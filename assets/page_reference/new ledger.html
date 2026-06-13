@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>欠粗哥 - 帳本（個人私帳）</title>
+  </head>
+  <body>
+    <!-- ============ TopAppBar ============ -->
+    <header>
+      <h1>欠粗哥</h1>
+      <nav>
+        <!-- Dark mode toggle (moon icon) -->
+        <button type="button" aria-label="切換深色模式">🌙</button>
+        <!-- Profile avatar -->
+        <img src="" alt="使用者頭像" />
+      </nav>
+    </header>
+
+    <!-- ============ Main Content ============ -->
+    <main>
+      <!-- Tab switcher: 對外債務 / 個人私帳 (個人私帳 active) -->
+      <nav aria-label="帳本分類">
+        <button type="button" aria-pressed="false">對外債務</button>
+        <button type="button" aria-pressed="true">個人私帳</button>
+      </nav>
+
+      <!-- Monthly income / expense summary card -->
+      <section aria-labelledby="summary-title">
+        <h2 id="summary-title">本月收支統計</h2>
+        <dl>
+          <dt>收入</dt>
+          <dd>+$0</dd>
+          <dt>支出</dt>
+          <dd>-$0</dd>
+        </dl>
+        <!-- Mascot illustration -->
+        <figure>
+          <img src="" alt="欠粗哥吉祥物" />
+          <figcaption>
+            本月結餘
+            <span>+0</span>
+          </figcaption>
+        </figure>
+      </section>
+
+      <!-- Private ledger list -->
+      <section aria-labelledby="list-title">
+        <header>
+          <h2 id="list-title">私帳清單</h2>
+          <button type="button" aria-label="刪除">🗑️</button>
+        </header>
+
+        <ul>
+          <!-- Ledger item 1 -->
+          <li>
+            <article>
+              <header>
+                <span>支出</span>
+                <time datetime="--04-02">4/2</time>
+              </header>
+              <h3>
+                <small>項目</small>
+                捐血
+              </h3>
+              <p>個人開銷</p>
+              <p>
+                <small>金額</small>
+                <strong>$-500</strong>
+              </p>
+            </article>
+          </li>
+
+          <!-- Ledger item 2 -->
+          <li>
+            <article>
+              <header>
+                <span>支出</span>
+                <time datetime="--04-02">4/2</time>
+              </header>
+              <h3>
+                <small>項目</small>
+                加油
+              </h3>
+              <p>個人開銷</p>
+              <p>
+                <small>金額</small>
+                <strong>$-611</strong>
+              </p>
+            </article>
+          </li>
+        </ul>
+      </section>
+    </main>
+
+    <!-- ============ BottomNavBar ============ -->
+    <nav aria-label="主要導覽">
+      <a href="#">
+        <span aria-hidden="true">💼</span>
+        <span>帳本</span>
+      </a>
+      <!-- Center floating action button -->
+      <button type="button" aria-label="新增一筆">+</button>
+      <a href="#" aria-label="圈子">
+        <span aria-hidden="true">🤝</span>
+      </a>
+      <a href="#" aria-label="個人">
+        <span aria-hidden="true">👤</span>
+      </a>
+    </nav>
+  </body>
+</html>

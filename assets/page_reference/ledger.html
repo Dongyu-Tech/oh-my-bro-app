@@ -1,0 +1,574 @@
+<!doctype html>
+<html lang="zh-TW" style="">
+    <head>
+        <meta charset="utf-8" />
+        <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+        <title>ROUGH BOOKIE - 總覽</title>
+        <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&amp;family=Space+Grotesk:wght@700&amp;family=Plus+Jakarta+Sans:wght@500&amp;display=swap"
+            rel="stylesheet"
+        />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+            rel="stylesheet"
+        />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+            rel="stylesheet"
+        />
+        <script id="tailwind-config">
+            tailwind.config = {
+                darkMode: "class",
+                theme: {
+                    extend: {
+                        colors: {
+                            tertiary: "#5f5e5e",
+                            "on-tertiary": "#ffffff",
+                            "on-primary-fixed": "#241a00",
+                            "on-error-container": "#93000a",
+                            "on-surface-variant": "#4d4634",
+                            "surface-container-low": "#fff2d9",
+                            "surface-variant": "#f6e1ab",
+                            "on-tertiary-container": "#5e5d5c",
+                            "on-tertiary-fixed-variant": "#474646",
+                            "on-primary-container": "#725a00",
+                            "surface-container-lowest": "#ffffff",
+                            "secondary-container": "#db3237",
+                            "on-primary-fixed-variant": "#574500",
+                            background: "#fff8f1",
+                            "tertiary-fixed": "#e5e2e1",
+                            "on-secondary": "#ffffff",
+                            "inverse-on-surface": "#ffefcd",
+                            "on-secondary-container": "#fffbff",
+                            "error-container": "#ffdad6",
+                            secondary: "#b71422",
+                            "surface-container-highest": "#f6e1ab",
+                            "on-primary": "#ffffff",
+                            "surface-dim": "#eed8a3",
+                            "tertiary-fixed-dim": "#c8c6c5",
+                            "surface-container-high": "#fce6b1",
+                            "on-background": "#241a00",
+                            "primary-container": "#ffd23f",
+                            surface: "#fff8f1",
+                            "surface-bright": "#fff8f1",
+                            "on-error": "#ffffff",
+                            "primary-fixed-dim": "#edc22e",
+                            outline: "#7f7661",
+                            "secondary-fixed": "#ffdad7",
+                            "inverse-surface": "#3b2f09",
+                            "surface-container": "#ffecc1",
+                            "on-secondary-fixed-variant": "#930014",
+                            "inverse-primary": "#edc22e",
+                            error: "#ba1a1a",
+                            primary: "#745c00",
+                            "outline-variant": "#d1c5ad",
+                            "on-secondary-fixed": "#410004",
+                            "tertiary-container": "#d9d6d6",
+                            "secondary-fixed-dim": "#ffb3ae",
+                            "surface-tint": "#745c00",
+                            "on-tertiary-fixed": "#1c1b1b",
+                            "on-surface": "#241a00",
+                            "primary-fixed": "#ffe089",
+                        },
+                        borderRadius: {
+                            DEFAULT: "0.25rem",
+                            lg: "0.5rem",
+                            xl: "0.75rem",
+                            full: "9999px",
+                        },
+                        spacing: {
+                            gutter: "16px",
+                            unit: "8px",
+                            "border-width": "4px",
+                            margin: "24px",
+                            "container-max": "1200px",
+                            "shadow-offset": "6px",
+                        },
+                        fontFamily: {
+                            "headline-lg": ["Bricolage Grotesque"],
+                            "label-bold": ["Space Grotesk"],
+                            "headline-lg-mobile": ["Bricolage Grotesque"],
+                            display: ["Bricolage Grotesque"],
+                            "body-lg": ["Plus Jakarta Sans"],
+                        },
+                        fontSize: {
+                            "headline-lg": [
+                                "32px",
+                                { lineHeight: "1.2", fontWeight: "800" },
+                            ],
+                            "label-bold": [
+                                "14px",
+                                { lineHeight: "1.2", fontWeight: "700" },
+                            ],
+                            "headline-lg-mobile": [
+                                "28px",
+                                { lineHeight: "1.2", fontWeight: "800" },
+                            ],
+                            display: [
+                                "48px",
+                                {
+                                    lineHeight: "1.1",
+                                    letterSpacing: "-0.04em",
+                                    fontWeight: "800",
+                                },
+                            ],
+                            "body-lg": [
+                                "18px",
+                                { lineHeight: "1.6", fontWeight: "500" },
+                            ],
+                        },
+                    },
+                },
+            };
+        </script>
+        <style>
+            .neo-brutal {
+                border: 4px solid #111111;
+                box-shadow: 6px 6px 0px 0px rgba(17, 17, 17, 1);
+                transition: all 0.2s ease-in-out;
+            }
+            @media (max-width: 768px) {
+                .neo-brutal {
+                    box-shadow: 4px 4px 0px 0px rgba(17, 17, 17, 1);
+                }
+                .neo-brutal:hover {
+                    box-shadow: 2px 2px 0px 0px rgba(17, 17, 17, 1);
+                    transform: translate(2px, 2px);
+                }
+            }
+            .neo-brutal:hover {
+                box-shadow: 2px 2px 0px 0px rgba(17, 17, 17, 1);
+                transform: translate(4px, 4px);
+            }
+            .neo-brutal-no-hover {
+                border: 4px solid #111111;
+                box-shadow: 6px 6px 0px 0px rgba(17, 17, 17, 1);
+            }
+            @media (max-width: 768px) {
+                .neo-brutal-no-hover {
+                    box-shadow: 4px 4px 0px 0px rgba(17, 17, 17, 1);
+                }
+            }
+
+            .mascot-sticker {
+                position: absolute;
+                z-index: 10;
+            }
+
+            /* Specific pattern for empty states / background */
+            .dot-pattern {
+                background-image: radial-gradient(#111111 2px, transparent 2px);
+                background-size: 24px 24px;
+                opacity: 0.05;
+            }
+        </style>
+    </head>
+    <body
+        class="bg-background text-on-background min-h-screen font-body-lg pb-24 md:pb-0"
+    >
+        <!-- TopAppBar -->
+        <header
+            class="docked full-width top-0 border-b-4 border-on-background shadow-[4px_4px_0px_0px_rgba(36,26,0,1)] bg-background dark:bg-background z-40 sticky"
+        >
+            <div
+                class="flex justify-between items-center w-full px-margin py-4 max-w-container-max mx-auto"
+            >
+                <div class="flex items-center gap-3">
+                    <div
+                        class="w-10 h-10 rounded-full border-4 border-on-background overflow-hidden bg-primary-container flex-shrink-0"
+                    >
+                        <img
+                            alt="Avatar"
+                            class="w-full h-full object-cover"
+                            data-alt="A small, stylized Q-version male mascot with a thick mustache, short hair, and a yellow hoodie giving a thumbs up. Hand-drawn comic style with thick black outlines, bold colors, and a playful, energetic expression."
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDMyFXc0YIewRqvWoeGtxjdZzj9mwjM3xd3I60Yb35lB5J9e8IjbCQZfpJxrS2OzCEQ8WpOGZ1q4g_4F-38Znv_O3PPvC78N6JD9PUTvPG99sydKd-0r4kd3TCB-Y6ddweLJkzMwy_zv1Iav_pPCM_I241LxDUyEwdIs7MwQdjiK4ONcJr3JeRfduNTC7VSu_GuxU2qvaOaOEUKtcuEctQOtaQTFjHefQRyP-MA2_TWOqL-Nst2ev-0b3c3DihDSw5L_nWhcZlccrpw"
+                        />
+                    </div>
+                    <h1
+                        class="text-headline-lg-mobile font-headline-lg-mobile font-black tracking-tighter text-on-background dark:text-on-background"
+                    >
+                        ROUGH BOOKIE
+                    </h1>
+                </div>
+                <nav class="hidden md:flex gap-6 items-center">
+                    <a class="text-primary font-bold" href="#">Ledger</a>
+                    <a
+                        class="text-on-surface-variant hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all"
+                        href="#"
+                        >Add</a
+                    >
+                    <a
+                        class="text-on-surface-variant hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all"
+                        href="#"
+                        >Circle</a
+                    >
+                    <a
+                        class="text-on-surface-variant hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all"
+                        href="#"
+                        >Account</a
+                    >
+                </nav>
+                <button
+                    class="w-12 h-12 flex items-center justify-center neo-brutal bg-surface rounded-lg text-primary dark:text-primary-fixed md:hidden"
+                >
+                    <span
+                        class="material-symbols-outlined"
+                        style="font-variation-settings: &quot;FILL&quot; 1"
+                        >search</span
+                    >
+                </button>
+            </div>
+        </header>
+        <!-- Main Content Canvas -->
+        <main
+            class="max-w-container-max mx-auto px-gutter md:px-margin pt-6 pb-20 relative"
+        >
+            <!-- Background decorative dots -->
+            <div
+                class="absolute inset-0 dot-pattern pointer-events-none -z-10"
+            ></div>
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+                <!-- Left Column: Summary & Input (md:col-span-8) -->
+                <div class="md:col-span-8 space-y-6">
+                    <!-- Monthly Summary Card (Bento style) -->
+                    <section
+                        class="neo-brutal-no-hover bg-primary-container rounded-xl p-6 relative overflow-hidden"
+                    >
+                        <div class="relative z-10">
+                            <h2
+                                class="text-label-bold font-label-bold text-on-primary-container mb-2 uppercase tracking-wide"
+                            >
+                                本月結餘 (Oct)
+                            </h2>
+                            <div
+                                class="text-display font-display font-black text-on-background mb-6"
+                            >
+                                $14,250
+                            </div>
+                            <div class="flex flex-wrap gap-4">
+                                <div
+                                    class="bg-surface rounded-lg p-3 border-4 border-on-background flex-1 min-w-[120px]"
+                                >
+                                    <div
+                                        class="text-label-bold font-label-bold text-on-surface-variant mb-1 flex items-center gap-1"
+                                    >
+                                        <span
+                                            class="material-symbols-outlined text-[16px]"
+                                            >arrow_downward</span
+                                        >
+                                        收入
+                                    </div>
+                                    <div
+                                        class="font-headline-lg-mobile text-on-background"
+                                    >
+                                        +$20,000
+                                    </div>
+                                </div>
+                                <div
+                                    class="bg-surface rounded-lg p-3 border-4 border-on-background flex-1 min-w-[120px]"
+                                >
+                                    <div
+                                        class="text-label-bold font-label-bold text-secondary mb-1 flex items-center gap-1"
+                                    >
+                                        <span
+                                            class="material-symbols-outlined text-[16px]"
+                                            >arrow_upward</span
+                                        >
+                                        支出
+                                    </div>
+                                    <div
+                                        class="font-headline-lg-mobile text-secondary"
+                                    >
+                                        -$5,750
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    <!-- Natural Language Input -->
+                    <section
+                        class="neo-brutal bg-surface-container-highest rounded-xl p-6"
+                    >
+                        <h3
+                            class="text-headline-lg-mobile font-headline-lg-mobile font-black mb-4 flex items-center gap-2"
+                        >
+                            <span
+                                class="material-symbols-outlined"
+                                style="
+                                    font-variation-settings: &quot;FILL&quot; 1;
+                                "
+                                >edit_note</span
+                            >
+                            快速記一筆
+                        </h3>
+                        <div class="flex items-center gap-3 mb-4 w-full">
+                            <button
+                                class="flex items-center gap-1 px-3 py-2 bg-primary-container border-4 border-on-background rounded-lg neo-brutal text-label-bold font-label-bold flex-1 justify-center"
+                            >
+                                <span class="flex-1 text-center">...</span
+                                ><span
+                                    class="material-symbols-outlined text-[18px] ml-auto"
+                                    >expand_more</span
+                                >
+                            </button>
+                            <span
+                                class="font-headline-lg-mobile text-xl font-black text-on-background"
+                                >欠</span
+                            >
+                            <button
+                                class="flex items-center gap-1 px-3 py-2 bg-primary-container border-4 border-on-background rounded-lg neo-brutal text-label-bold font-label-bold flex-1 justify-center"
+                            >
+                                <span class="flex-1 text-center">...</span
+                                ><span
+                                    class="material-symbols-outlined text-[18px] ml-auto"
+                                    >expand_more</span
+                                >
+                            </button>
+                        </div>
+                        <form class="flex gap-3">
+                            <div class="flex-1">
+                                <input
+                                    class="w-full h-14 px-4 text-body-lg font-body-lg rounded-lg border-4 border-on-background bg-surface focus:bg-surface-container-low focus:ring-0 focus:border-on-background transition-colors placeholder:text-on-surface-variant placeholder:opacity-60"
+                                    placeholder="例：午餐 120"
+                                    type="text"
+                                />
+                            </div>
+                            <button
+                                class="neo-brutal bg-primary-container text-on-background w-14 h-14 rounded-lg flex items-center justify-center flex-shrink-0"
+                                type="button"
+                            >
+                                <span
+                                    class="material-symbols-outlined text-[32px]"
+                                    style="
+                                        font-variation-settings: &quot;FILL&quot;
+                                            1;
+                                    "
+                                    >add</span
+                                >
+                            </button>
+                        </form>
+                    </section>
+                    <!-- Daily Goal / Motivation Banner -->
+                    <section
+                        class="neo-brutal-no-hover bg-[#FF4D4D] rounded-xl p-4 flex items-center justify-between text-on-error relative overflow-hidden"
+                    >
+                        <div class="relative z-10 flex items-center gap-4">
+                            <div
+                                class="w-12 h-12 bg-surface rounded-full border-4 border-on-background flex items-center justify-center"
+                            >
+                                <span
+                                    class="material-symbols-outlined text-[#FF4D4D] text-[28px]"
+                                    style="
+                                        font-variation-settings: &quot;FILL&quot;
+                                            1;
+                                    "
+                                    >local_fire_department</span
+                                >
+                            </div>
+                            <div>
+                                <h4
+                                    class="font-headline-lg-mobile text-xl mb-0"
+                                >
+                                    本月預算！我守住！
+                                </h4>
+                                <p class="text-label-bold opacity-90">
+                                    剩餘預算 $4,250
+                                </p>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+                <!-- Right Column: Recent Transactions (md:col-span-4) -->
+                <div class="md:col-span-4">
+                    <section
+                        class="neo-brutal-no-hover bg-surface rounded-xl p-6 h-full border-4 border-on-background"
+                    >
+                        <div class="flex justify-between items-center mb-6">
+                            <h3
+                                class="text-headline-lg-mobile font-headline-lg-mobile font-black"
+                            >
+                                近期紀錄
+                            </h3>
+                            <a
+                                class="text-label-bold font-label-bold text-primary hover:underline"
+                                href="#"
+                                >查看全部</a
+                            >
+                        </div>
+                        <div class="space-y-4">
+                            <!-- Transaction Item 1 -->
+                            <div
+                                class="flex items-center gap-4 p-3 rounded-lg border-4 border-on-background bg-surface-container-highest hover:bg-primary-container transition-colors cursor-pointer group"
+                            >
+                                <div
+                                    class="w-12 h-12 rounded-lg bg-surface border-2 border-on-background flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform"
+                                >
+                                    <span
+                                        class="material-symbols-outlined text-[28px]"
+                                        style="
+                                            font-variation-settings: &quot;FILL&quot;
+                                                1;
+                                        "
+                                        >lunch_dining</span
+                                    >
+                                </div>
+                                <div class="flex-1">
+                                    <div class="font-bold text-on-background">
+                                        午餐
+                                    </div>
+                                    <div
+                                        class="text-label-bold text-on-surface-variant"
+                                    >
+                                        今天 12:30
+                                    </div>
+                                </div>
+                                <div
+                                    class="font-headline-lg-mobile text-xl text-secondary"
+                                >
+                                    -120
+                                </div>
+                            </div>
+                            <!-- Transaction Item 2 -->
+                            <div
+                                class="flex items-center gap-4 p-3 rounded-lg border-4 border-on-background bg-surface-container-highest hover:bg-primary-container transition-colors cursor-pointer group"
+                            >
+                                <div
+                                    class="w-12 h-12 rounded-lg bg-surface border-2 border-on-background flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform"
+                                >
+                                    <span
+                                        class="material-symbols-outlined text-[28px]"
+                                        style="
+                                            font-variation-settings: &quot;FILL&quot;
+                                                1;
+                                        "
+                                        >local_cafe</span
+                                    >
+                                </div>
+                                <div class="flex-1">
+                                    <div class="font-bold text-on-background">
+                                        咖啡
+                                    </div>
+                                    <div
+                                        class="text-label-bold text-on-surface-variant"
+                                    >
+                                        今天 08:15
+                                    </div>
+                                </div>
+                                <div
+                                    class="font-headline-lg-mobile text-xl text-secondary"
+                                >
+                                    -85
+                                </div>
+                            </div>
+                            <!-- Transaction Item 3 (Income) -->
+                            <div
+                                class="flex items-center gap-4 p-3 rounded-lg border-4 border-on-background bg-surface-container-highest hover:bg-primary-container transition-colors cursor-pointer group"
+                            >
+                                <div
+                                    class="w-12 h-12 rounded-lg bg-surface border-2 border-on-background flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform"
+                                >
+                                    <span
+                                        class="material-symbols-outlined text-[28px]"
+                                        style="
+                                            font-variation-settings: &quot;FILL&quot;
+                                                1;
+                                        "
+                                        >payments</span
+                                    >
+                                </div>
+                                <div class="flex-1">
+                                    <div class="font-bold text-on-background">
+                                        薪水
+                                    </div>
+                                    <div
+                                        class="text-label-bold text-on-surface-variant"
+                                    >
+                                        昨天
+                                    </div>
+                                </div>
+                                <div
+                                    class="font-headline-lg-mobile text-xl text-primary-fixed-dim"
+                                >
+                                    +20,000
+                                </div>
+                            </div>
+                            <!-- Transaction Item 4 -->
+                            <div
+                                class="flex items-center gap-4 p-3 rounded-lg border-4 border-on-background bg-surface-container-highest hover:bg-primary-container transition-colors cursor-pointer group"
+                            >
+                                <div
+                                    class="w-12 h-12 rounded-lg bg-surface border-2 border-on-background flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform"
+                                >
+                                    <span
+                                        class="material-symbols-outlined text-[28px]"
+                                        style="
+                                            font-variation-settings: &quot;FILL&quot;
+                                                1;
+                                        "
+                                        >directions_bus</span
+                                    >
+                                </div>
+                                <div class="flex-1">
+                                    <div class="font-bold text-on-background">
+                                        交通
+                                    </div>
+                                    <div
+                                        class="text-label-bold text-on-surface-variant"
+                                    >
+                                        昨天
+                                    </div>
+                                </div>
+                                <div
+                                    class="font-headline-lg-mobile text-xl text-secondary"
+                                >
+                                    -30
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-6 flex justify-center"></div>
+                    </section>
+                </div>
+            </div>
+        </main>
+        <!-- BottomNavBar -->
+        <nav
+            class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-2 bg-surface md:hidden border-t-4 border-on-background shadow-[0px_-4px_0px_0px_rgba(36,26,0,1)] rounded-t-xl"
+        >
+            <a
+                class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container border-2 border-on-background rounded-lg p-2 shadow-[2px_2px_0px_0px_rgba(36,26,0,1)] Active: translate-y-1 shadow-none transition-all"
+                href="#"
+            >
+                <span
+                    class="material-symbols-outlined mb-1"
+                    style="font-variation-settings: &quot;FILL&quot; 1"
+                    >account_balance_wallet</span
+                >
+                <span class="text-label-bold font-label-bold">Ledger</span>
+            </a>
+            <a
+                class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high transition-colors"
+                href="#"
+            >
+                <span class="material-symbols-outlined mb-1">add_box</span>
+                <span class="text-label-bold font-label-bold">Add</span>
+            </a>
+            <a
+                class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high transition-colors"
+                href="#"
+            >
+                <span class="material-symbols-outlined mb-1">group</span>
+                <span class="text-label-bold font-label-bold">Circle</span>
+            </a>
+            <a
+                class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high transition-colors"
+                href="#"
+            >
+                <span class="material-symbols-outlined mb-1"
+                    >account_circle</span
+                >
+                <span class="text-label-bold font-label-bold">Account</span>
+            </a>
+        </nav>
+    </body>
+</html>

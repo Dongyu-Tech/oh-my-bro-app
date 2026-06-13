@@ -1,0 +1,101 @@
+key,en,zh_TW
+app_title,Oh My Bro,Oh My Bro
+confirm,Confirm,確認
+cancel,Cancel,取消
+coming_soon,Coming Soon,敬請期待
+system,System,系統
+light,Light,淺色
+dark,Dark,深色
+language_english,English,英文
+language_chinese,Chinese,中文
+ledger_brand,Oh My Bro,欸 粗哥
+ledger_monthly_balance,Balance this month,本月結餘
+ledger_income,Income,收入
+ledger_expense,Expense,支出
+ledger_quick_add,Quick entry,快速記一筆
+ledger_owes,owes,欠
+ledger_quick_hint,e.g. Lunch 120,例：午餐120
+ledger_budget_kept,Budget held this month!,本月預算！我守住！
+ledger_budget_remaining,Remaining budget,剩餘預算
+ledger_title,My Ledger,我的帳本
+ledger_recent,Recent entries,近期紀錄
+ledger_view_all,View all,查看全部
+ledger_today,Today,今天
+ledger_yesterday,Yesterday,昨天
+nav_ledger,Ledger,帳本
+nav_transaction,Transaction,交易
+nav_add,Add,新增
+nav_circle,Circle,夥伴
+nav_account,Account,帳號
+circle_title,Chasing a friend's debt?,找朋友討債？
+circle_search_hint,Enter friend ID…,輸入好友ID…
+circle_search_button,Search,搜尋
+circle_card_owes_you,Owes you,欠你錢
+circle_card_you_owe,You owe,你欠他
+circle_view_ledger,View Ledger,查看帳本
+circle_tag,ELITE,人上人
+friend_credit_report_title,Bro Credit Report,粗哥信用報告
+friend_credit_report_verdict,Hopeless... Bro gives up.,沒救了..粗哥放棄。
+friend_ledger_transactions,Shared transactions,往來帳務
+sample_lunch,Lunch,午餐
+sample_coffee,Coffee,咖啡
+sample_salary,Salary,薪水
+sample_transit,Transit,交通
+sample_donate,Donate,捐血
+sample_fuel,Fuel,加油
+transaction_title,Transactions,交易紀錄
+tx_tab_external,External debt,對外債務
+tx_tab_personal,Personal,個人私帳
+tx_summary_title,Monthly summary,本月收支統計
+tx_list_title,Private records,私帳清單
+tx_item,Item,項目
+tx_amount,Amount,金額
+tx_category_personal,Personal expense,個人開銷
+account_title,My Account,我的帳號
+account_stats_title,Account stats,帳戶統計
+account_days_logged,Days logged,記帳天數
+account_month_total,This month,本月總額
+account_share_id,Scan to share ID,掃描分享 ID
+account_currency,Currency,幣別
+account_categories,Categories,分類管理
+account_export,Export Data,匯出資料
+account_mode_light,Light Mode,淺色模式
+account_mode_dark,Dark Mode,深色模式
+account_notifications,Notifications,通知設定
+account_privacy,Privacy,隱私條款
+account_logout,Logout,登出
+account_logout_done,Signed out,已登出
+onboarding_slogan,Track easy. Live happy.,記帳不痛苦，生活更幸福！
+onboarding_welcome_title,Welcome aboard!,歡迎加入！
+onboarding_welcome_subtitle,Sign in to start managing your money,登入後就能開始記帳囉
+onboarding_google_login,Sign in with Google,使用 Google 登入
+new_tx_title,Quick Add,記一筆
+new_tx_hint,e.g. Ate ramen with Ming yesterday for $250...,例如：昨天跟小明吃拉麵花了250元...
+new_tx_analyze,AI Analyze,AI 分析
+new_tx_record,Record!,記帳！
+new_tx_verify_title,AI Result,AI 解析結果
+new_tx_field_type,Type,類型
+new_tx_field_who,Who owes who,誰欠誰
+new_tx_sample_name,Ramen,拉麵
+new_tx_sample_friend,Xiao-Ming,小明
+new_tx_you,you,你
+new_tx_status_input,Tell me what you spent~,說說你花了什麼吧～
+new_tx_status_thinking,Hmm... let me think...,嗯…讓我想想…
+new_tx_status_success,Done! Take a look~,搞定！檢查一下吧～
+new_tx_status_eating,Recorded! Nom nom~,記好囉，嗯姆嗯姆～
+tx_detail_suffix,Details,細項
+tx_detail_target,Target,對象
+tx_detail_total,Total,總額
+tx_detail_col_time,Time,時間
+tx_detail_grand_total,Grand total,總計
+tx_detail_sealed,Sealed!,封帳成功！
+tx_detail_settle,Settle this record,結清此筆帳務
+tx_detail_edit,Edit,編輯
+tx_detail_share,Share,分享
+tx_detail_delete,Move to trash,丟進回收桶
+tx_detail_close,Close,關閉
+new_tx_friend1,Ming,小明
+new_tx_friend2,Hua,阿華
+new_tx_friend3,Leo,大雄
+new_tx_me,Me,我
+new_tx_add,Add,添加
