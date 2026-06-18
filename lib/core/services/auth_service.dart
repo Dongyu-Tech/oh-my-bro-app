@@ -48,3 +48,21 @@ class AuthNotWiredException implements Exception {
   @override
   String toString() => 'AuthNotWiredException: $message';
 }
+
+/// Sign-in was aborted by the user (dismissed the Google sheet). Benign — call
+/// sites should treat this as a no-op and NOT surface an error message.
+class AuthCancelledException implements Exception {
+  const AuthCancelledException();
+
+  @override
+  String toString() => 'AuthCancelledException';
+}
+
+/// Any other sign-in / sign-out failure, carrying a human-readable [message].
+class AuthFailedException implements Exception {
+  const AuthFailedException(this.message);
+  final String message;
+
+  @override
+  String toString() => 'AuthFailedException: $message';
+}

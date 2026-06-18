@@ -4,6 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'package:heymybro/core/error/error_logger.dart';
+import 'package:heymybro/core/error/result.dart';
+import 'package:heymybro/core/services/auth_service.dart';
+import 'package:heymybro/shared/provider/auth_provider.dart';
 import 'package:heymybro/shared/widgets/brutalism.dart';
 
 /// First-run / signed-out gate.
@@ -180,24 +184,42 @@ class _LoginBottomSheet extends ConsumerStatefulWidget {
 }
 
 class _LoginBottomSheetState extends ConsumerState<_LoginBottomSheet> {
-  void _signInWithGoogle() {
-    // 先暫時這樣做: skip auth and go straight to the app shell so the flow is
-    // navigable without a backend. Capture the router before popping so we
-    // don't read a defunct context.
-    //
-    // TODO(auth): swap this for the real sign-in once authServiceProvider is
-    // wired (add a loading state + handle Result):
-    //   switch (await ref.read(authServiceProvider).signIn()) {
-    //     case Ok():
-    //       final router = GoRouter.of(context);
-    //       Navigator.of(context).pop();
-    //       router.go('/');
-    //     case Error(error: final e):
-    //       showErrorSnakeBar(e.toString());
-    //   }
-    final router = GoRouter.of(context);
-    Navigator.of(context).pop();
-    router.go('/');
+  bool _loading = false;
+  String? _errorText;
+
+  Future<void> _signInWithGoogle() async {
+    if (_loading) return;
+    setState(() {
+      _loading = true;
+      _errorText = null;
+    });
+
+    final result = await ref.read(authServiceProvider).signIn();
+    if (!mounted) return;
+
+    switch (result) {
+      case Ok():
+        // Close the (non-dismissible) sheet; the router's auth guard then
+        // swaps onboarding for the app shell.
+        final router = GoRouter.of(context);
+        Navigator.of(context).pop();
+        router.go('/');
+      case Error(error: final e):
+        // User dismissed the Google sheet — benign, show nothing.
+        if (e is AuthCancelledException) {
+          setState(() => _loading = false);
+          return;
+        }
+        // Keep the technical detail in logs for us; show the user a short,
+        // plain message — shown inline because a bottom snackbar is hidden
+        // behind this sheet.
+        debugPrint('[Auth] sign-in failed: $e');
+        setState(() {
+          _loading = false;
+          _errorText = 'login_failed'.tr();
+        });
+        showErrorSnakeBar('login_failed'.tr());
+    }
   }
 
   @override
@@ -246,7 +268,31 @@ class _LoginBottomSheetState extends ConsumerState<_LoginBottomSheet> {
                 ),
               ),
               const SizedBox(height: 22),
-              _GoogleSignInButton(loading: false, onTap: _signInWithGoogle),
+              _GoogleSignInButton(loading: _loading, onTap: _signInWithGoogle),
+              if (_errorText != null) ...[
+                const SizedBox(height: 14),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      size: 18,
+                      color: BrutalColors.secondary,
+                    ),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(
+                        _errorText!,
+                        textAlign: TextAlign.center,
+                        style: BrutalText.labelBold(
+                          fontSize: 14,
+                          color: BrutalColors.secondary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ],
           ),
         ),

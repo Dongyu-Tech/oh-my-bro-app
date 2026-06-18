@@ -46,7 +46,7 @@ class App extends ConsumerWidget {
         appBarTheme: const AppBarTheme(centerTitle: false),
       ),
       themeMode: themeMode,
-      routerConfig: router,
+      routerConfig: ref.watch(routerProvider),
       builder: (context, child) =>
           AppKeyboardFocusGuard(child: child ?? const SizedBox.shrink()),
     );

@@ -27,6 +27,17 @@ class AccountPage extends ConsumerWidget {
         ref.watch(settingsProvider.select((s) => s.themeMode)) ==
         ThemeMode.dark;
 
+    // Live signed-in Google user; fall back to the synchronous current user
+    // before the auth stream emits its first value.
+    final user =
+        ref.watch(currentUserProvider).asData?.value ??
+        ref.watch(authServiceProvider).currentUser;
+    final email = user?.email ?? '';
+    final name = (user?.displayName?.trim().isNotEmpty ?? false)
+        ? user!.displayName!.trim()
+        : (email.contains('@') ? email.split('@').first : 'Bro');
+    final handle = email.contains('@') ? '@${email.split('@').first}' : '';
+
     return Scaffold(
       backgroundColor: BrutalColors.background,
       body: SafeArea(
@@ -48,10 +59,11 @@ class AccountPage extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 24),
-                const _ProfileHeader(
-                  name: '欽粗哥',
-                  handle: '@rough_bro_888',
-                  email: 'rough@bookie.app',
+                _ProfileHeader(
+                  name: name,
+                  handle: handle,
+                  email: email,
+                  photoUrl: user?.photoUrl,
                 ),
                 const SizedBox(height: 20),
                 const _ShareIdCard(),
@@ -134,11 +146,13 @@ class _ProfileHeader extends StatelessWidget {
     required this.name,
     required this.handle,
     required this.email,
+    this.photoUrl,
   });
 
   final String name;
   final String handle;
   final String email;
+  final String? photoUrl;
 
   @override
   Widget build(BuildContext context) {
@@ -165,12 +179,25 @@ class _ProfileHeader extends StatelessWidget {
                       width: BrutalSpec.borderWidth,
                     ),
                   ),
+                  clipBehavior: Clip.antiAlias,
                   alignment: Alignment.center,
-                  child: const Icon(
-                    LucideIcons.users,
-                    size: 44,
-                    color: BrutalColors.onBackground,
-                  ),
+                  child: (photoUrl == null || photoUrl!.isEmpty)
+                      ? const Icon(
+                          LucideIcons.users,
+                          size: 44,
+                          color: BrutalColors.onBackground,
+                        )
+                      : Image.network(
+                          photoUrl!,
+                          width: 96,
+                          height: 96,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => const Icon(
+                            LucideIcons.users,
+                            size: 44,
+                            color: BrutalColors.onBackground,
+                          ),
+                        ),
                 ),
                 Positioned(
                   top: -2,
@@ -307,7 +334,7 @@ class _StatsCard extends StatelessWidget {
           _StatRow(
             label: 'account_month_total'.tr(),
             value: monthTotal,
-            valueColor: BrutalColors.primaryFixedDim,
+            valueColor: BrutalColors.incomeInk,
           ),
         ],
       ),
