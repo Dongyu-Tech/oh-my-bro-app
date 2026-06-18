@@ -58,3 +58,4 @@ local.*
 
 # Superpowers brainstorm/session scratch (local mockups + server state)
 .superpowers/
+config.txt
