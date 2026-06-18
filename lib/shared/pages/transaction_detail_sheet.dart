@@ -251,7 +251,7 @@ class _SummaryCard extends StatelessWidget {
     final amountText =
         '\$${positive ? '+' : '-'}${money.format(detail.amount.abs())}';
     final amountColor = positive
-        ? BrutalColors.primaryFixedDim
+        ? BrutalColors.incomeInk
         : BrutalColors.secondary;
 
     return Container(
@@ -383,7 +383,7 @@ class _BreakdownTable extends StatelessWidget {
                 style: BrutalText.display(
                   fontSize: 26,
                   color: totalPositive
-                      ? BrutalColors.primaryFixedDim
+                      ? BrutalColors.incomeInk
                       : BrutalColors.secondary,
                 ),
               ),
@@ -460,7 +460,7 @@ class _BreakdownRow extends StatelessWidget {
               style: BrutalText.headlineLgMobile(
                 fontSize: 18,
                 color: positive
-                    ? BrutalColors.primaryFixedDim
+                    ? BrutalColors.incomeInk
                     : BrutalColors.secondary,
               ),
             ),

@@ -17,8 +17,13 @@ abstract class BrutalColors {
   static const primaryContainer = Color(
     0xFFFFD23F,
   ); // main yellow card / button
-  static const primaryFixedDim = Color(0xFFEDC22E); // income amount gold
+  static const primaryFixedDim = Color(0xFFEDC22E); // bright gold: fills/hover
   static const primary = Color(0xFF745C00);
+
+  /// Income / positive-amount TEXT. Bright [primaryFixedDim] is gold-on-gold
+  /// against the warm light surfaces (card = [surfaceContainerHighest]), so
+  /// amount text uses this deep gold instead (~5:1 on the gold card).
+  static const incomeInk = Color(0xFF745C00);
 
   // Ink / text on warm background
   static const onBackground = Color(0xFF241A00);
@@ -39,7 +44,7 @@ abstract class BrutalColors {
   static const yellow = primaryContainer;
   static const yellowDeep = primaryFixedDim;
   static const red = dangerBanner;
-  static const greenInk = primaryFixedDim;
+  static const greenInk = incomeInk;
   static const redInk = secondary;
   static const ink = onBackground;
   static const muted = onSurfaceVariant;

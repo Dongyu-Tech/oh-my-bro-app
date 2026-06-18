@@ -43,7 +43,7 @@ class TransactionCard extends StatelessWidget {
     final amountText =
         '\$${positive ? '+' : '-'}${money.format(entry.amount.abs())}';
     final amountColor = positive
-        ? BrutalColors.primaryFixedDim
+        ? BrutalColors.incomeInk
         : BrutalColors.secondary;
 
     return PressableBrutal(

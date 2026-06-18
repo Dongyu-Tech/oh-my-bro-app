@@ -13,33 +13,30 @@ import 'package:heymybro/shared/widgets/brutalism.dart';
 /// income/expense summary card with mascot → the "私帳清單" transaction list.
 /// Data is hardcoded sample content, consistent with [LedgerPage]; the repo is
 /// still a DB-less scaffold.
-class TransactionPage extends ConsumerWidget {
+class TransactionPage extends ConsumerStatefulWidget {
   const TransactionPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final money = NumberFormat.decimalPattern();
+  ConsumerState<TransactionPage> createState() => _TransactionPageState();
+}
 
-    final entries = <TransactionEntry>[
-      TransactionEntry(
-        title: 'sample_donate'.tr(),
-        subtitle: 'tx_category_personal'.tr(),
-        date: '4/2',
-        amount: -500,
-      ),
-      TransactionEntry(
-        title: 'sample_fuel'.tr(),
-        subtitle: 'tx_category_personal'.tr(),
-        date: '4/2',
-        amount: -611,
-      ),
-      TransactionEntry(
-        title: 'sample_salary'.tr(),
-        subtitle: 'tx_category_personal'.tr(),
-        date: '4/1',
-        amount: 20000,
-      ),
-    ];
+class _TransactionPageState extends ConsumerState<TransactionPage> {
+  // 0 = 對外債務 (external debt), 1 = 個人私帳 (personal) — personal active.
+  int _activeTab = 1;
+
+  @override
+  Widget build(BuildContext context) {
+    final money = NumberFormat.decimalPattern();
+    final personal = _activeTab == 1;
+
+    // The two tabs are different ledgers, not just a visual highlight: switching
+    // swaps the whole list. 個人私帳 shows personal expenses (subtitle = the
+    // category); 對外債務 shows debts with people (subtitle = the counterparty,
+    // amount +owed-to-you / -you-owe-them). Hardcoded sample data either way.
+    final entries = personal ? _personalEntries() : _externalEntries();
+    final listTitle = personal
+        ? 'tx_list_title'.tr()
+        : 'tx_list_title_external'.tr();
 
     return Scaffold(
       backgroundColor: BrutalColors.background,
@@ -64,11 +61,18 @@ class TransactionPage extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    const _LedgerTabSwitcher(),
+                    _LedgerTabSwitcher(
+                      active: _activeTab,
+                      onChanged: (i) => setState(() => _activeTab = i),
+                    ),
                     const SizedBox(height: 20),
                     _MonthlySummaryCard(money: money),
                     const SizedBox(height: 20),
-                    _TransactionListSection(entries: entries, money: money),
+                    _TransactionListSection(
+                      title: listTitle,
+                      entries: entries,
+                      money: money,
+                    ),
                   ],
                 ),
               ),
@@ -78,22 +82,64 @@ class TransactionPage extends ConsumerWidget {
       ),
     );
   }
+
+  // 個人私帳: personal expenses, subtitle = the spending category.
+  List<TransactionEntry> _personalEntries() => [
+    TransactionEntry(
+      title: 'sample_donate'.tr(),
+      subtitle: 'tx_category_personal'.tr(),
+      date: '4/2',
+      amount: -500,
+    ),
+    TransactionEntry(
+      title: 'sample_fuel'.tr(),
+      subtitle: 'tx_category_personal'.tr(),
+      date: '4/2',
+      amount: -611,
+    ),
+    TransactionEntry(
+      title: 'sample_salary'.tr(),
+      subtitle: 'tx_category_personal'.tr(),
+      date: '4/1',
+      amount: 20000,
+    ),
+  ];
+
+  // 對外債務: debts with people, subtitle = the counterparty.
+  // +amount = they owe you, -amount = you owe them.
+  List<TransactionEntry> _externalEntries() => [
+    TransactionEntry(
+      title: 'sample_lunch'.tr(),
+      subtitle: 'new_tx_friend1'.tr(),
+      date: '4/3',
+      amount: 350,
+    ),
+    TransactionEntry(
+      title: 'sample_coffee'.tr(),
+      subtitle: 'new_tx_friend2'.tr(),
+      date: '4/2',
+      amount: -120,
+    ),
+    TransactionEntry(
+      title: 'sample_fuel'.tr(),
+      subtitle: 'new_tx_friend3'.tr(),
+      date: '4/1',
+      amount: 600,
+    ),
+  ];
 }
 
 // ---------------------------------------------------------------------------
 // Ledger-category tab switcher: 對外債務 / 個人私帳 (personal active)
 // ---------------------------------------------------------------------------
 
-class _LedgerTabSwitcher extends StatefulWidget {
-  const _LedgerTabSwitcher();
+class _LedgerTabSwitcher extends StatelessWidget {
+  const _LedgerTabSwitcher({required this.active, required this.onChanged});
 
-  @override
-  State<_LedgerTabSwitcher> createState() => _LedgerTabSwitcherState();
-}
-
-class _LedgerTabSwitcherState extends State<_LedgerTabSwitcher> {
-  // 0 = 對外債務 (external debt), 1 = 個人私帳 (personal) — personal active.
-  int _active = 1;
+  /// Active tab index — 0 = 對外債務, 1 = 個人私帳. State lives in the page so
+  /// the transaction list below can swap with the selection.
+  final int active;
+  final ValueChanged<int> onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -105,8 +151,8 @@ class _LedgerTabSwitcherState extends State<_LedgerTabSwitcher> {
           Expanded(
             child: _SwitchPill(
               label: labels[i],
-              active: i == _active,
-              onTap: () => setState(() => _active = i),
+              active: i == active,
+              onTap: () => onChanged(i),
             ),
           ),
         ],
@@ -184,7 +230,7 @@ class _MonthlySummaryCard extends StatelessWidget {
                     icon: LucideIcons.arrowDownLeft,
                     label: 'ledger_income'.tr(),
                     amount: '+\$${money.format(0)}',
-                    amountColor: BrutalColors.primaryFixedDim,
+                    amountColor: BrutalColors.incomeInk,
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -300,8 +346,13 @@ class _SummaryChip extends StatelessWidget {
 // ---------------------------------------------------------------------------
 
 class _TransactionListSection extends StatelessWidget {
-  const _TransactionListSection({required this.entries, required this.money});
+  const _TransactionListSection({
+    required this.title,
+    required this.entries,
+    required this.money,
+  });
 
+  final String title;
   final List<TransactionEntry> entries;
   final NumberFormat money;
 
@@ -317,7 +368,7 @@ class _TransactionListSection extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'tx_list_title'.tr(),
+              title,
               style: BrutalText.headlineLgMobile(fontSize: 22),
             ),
             PressableBrutal(
