@@ -1,11 +1,11 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import 'package:heymybro/core/error/error_logger.dart';
 import 'package:heymybro/core/error/result.dart';
+import 'package:heymybro/shared/dialogs/basic_dialog.dart';
 import 'package:heymybro/shared/provider/auth_provider.dart';
 import 'package:heymybro/shared/provider/settings_provider.dart';
 import 'package:heymybro/shared/widgets/brutalism.dart';
@@ -130,9 +130,23 @@ class AccountPage extends ConsumerWidget {
   }
 
   Future<void> _logout(WidgetRef ref, BuildContext context) async {
+    await showConfirmLeaveDialog(
+      context,
+      icon: const Icon(LucideIcons.logOut, color: BrutalColors.secondary),
+      title: 'logout_confirm_title'.tr(),
+      text: 'logout_confirm_text'.tr(),
+      confirmText: 'logout_confirm_action'.tr(),
+      confirmType: ConfirmType.delete,
+      onConfirm: () => _signOut(ref),
+    );
+  }
+
+  /// Signs out; the router's auth guard redirects to /onboarding once the
+  /// session clears, so no explicit navigation is needed here.
+  Future<void> _signOut(WidgetRef ref) async {
     switch (await ref.read(authServiceProvider).signOut()) {
       case Ok():
-        context.go('/onboarding');
+        break;
       case Error(error: final e):
         showErrorSnakeBar(e.toString());
     }

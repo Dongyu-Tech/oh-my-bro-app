@@ -4,6 +4,9 @@ confirm,Confirm,確認
 cancel,Cancel,取消
 coming_soon,Coming Soon,敬請期待
 login_failed,Sign-in failed. Please try again.,登入失敗，請再試一次
+logout_confirm_title,Log out?,要登出嗎？
+logout_confirm_text,You'll need to sign in with Google again.,登出後需要重新用 Google 登入
+logout_confirm_action,Log out,登出
 system,System,系統
 light,Light,淺色
 dark,Dark,深色
