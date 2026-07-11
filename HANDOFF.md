@@ -4,7 +4,8 @@
 
 ## ⚠️ 最重要：在哪裡開發
 - **主力程式碼在 `C:\dev\oh-my-bro-app`（英文路徑）**。所有近期改動都在這。
-- 原本的 `桌面\欸粗哥\oh-my-bro-app`（中文路徑）**已過時**，而且**中文路徑會讓 Android 建置＋codegen 失敗**，別在那開發。
+- **現況（2026-07-11）**：整輪工作已 commit 上分支 `feat/gatherings-split-flow`、推到 origin；桌面副本也已 `git checkout` 對齊同一分支(乾淨)，舊改動存在桌面的 `stash@{0}`(已被取代，可丟)。**兩份 + origin 都在 `9d56a37`**。
+- 中文路徑 `桌面\欸粗哥\oh-my-bro-app` **會讓 Android 建置＋codegen 失敗**，別在那開發(僅作 git 正本；實際開發/建置都在 C:\dev)。
 - 跑 App：先開模擬器 `flutter emulators --launch winma_pixel`，再 `cd /c/dev/oh-my-bro-app && flutter run -d emulator-5554`。
 - 登入是**假登入**（`DevAuthService`，只在 debug；按 Google 登入直接進）。模擬器語言已設 `zh-TW`。
 - **改資料表要 codegen**：`dart run build_runner build`（在 C:\dev 原生可跑）。動 schema 記得**同時**：bump `AppDatabase.schemaVersion` ＋ 加 `onUpgrade` migration ＋ 更新 `BackupService.supportedSchemaVersions`。
@@ -33,7 +34,7 @@
 - **回收桶**：軟刪→**浮動視窗(底下模糊)**→橫幅項目(刪除線+彩色端蓋)→還原/永久刪。入口在「個人」「帳本」右上角。
 - 到處可**編輯**（團名/色、花費、好友名、個人帳）＋刪除有確認。
 - 帳本/個人接**真資料**（不再假）。
-- 統一 `← 返回` 按鈕 (`widgets/back_button.dart`)，用 **Material 圖示**；「回收桶」按鈕 (`TrashButton` in `trash_page.dart`) 也用 Material 圖示。
+- 統一 `← 返回` 按鈕 (`widgets/back_button.dart`) 與「回收桶」按鈕 (`TrashButton` in `trash_page.dart`)。**圖示已於 2026-07-11 全面改用 Lucide**（見下方「收尾三項」）。
 
 ## ✅ 已解（2026-07-04）
 - **Lucide 圖示其實正常** — 實機驗證 7+ 顆(partyPopper/logIn/receipt/↙↗/chevron/＋)在首頁+帳本都有顯示，字型有載入。**不要**把 69 個 `LucideIcons.*` 換成 Material。返回/回收桶維持 Material 是設計選擇；順手修了 `回收桶` 按鈕圖示對比太淡(在 `trash_page.dart` 的 `TrashButton` 加 `color: BrutalColors.onBackground`)。
@@ -61,10 +62,16 @@
 
 ### UI/UX 一致性(2026-07-04)
 - **對話框統一**:全 app 確認框現在都走品牌化的 `_BrutalDialog`(填色 PressableBrutal 按鈕、硬陰影),不再是扁平 Material AlertDialog。`confirmDialog`([widgets/confirm_dialog.dart](lib/shared/widgets/confirm_dialog.dart))改成薄包 `confirmBrutal`([dialogs/basic_dialog.dart](lib/shared/dialogs/basic_dialog.dart));新增 `showTextInputDialog`(品牌化輸入框)。收攏兩個手刻 AlertDialog:group_detail 刪攤 → `confirmDialog`;friend_detail 改名 → `showTextInputDialog`。
-- **`BrutalSheet` 共用外殼**(brutalism.dart):bottom sheet 的「上圓角+向上硬陰影+SafeArea+鍵盤 inset」外殼抽成元件。**已遷 2/6**(首頁選人 picker、個人帳編輯 sheet);**還沒遷 4 個**(group_detail 的 settle/invite/edit、group_expense_sheet)——外觀完全一樣、純內部去重,安全但瑣碎,可延後。
+- **`BrutalSheet` 共用外殼**(brutalism.dart):bottom sheet 的「上圓角+向上硬陰影+SafeArea+鍵盤 inset」外殼抽成元件。**2026-07-11 已全部遷完 6/6**(先前 2:首頁選人 picker、個人帳編輯;新遷 4:group_expense add-expense、group_detail 的 invite/settle/edit)。
 - **選人 picker 改置中**:首頁債務 composer 的「選人」原本是底部 bottom sheet(貼著導覽列很奇怪),改成**置中的品牌對話框**「選誰？」+ 人物 chips(新 helper `showChipPickerDialog`,basic_dialog.dart)。順手修一個潛在 bug:composer 現在 `ref.watch(friendsProvider)` 保持熱,所以第一次進 App 就直接開 composer 也能列出所有好友(以前沒逛過夥伴會列不出來)。實機驗過:置中、我/好友都在、選了會回填。
-- **未做**:圖示混用(Lucide 69 + Material 85)未統一,量大延後。
+- ~~未做:圖示混用未統一~~ → **2026-07-11 已統一**(見下)。
 - analyze 乾淨、32 tests 全綠。
+
+### 收尾三項（2026-07-11,analyze 乾淨 · 32 tests 全綠 · 已 commit＋push）
+- **BrutalSheet 6/6 遷完**:group_expense 的 add-expense、group_detail 的 invite/settle/edit 四個手刻外殼改用 `BrutalSheet`。純去重、外觀不變(behaviour-preserving;dart format 過)。
+- **圖示統一 → 全 Lucide**:殘留的 ~16 顆 Material `Icons.*` 換成 `LucideIcons.*`(8 檔:app_shell 導覽列、ledger、onboarding、trash、back_button、new_transaction、friend_ledger、account 的 QR/chevron)。**現在全 app 零 Material `Icons.*`**。⚠️ 這**推翻了先前「返回/回收桶維持 Material 是設計選擇」**——因為這輪明確要求統一;返回鍵/回收桶鍵現在是 Lucide 的 `arrowLeft`/`trash2`,實機請順眼確認,不喜歡可個別改回。
+- **帳號頁統計接真資料**:`帳戶統計` 卡「記帳天數」= 有個人記帳的不重複日曆天數(新 `daysLoggedProvider`);「本月總計」= 既有 `monthSpendProvider` 淨額,帶正負號＋顏色(綠收/紅支),不再是假的 256 / +12.5k。(帳號頁其餘選單列仍 comingSoon、Share ID QR 仍假,屬設計未做。)
+- **git**:`feat/gatherings-split-flow` 上兩筆——`f4da07c`(整輪 WIP 快照)＋`9d56a37`(這三項),已推 origin;桌面副本已對齊同分支。
 
 ## 🐛 待查/待辦（下一步）
 - （目前無阻塞待辦；見下方「已知延後」。）
