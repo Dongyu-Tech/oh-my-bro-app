@@ -34,6 +34,9 @@ class App extends ConsumerWidget {
         brightness: Brightness.light,
         scaffoldBackgroundColor: BrutalColors.cream,
         canvasColor: BrutalColors.cream,
+        // Brutal screens use the fixed ink palette; default bare Icon()s to it
+        // so they don't fall back to Material 3's muted (low-contrast) tint.
+        iconTheme: const IconThemeData(color: BrutalColors.onBackground),
         appBarTheme: const AppBarTheme(centerTitle: false),
       ),
       darkTheme: ThemeData(
@@ -43,6 +46,9 @@ class App extends ConsumerWidget {
           brightness: Brightness.dark,
         ),
         brightness: Brightness.dark,
+        // Brutal screens render on the fixed cream palette even in dark mode,
+        // so icons stay ink here too (matches how the screens actually paint).
+        iconTheme: const IconThemeData(color: BrutalColors.onBackground),
         appBarTheme: const AppBarTheme(centerTitle: false),
       ),
       themeMode: themeMode,
