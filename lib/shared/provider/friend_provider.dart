@@ -33,12 +33,24 @@ final trashedFriendsProvider = StreamProvider<List<Friend>>((ref) {
 /// memberId → net balance across ALL gatherings, after settlements
 /// (positive = owed to them, negative = they owe).
 final globalNetProvider = Provider<Map<String, int>>((ref) {
-  final expenses = ref.watch(allExpensesProvider).asData?.value ?? const [];
+  // Exclude soft-deleted (trashed) groups: deleting a group leaves its expenses
+  // and settlements individually un-deleted, so without this filter a trashed
+  // gathering's debts keep dragging on friend credit scores until purge.
+  final groups = ref.watch(groupsProvider).asData?.value ?? const [];
+  final liveGroupIds = {
+    for (final g in groups)
+      if (g.deletedAt == null) g.id,
+  };
+  final expenses = (ref.watch(allExpensesProvider).asData?.value ?? const [])
+      .where((e) => liveGroupIds.contains(e.groupId))
+      .toList();
   final shares = ref.watch(allSharesProvider).asData?.value ?? const [];
   final settlements =
-      ref.watch(allSettlementsProvider).asData?.value ?? const [];
+      (ref.watch(allSettlementsProvider).asData?.value ?? const [])
+          .where((s) => liveGroupIds.contains(s.groupId))
+          .toList();
 
-  // `expenses` is live-only; drop shares belonging to trashed expenses.
+  // `expenses` is now live-group + live-expense only; drop orphan shares.
   final liveExpenseIds = expenses.map((e) => e.id).toSet();
   final net = <String, int>{};
   for (final e in expenses) {
@@ -143,10 +155,22 @@ class DirectSettleAction {
 /// Ids of the live, active direct-debt groups (the synthetic 2-person groups the
 /// debt composer mints). Netting is scoped to these — multi-person gatherings
 /// aren't purely between you and one friend.
-Set<String> _directDebtGroupIds(List<Group> groups) => {
-  for (final g in groups)
-    if (g.isDirect && !g.isArchived && g.deletedAt == null) g.id,
-};
+Set<String> _directDebtGroupIds(List<Group> groups, List<Member> members) {
+  // Only direct groups I'm actually a member of — a debt the composer recorded
+  // between two *other* friends (no "me") must never surface as my debt.
+  final myGroupIds = {
+    for (final m in members)
+      if (m.isMe) m.groupId,
+  };
+  return {
+    for (final g in groups)
+      if (g.isDirect &&
+          !g.isArchived &&
+          g.deletedAt == null &&
+          myGroupIds.contains(g.id))
+        g.id,
+  };
+}
 
 /// Signed net across a friend's DIRECT debts, after settlements.
 /// `< 0` → the friend owes you; `> 0` → you owe the friend; `0` → all square.
@@ -156,7 +180,7 @@ int friendDirectNet({
   required Map<String, int> net,
   required String friendId,
 }) {
-  final direct = _directDebtGroupIds(groups);
+  final direct = _directDebtGroupIds(groups, members);
   var sum = 0;
   for (final m in members) {
     if (m.friendId == friendId && direct.contains(m.groupId)) {
@@ -174,7 +198,7 @@ List<DirectSettleAction> friendDirectSettleActions({
   required Map<String, int> net,
   required String friendId,
 }) {
-  final direct = _directDebtGroupIds(groups);
+  final direct = _directDebtGroupIds(groups, members);
   // Pair up "me" and the friend within each direct group.
   final byGroup = <String, ({Member? me, Member? friend})>{};
   for (final m in members) {

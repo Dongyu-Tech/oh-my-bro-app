@@ -320,6 +320,10 @@ class _NetSettleCard extends ConsumerWidget {
     final members = ref.read(allMembersProvider).asData?.value ?? const [];
     final expenses = ref.read(allExpensesProvider).asData?.value ?? const [];
     final shares = ref.read(allSharesProvider).asData?.value ?? const [];
+    final settlements =
+        ref.read(allSettlementsProvider).asData?.value ?? const [];
+    final personalEntries =
+        ref.read(personalEntriesProvider).asData?.value ?? const [];
     final svc = ref.read(groupServiceProvider);
     final toLog = <({String title, int amount, String settlementId})>[];
     for (final a in actions) {
@@ -331,12 +335,20 @@ class _NetSettleCard extends ConsumerWidget {
       );
       toLog.add((
         title: groups.firstWhereOrNull((g) => g.id == a.groupId)?.name ?? '',
-        amount: myShareOfGroup(
-          groupId: a.groupId,
-          members: members,
-          expenses: expenses,
-          shares: shares,
-        ),
+        // Book only my still-unbooked share of this group (subtract anything a
+        // previous settlement already logged) — see alreadyBookedShare.
+        amount:
+            myShareOfGroup(
+              groupId: a.groupId,
+              members: members,
+              expenses: expenses,
+              shares: shares,
+            ) -
+            alreadyBookedShare(
+              groupId: a.groupId,
+              settlements: settlements,
+              personalEntries: personalEntries,
+            ),
         settlementId: settlementId,
       ));
     }

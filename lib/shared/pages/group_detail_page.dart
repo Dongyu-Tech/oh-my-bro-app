@@ -130,16 +130,33 @@ class GroupDetailPage extends ConsumerWidget {
                             expense: e,
                             payerName: nameOf[e.payerMemberId] ?? '?',
                             memberCount: members.length,
-                            onEdit: () => showAddExpenseSheet(
-                              context,
-                              groupId: groupId,
-                              members: members,
-                              editing: e,
-                              editingShares: shares
-                                  .where((s) => s.expenseId == e.id)
-                                  .toList(),
-                            ),
+                            onEdit: () {
+                              // Editing an expense after it's been settled into
+                              // would silently corrupt the settled balances —
+                              // make the user undo the settlements first.
+                              if (settlements.isNotEmpty) {
+                                showErrorSnakeBar(
+                                  'expense_locked_settled'.tr(),
+                                );
+                                return;
+                              }
+                              showAddExpenseSheet(
+                                context,
+                                groupId: groupId,
+                                members: members,
+                                editing: e,
+                                editingShares: shares
+                                    .where((s) => s.expenseId == e.id)
+                                    .toList(),
+                              );
+                            },
                             onDelete: () async {
+                              if (settlements.isNotEmpty) {
+                                showErrorSnakeBar(
+                                  'expense_locked_settled'.tr(),
+                                );
+                                return;
+                              }
                               if (await confirmDialog(
                                 context,
                                 title: 'confirm_delete_expense'.tr(),
@@ -560,11 +577,20 @@ class _SettleSheetState extends ConsumerState<_SettleSheet> {
 
     // If this repayment fully cleared my net here, offer to log my share to
     // 個人記帳 (only when I actually consumed something — see the pure fn).
+    final alreadyBooked = alreadyBookedShare(
+      groupId: widget.groupId,
+      settlements:
+          ref.read(groupSettlementsProvider(widget.groupId)).asData?.value ??
+          const [],
+      personalEntries:
+          ref.read(personalEntriesProvider).asData?.value ?? const [],
+    );
     final toBook = summary == null
         ? null
         : shareToBookAfterSettle(
             myNet: summary.myNet,
             myShare: summary.myShare,
+            alreadyBooked: alreadyBooked,
             myMemberId: myId,
             transfer: widget.transfer,
             settledAmount: amount,

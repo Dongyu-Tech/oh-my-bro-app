@@ -246,6 +246,7 @@ invite_share,Share link,分享連結
 invite_scan,Scan to join,掃我加入
 invite_copied,Copied,已複製
 invite_share_text,Join my split {name}! Circle code {code},揪你加入分帳「{name}」！團碼 {code}
+expense_locked_settled,Undo the settlements first to edit or delete this expense,要先復原結清紀錄才能編輯或刪除這筆花費
 expense_title_label,What was it,這筆花什麼
 expense_title_hint,e.g. Dinner,例如 晚餐
 expense_amount_label,Amount,金額
