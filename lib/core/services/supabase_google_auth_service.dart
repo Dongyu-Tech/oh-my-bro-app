@@ -92,7 +92,9 @@ class SupabaseGoogleAuthService implements AuthService {
         return const Result.error(AuthCancelledException());
       }
       return Result.error(
-        AuthFailedException('Google sign-in failed (${e.code}): ${e.description}'),
+        AuthFailedException(
+          'Google sign-in failed (${e.code}): ${e.description}',
+        ),
       );
     } on AuthException catch (e) {
       return Result.error(AuthFailedException(e.message));

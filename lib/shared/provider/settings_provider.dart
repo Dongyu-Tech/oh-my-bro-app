@@ -42,5 +42,6 @@ class SettingsNotifier extends Notifier<AppSettingsModel> {
   }
 }
 
-final settingsProvider =
-    NotifierProvider<SettingsNotifier, AppSettingsModel>(SettingsNotifier.new);
+final settingsProvider = NotifierProvider<SettingsNotifier, AppSettingsModel>(
+  SettingsNotifier.new,
+);

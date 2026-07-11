@@ -1,8 +1,9 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import 'package:heymybro/core/error/error_logger.dart';
+import 'package:heymybro/shared/widgets/back_button.dart';
 import 'package:heymybro/shared/widgets/brutalism.dart';
 
 /// The 記帳 entry flow, hosted as the bottom-nav "+" tab inside [AppShell]'s
@@ -125,15 +126,19 @@ class _NewTransactionPageState extends State<NewTransactionPage> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
             children: [
-              // Left-aligned tab title, mirroring the other bottom-nav tabs.
-              Align(
-                alignment: Alignment.centerLeft,
-                child: MarkerHighlight(
-                  child: Text(
-                    'new_tx_title'.tr(),
-                    style: BrutalText.headlineLgMobile(fontSize: 30),
+              // Back button + title. This screen is pushed from the "+" chooser,
+              // so it needs a way back.
+              Row(
+                children: [
+                  const BrutalBackButton(),
+                  const SizedBox(width: 12),
+                  MarkerHighlight(
+                    child: Text(
+                      'new_tx_title'.tr(),
+                      style: BrutalText.headlineLgMobile(fontSize: 30),
+                    ),
                   ),
-                ),
+                ],
               ),
               const SizedBox(height: 12),
               _Mascot(asset: _mascotAsset(_status)),
@@ -268,9 +273,21 @@ class _OweComposer extends StatefulWidget {
 
 class _OweComposerState extends State<_OweComposer> {
   late final List<_Friend> _friends = [
-    _Friend(id: 'f1', name: 'new_tx_friend1'.tr(), color: const Color(0xFF7CB3FF)),
-    _Friend(id: 'f2', name: 'new_tx_friend2'.tr(), color: const Color(0xFF8FD89B)),
-    _Friend(id: 'f3', name: 'new_tx_friend3'.tr(), color: const Color(0xFFF4A6C0)),
+    _Friend(
+      id: 'f1',
+      name: 'new_tx_friend1'.tr(),
+      color: const Color(0xFF7CB3FF),
+    ),
+    _Friend(
+      id: 'f2',
+      name: 'new_tx_friend2'.tr(),
+      color: const Color(0xFF8FD89B),
+    ),
+    _Friend(
+      id: 'f3',
+      name: 'new_tx_friend3'.tr(),
+      color: const Color(0xFFF4A6C0),
+    ),
   ];
 
   final List<_Tok> _picked = [];
@@ -282,7 +299,8 @@ class _OweComposerState extends State<_OweComposer> {
   void _tapFriend(_Friend f) {
     if (_complete || _hasFriend) return;
     setState(() {
-      final pendingMeOwe = _picked.length == 2 &&
+      final pendingMeOwe =
+          _picked.length == 2 &&
           _picked[0].kind == _TokKind.me &&
           _picked[1].kind == _TokKind.owe;
       if (pendingMeOwe) {
@@ -569,7 +587,9 @@ class _WordChip extends StatelessWidget {
       onTap: onTap,
       child: row,
     );
-    return disabled ? Opacity(opacity: 0.3, child: IgnorePointer(child: chip)) : chip;
+    return disabled
+        ? Opacity(opacity: 0.3, child: IgnorePointer(child: chip))
+        : chip;
   }
 }
 

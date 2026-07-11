@@ -2,13 +2,13 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import 'package:heymybro/shared/widgets/app_keyboard_focus_guard.dart';
 import 'package:heymybro/shared/widgets/brutalism.dart';
 import 'package:heymybro/shared/pages/ledger_page.dart';
 import 'package:heymybro/shared/pages/transaction_page.dart';
-import 'package:heymybro/shared/pages/new_transaction_page.dart';
+import 'package:heymybro/shared/pages/home_page.dart';
 import 'package:heymybro/shared/pages/circle_page.dart';
 import 'package:heymybro/shared/pages/account_page.dart';
 
@@ -22,9 +22,10 @@ class AppShell extends ConsumerStatefulWidget {
 }
 
 class _AppShellState extends ConsumerState<AppShell> {
-  // The "+" (index 2) is a regular swipeable/tappable tab hosting the 記帳 flow.
-  final _pageController = PageController();
-  int _index = 0;
+  // Home (index 2) is the centre tab and the default landing.
+  static const _homeIndex = 2;
+  final _pageController = PageController(initialPage: _homeIndex);
+  int _index = _homeIndex;
 
   // How much more deliberate a horizontal drag must be (vs. the OS touch slop)
   // before the PageView claims it as a tab swipe. Higher = harder to trigger a
@@ -53,8 +54,8 @@ class _AppShellState extends ConsumerState<AppShell> {
     final pages = <Widget>[
       const LedgerPage(),
       const TransactionPage(),
-      // After 「記帳！」the flow asks the shell to swipe back to the ledger tab.
-      NewTransactionPage(onRecorded: () => _goToTab(0)),
+      // Home sits centre (the primary throne) and is the default landing.
+      const HomePage(),
       const CirclePage(),
       const AccountPage(),
     ];
@@ -172,7 +173,7 @@ class _BrutalBottomNav extends StatelessWidget {
     final items = <_NavItem>[
       _NavItem(icon: Icons.account_balance_wallet, label: 'nav_ledger'.tr()),
       _NavItem(icon: LucideIcons.receipt, label: 'nav_transaction'.tr()),
-      _NavItem(icon: Icons.add_box, label: 'nav_add'.tr()),
+      _NavItem(icon: Icons.home_rounded, label: 'nav_home'.tr()),
       _NavItem(icon: Icons.group, label: 'nav_circle'.tr()),
       _NavItem(icon: Icons.account_circle, label: 'nav_account'.tr()),
     ];

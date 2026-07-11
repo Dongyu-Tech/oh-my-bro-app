@@ -7,7 +7,14 @@ import 'package:go_router/go_router.dart';
 import 'package:heymybro/shared/models/auth_user_model.dart';
 import 'package:heymybro/shared/pages/app_shell.dart';
 import 'package:heymybro/shared/pages/friend_ledger_page.dart';
+import 'package:heymybro/shared/pages/friend_detail_page.dart';
+import 'package:heymybro/shared/pages/gatherings_list_page.dart';
+import 'package:heymybro/shared/pages/group_detail_page.dart';
+import 'package:heymybro/shared/pages/join_room_page.dart';
+import 'package:heymybro/shared/pages/new_group_page.dart';
 import 'package:heymybro/shared/pages/onboarding_page.dart';
+import 'package:heymybro/shared/pages/record_page.dart';
+import 'package:heymybro/shared/pages/room_page.dart';
 import 'package:heymybro/shared/provider/auth_provider.dart';
 import 'package:heymybro/shared/widgets/app_keyboard_focus_guard.dart';
 
@@ -37,6 +44,36 @@ final routerProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(path: '/', builder: (_, __) => const AppShell()),
       GoRoute(path: '/onboarding', builder: (_, __) => const OnboardingPage()),
+
+      // Split-the-bill circles. `/group/new` is listed before `/group/:id` so
+      // the literal path wins over the param.
+      GoRoute(path: '/group/new', builder: (_, __) => const NewGroupPage()),
+      // Invite-first room screen (big code + QR) for a gathering.
+      GoRoute(
+        path: '/group/:id/room',
+        builder: (_, state) => RoomPage(groupId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/group/:id',
+        builder: (_, state) =>
+            GroupDetailPage(groupId: state.pathParameters['id']!),
+      ),
+      // Join a gathering by typing its room code.
+      GoRoute(path: '/join', builder: (_, __) => const JoinRoomPage()),
+      // Unified record form (personal / into a circle), pushed from home.
+      GoRoute(path: '/record', builder: (_, __) => const RecordPage()),
+
+      // All gatherings (active + archived), pushed from the home "view all".
+      GoRoute(
+        path: '/gatherings',
+        builder: (_, __) => const GatheringsListPage(),
+      ),
+      // A friend's comic credit report.
+      GoRoute(
+        path: '/friend/:id',
+        builder: (_, state) =>
+            FriendDetailPage(friendId: state.pathParameters['id']!),
+      ),
 
       // Pass typed payloads via state.extra rather than encoding into the URL.
       GoRoute(

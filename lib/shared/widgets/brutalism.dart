@@ -333,6 +333,47 @@ class BrutalDivider extends StatelessWidget {
   }
 }
 
+/// The shared shell for every bottom sheet: warm opaque surface, top-rounded,
+/// an upward hard shadow (no blur), a bottom [SafeArea], and keyboard-inset
+/// padding so a focused field is never hidden. Wrap the sheet's content in this
+/// instead of re-declaring the decoration each time, so all sheets stay in sync.
+class BrutalSheet extends StatelessWidget {
+  const BrutalSheet({
+    super.key,
+    required this.child,
+    this.padding = const EdgeInsets.fromLTRB(20, 18, 20, 20),
+  });
+
+  final Widget child;
+  final EdgeInsetsGeometry padding;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: Container(
+        decoration: const BoxDecoration(
+          color: BrutalColors.background,
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(BrutalSpec.cardRadius),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: BrutalColors.onBackground,
+              offset: Offset(0, -4),
+              blurRadius: 0,
+            ),
+          ],
+        ),
+        padding: padding,
+        child: SafeArea(top: false, child: child),
+      ),
+    );
+  }
+}
+
 /// Loading-placeholder that gently pulses between two warm surface shades.
 /// Keeps the brutalist look (opaque, hard border, no blur) — use while real
 /// content (avatars, list rows) is still loading.
