@@ -40,7 +40,9 @@ class AccountPage extends ConsumerWidget {
     final handle = email.contains('@') ? '@${email.split('@').first}' : '';
 
     final daysLogged = ref.watch(daysLoggedProvider);
-    final monthNet = ref.watch(monthSpendProvider);
+    // monthSpendProvider is spend magnitude (money out). With no income yet, the
+    // month balance is its negation — keeps 本月總額 consistent with 個人 頁's 本月結餘.
+    final monthNet = -ref.watch(monthSpendProvider);
 
     return Scaffold(
       backgroundColor: BrutalColors.background,
@@ -329,9 +331,11 @@ class _StatsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final money = NumberFormat.decimalPattern();
-    final isPositive = monthNet >= 0;
-    final monthText =
-        '${isPositive ? '+' : '-'}\$${money.format(monthNet.abs())}';
+    final sign = monthNet > 0 ? '+' : (monthNet < 0 ? '-' : '');
+    final monthText = '$sign\$${money.format(monthNet.abs())}';
+    final monthColor = monthNet > 0
+        ? BrutalColors.incomeInk
+        : (monthNet < 0 ? BrutalColors.secondary : BrutalColors.onBackground);
     return BrutalCard(
       color: BrutalColors.surface,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
@@ -356,9 +360,7 @@ class _StatsCard extends StatelessWidget {
           _StatRow(
             label: 'account_month_total'.tr(),
             value: monthText,
-            valueColor: isPositive
-                ? BrutalColors.incomeInk
-                : BrutalColors.secondary,
+            valueColor: monthColor,
           ),
         ],
       ),
