@@ -300,6 +300,11 @@ class _TrashBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Cover colours span pale yellow to deep purple — tint the cap icon so it
+    // stays legible on any of them.
+    final capIcon = color.computeLuminance() > 0.55
+        ? BrutalColors.onBackground
+        : BrutalColors.surface;
     return Container(
       height: 58,
       decoration: brutalDecoration(
@@ -310,13 +315,23 @@ class _TrashBanner extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: Row(
         children: [
-          // Coloured end-cap with the item's icon.
+          // Coloured end-cap with the item's icon — bordered on its inner edge
+          // so it reads as an intentional cap in the hard-border style, not a
+          // flat colour block bleeding into the card.
           Container(
             width: 52,
             height: double.infinity,
-            color: color,
+            decoration: BoxDecoration(
+              color: color,
+              border: Border(
+                right: BorderSide(
+                  color: BrutalColors.onBackground,
+                  width: BrutalSpec.borderWidth,
+                ),
+              ),
+            ),
             alignment: Alignment.center,
-            child: Icon(icon, size: 22, color: BrutalColors.onBackground),
+            child: Icon(icon, size: 22, color: capIcon),
           ),
           const SizedBox(width: 12),
           Expanded(
