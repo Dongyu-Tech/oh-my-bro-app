@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:share_plus/share_plus.dart';
 
 import 'package:heymybro/core/database/database.dart';
 import 'package:heymybro/core/error/error_logger.dart';
@@ -847,7 +848,12 @@ class _InviteSheet extends StatelessWidget {
           _CopyRow(label: 'invite_link_label'.tr(), value: _link),
           const SizedBox(height: 18),
           PressableBrutal(
-            onTap: comingSoon,
+            onTap: () => SharePlus.instance.share(
+              ShareParams(
+                text:
+                    '${'invite_share_text'.tr(namedArgs: {'name': group.name, 'code': _code})}\n$_link',
+              ),
+            ),
             color: BrutalColors.primaryContainer,
             alignment: Alignment.center,
             padding: const EdgeInsets.symmetric(vertical: 14),

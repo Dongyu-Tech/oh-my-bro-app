@@ -1,4 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -214,7 +215,7 @@ class _LoginBottomSheetState extends ConsumerState<_LoginBottomSheet> {
         // Keep the technical detail in logs for us; show the user a short,
         // plain message — shown inline because a bottom snackbar is hidden
         // behind this sheet.
-        debugPrint('[Auth] sign-in failed: $e');
+        if (kDebugMode) debugPrint('[Auth] sign-in failed: $e');
         setState(() {
           _loading = false;
           _errorText = 'login_failed'.tr();
