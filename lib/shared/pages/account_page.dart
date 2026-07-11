@@ -6,7 +6,9 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:heymybro/core/error/error_logger.dart';
 import 'package:heymybro/core/error/result.dart';
 import 'package:heymybro/shared/dialogs/basic_dialog.dart';
+import 'package:heymybro/shared/pages/paywall_sheet.dart';
 import 'package:heymybro/shared/provider/auth_provider.dart';
+import 'package:heymybro/shared/provider/entitlement_provider.dart';
 import 'package:heymybro/shared/provider/group_provider.dart';
 import 'package:heymybro/shared/provider/settings_provider.dart';
 import 'package:heymybro/shared/widgets/brutalism.dart';
@@ -43,6 +45,7 @@ class AccountPage extends ConsumerWidget {
     // monthSpendProvider is spend magnitude (money out). With no income yet, the
     // month balance is its negation — keeps 本月總額 consistent with 個人 頁's 本月結餘.
     final monthNet = -ref.watch(monthSpendProvider);
+    final isPro = ref.watch(proEntitlementProvider);
 
     return Scaffold(
       backgroundColor: BrutalColors.background,
@@ -77,6 +80,15 @@ class AccountPage extends ConsumerWidget {
                 _StatsCard(daysLogged: daysLogged, monthNet: monthNet),
                 const SizedBox(height: 20),
 
+                _AccountMenuRow(
+                  icon: LucideIcons.sparkles,
+                  label: (isPro ? 'account_pro_member' : 'account_go_pro').tr(),
+                  trailing: isPro ? const _TrailingPill(text: 'PRO') : null,
+                  onTap: isPro
+                      ? () => showMessage('account_pro_thanks'.tr())
+                      : () => showPaywall(context),
+                ),
+                const SizedBox(height: 12),
                 _AccountMenuRow(
                   icon: LucideIcons.coins,
                   label: 'account_currency'.tr(),

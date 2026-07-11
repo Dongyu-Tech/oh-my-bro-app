@@ -247,6 +247,17 @@ invite_scan,Scan to join,掃我加入
 invite_copied,Copied,已複製
 invite_share_text,Join my split {name}! Circle code {code},揪你加入分帳「{name}」！團碼 {code}
 expense_locked_settled,Undo the settlements first to edit or delete this expense,要先復原結清紀錄才能編輯或刪除這筆花費
+paywall_badge,PRO,PRO
+paywall_title,Unlock unlimited gatherings,解鎖無限攤
+paywall_subtitle,Free runs {count} active gatherings. Go PRO for no limit.,免費版最多同時 {count} 攤。升 PRO 就無上限。
+paywall_benefit_unlimited,Unlimited active gatherings,無限同時進行的攤
+paywall_benefit_friends,Unlimited friends & credit reports,無限好友與信用報告
+paywall_benefit_support,Back a solo indie dev 🙏,挺一下獨立開發者 🙏
+paywall_upgrade,Unlock PRO (demo),解鎖 PRO（示範）
+paywall_later,Maybe later,以後再說
+account_go_pro,Upgrade to PRO,升級 PRO
+account_pro_member,PRO member,PRO 會員
+account_pro_thanks,You're PRO — thanks for the support! 🙏,你是 PRO 會員 感謝支持！🙏
 expense_title_label,What was it,這筆花什麼
 expense_title_hint,e.g. Dinner,例如 晚餐
 expense_amount_label,Amount,金額
