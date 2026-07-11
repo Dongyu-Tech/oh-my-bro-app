@@ -1,0 +1,14 @@
+# Release signing config for Google Play. Copy this file to `key.properties`
+# (which is gitignored — NEVER commit the real one) and fill in your values.
+#
+# Generate an upload keystore once:
+#   keytool -genkey -v -keystore upload-keystore.jks -keyalg RSA \
+#     -keysize 2048 -validity 10000 -alias upload
+#
+# Then set storeFile below to that .jks path (absolute, or relative to
+# android/app/). Enroll in Play App Signing when you first upload the AAB.
+
+storePassword=your-store-password
+keyPassword=your-key-password
+keyAlias=upload
+storeFile=/absolute/path/to/upload-keystore.jks
