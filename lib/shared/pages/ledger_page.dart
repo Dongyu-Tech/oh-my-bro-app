@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import 'package:heymybro/core/error/error_logger.dart';
 import 'package:heymybro/shared/pages/trash_page.dart';
@@ -26,7 +27,7 @@ class LedgerPage extends ConsumerWidget {
       for (final e in personal)
         _LedgerEntry(
           id: e.id,
-          icon: Icons.receipt_long,
+          icon: LucideIcons.receipt,
           title: e.title,
           when: when.format(e.createdAt),
           amount: -e.amount,
@@ -127,7 +128,7 @@ class _MonthlyBalanceCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: _BalanceChip(
-                    icon: Icons.arrow_downward_rounded,
+                    icon: LucideIcons.arrowDown,
                     label: 'ledger_income'.tr(),
                     labelColor: BrutalColors.onSurfaceVariant,
                     amount: '+\$${money.format(income)}',
@@ -137,7 +138,7 @@ class _MonthlyBalanceCard extends StatelessWidget {
                 const SizedBox(width: 14),
                 Expanded(
                   child: _BalanceChip(
-                    icon: Icons.arrow_upward_rounded,
+                    icon: LucideIcons.arrowUp,
                     label: 'ledger_expense'.tr(),
                     labelColor: BrutalColors.secondary,
                     amount: '-\$${money.format(expense)}',
@@ -428,7 +429,7 @@ class _PersonalEntrySheetState extends ConsumerState<_PersonalEntrySheet> {
                 child: const Padding(
                   padding: EdgeInsets.all(4),
                   child: Icon(
-                    Icons.delete_outline,
+                    LucideIcons.trash2,
                     size: 24,
                     color: BrutalColors.secondary,
                   ),

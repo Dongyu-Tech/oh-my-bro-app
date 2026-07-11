@@ -443,7 +443,7 @@ class _AddChip extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(
-              Icons.add,
+              LucideIcons.plus,
               size: 16,
               color: BrutalColors.onSurfaceVariant,
             ),

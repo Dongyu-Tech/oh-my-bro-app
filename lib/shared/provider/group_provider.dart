@@ -69,6 +69,17 @@ final monthSpendProvider = Provider<int>((ref) {
       .fold(0, (sum, e) => sum + e.amount);
 });
 
+/// Number of distinct calendar days you've logged a personal entry (all-time).
+/// Drives the 帳戶統計 "記帳天數" stat on the account page.
+final daysLoggedProvider = Provider<int>((ref) {
+  final personal = ref.watch(personalEntriesProvider).asData?.value ?? const [];
+  final days = <int>{
+    for (final e in personal)
+      e.createdAt.year * 10000 + e.createdAt.month * 100 + e.createdAt.day,
+  };
+  return days.length;
+});
+
 final groupMembersProvider = StreamProvider.family<List<Member>, String>((
   ref,
   groupId,

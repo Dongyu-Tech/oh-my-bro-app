@@ -51,7 +51,7 @@ class TrashButton extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           const Icon(
-            Icons.delete_outline,
+            LucideIcons.trash2,
             size: 19,
             color: BrutalColors.onBackground,
           ),

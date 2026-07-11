@@ -158,97 +158,77 @@ class _AddExpenseSheetState extends ConsumerState<_AddExpenseSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-    return Padding(
-      padding: EdgeInsets.only(bottom: bottomInset),
-      child: Container(
-        decoration: const BoxDecoration(
-          color: BrutalColors.background,
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(BrutalSpec.cardRadius),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: BrutalColors.onBackground,
-              offset: Offset(0, -4),
-              blurRadius: 0,
+    return BrutalSheet(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 44,
+                height: 5,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: BrutalColors.onSurfaceVariant,
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              ),
+            ),
+            Text(
+              (_isEdit ? 'expense_edit_title' : 'group_add_expense').tr(),
+              style: BrutalText.headlineLgMobile(fontSize: 22),
+            ),
+            const SizedBox(height: 16),
+            _Label('expense_title_label'.tr()),
+            _Field(
+              controller: _titleController,
+              hint: 'expense_title_hint'.tr(),
+            ),
+            const SizedBox(height: 14),
+            _Label('expense_amount_label'.tr()),
+            _Field(
+              controller: _amountController,
+              hint: '0',
+              number: true,
+              onChanged: (_) => setState(() {}),
+            ),
+            const SizedBox(height: 14),
+            _Label('expense_payer_label'.tr()),
+            _MemberChips(
+              members: widget.members,
+              selectedId: _payerId,
+              onSelect: (id) => setState(() => _payerId = id),
+            ),
+            const SizedBox(height: 14),
+            _Label('expense_split_label'.tr()),
+            _SplitToggle(
+              custom: _custom,
+              onChanged: (v) => setState(() => _custom = v),
+            ),
+            const SizedBox(height: 10),
+            if (_custom)
+              _CustomSplitFields(
+                members: widget.members,
+                controllers: _customControllers,
+                onChanged: () => setState(() {}),
+                amount: _amount,
+              )
+            else
+              _EqualPreview(members: widget.members, slices: _equalSlices),
+            const SizedBox(height: 18),
+            PressableBrutal(
+              onTap: _saving ? null : _save,
+              color: BrutalColors.primaryContainer,
+              alignment: Alignment.center,
+              padding: const EdgeInsets.symmetric(vertical: 15),
+              child: Text(
+                'expense_save'.tr(),
+                style: BrutalText.labelBold(fontSize: 17),
+              ),
             ),
           ],
-        ),
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-        child: SafeArea(
-          top: false,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Center(
-                  child: Container(
-                    width: 44,
-                    height: 5,
-                    margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration(
-                      color: BrutalColors.onSurfaceVariant,
-                      borderRadius: BorderRadius.circular(3),
-                    ),
-                  ),
-                ),
-                Text(
-                  (_isEdit ? 'expense_edit_title' : 'group_add_expense').tr(),
-                  style: BrutalText.headlineLgMobile(fontSize: 22),
-                ),
-                const SizedBox(height: 16),
-                _Label('expense_title_label'.tr()),
-                _Field(
-                  controller: _titleController,
-                  hint: 'expense_title_hint'.tr(),
-                ),
-                const SizedBox(height: 14),
-                _Label('expense_amount_label'.tr()),
-                _Field(
-                  controller: _amountController,
-                  hint: '0',
-                  number: true,
-                  onChanged: (_) => setState(() {}),
-                ),
-                const SizedBox(height: 14),
-                _Label('expense_payer_label'.tr()),
-                _MemberChips(
-                  members: widget.members,
-                  selectedId: _payerId,
-                  onSelect: (id) => setState(() => _payerId = id),
-                ),
-                const SizedBox(height: 14),
-                _Label('expense_split_label'.tr()),
-                _SplitToggle(
-                  custom: _custom,
-                  onChanged: (v) => setState(() => _custom = v),
-                ),
-                const SizedBox(height: 10),
-                if (_custom)
-                  _CustomSplitFields(
-                    members: widget.members,
-                    controllers: _customControllers,
-                    onChanged: () => setState(() {}),
-                    amount: _amount,
-                  )
-                else
-                  _EqualPreview(members: widget.members, slices: _equalSlices),
-                const SizedBox(height: 18),
-                PressableBrutal(
-                  onTap: _saving ? null : _save,
-                  color: BrutalColors.primaryContainer,
-                  alignment: Alignment.center,
-                  padding: const EdgeInsets.symmetric(vertical: 15),
-                  child: Text(
-                    'expense_save'.tr(),
-                    style: BrutalText.labelBold(fontSize: 17),
-                  ),
-                ),
-              ],
-            ),
-          ),
         ),
       ),
     );

@@ -171,11 +171,11 @@ class _BrutalBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = <_NavItem>[
-      _NavItem(icon: Icons.account_balance_wallet, label: 'nav_ledger'.tr()),
+      _NavItem(icon: LucideIcons.wallet, label: 'nav_ledger'.tr()),
       _NavItem(icon: LucideIcons.receipt, label: 'nav_transaction'.tr()),
-      _NavItem(icon: Icons.home_rounded, label: 'nav_home'.tr()),
-      _NavItem(icon: Icons.group, label: 'nav_circle'.tr()),
-      _NavItem(icon: Icons.account_circle, label: 'nav_account'.tr()),
+      _NavItem(icon: LucideIcons.house, label: 'nav_home'.tr()),
+      _NavItem(icon: LucideIcons.users, label: 'nav_circle'.tr()),
+      _NavItem(icon: LucideIcons.circleUser, label: 'nav_account'.tr()),
     ];
     final count = items.length;
 

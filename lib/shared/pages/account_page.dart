@@ -7,6 +7,7 @@ import 'package:heymybro/core/error/error_logger.dart';
 import 'package:heymybro/core/error/result.dart';
 import 'package:heymybro/shared/dialogs/basic_dialog.dart';
 import 'package:heymybro/shared/provider/auth_provider.dart';
+import 'package:heymybro/shared/provider/group_provider.dart';
 import 'package:heymybro/shared/provider/settings_provider.dart';
 import 'package:heymybro/shared/widgets/brutalism.dart';
 
@@ -38,6 +39,9 @@ class AccountPage extends ConsumerWidget {
         : (email.contains('@') ? email.split('@').first : 'Bro');
     final handle = email.contains('@') ? '@${email.split('@').first}' : '';
 
+    final daysLogged = ref.watch(daysLoggedProvider);
+    final monthNet = ref.watch(monthSpendProvider);
+
     return Scaffold(
       backgroundColor: BrutalColors.background,
       body: SafeArea(
@@ -68,7 +72,7 @@ class AccountPage extends ConsumerWidget {
                 const SizedBox(height: 20),
                 const _ShareIdCard(),
                 const SizedBox(height: 20),
-                const _StatsCard(daysLogged: '256', monthTotal: '+12.5k'),
+                _StatsCard(daysLogged: daysLogged, monthNet: monthNet),
                 const SizedBox(height: 20),
 
                 _AccountMenuRow(
@@ -288,7 +292,7 @@ class _ShareIdCard extends StatelessWidget {
             ),
             alignment: Alignment.center,
             child: const Icon(
-              Icons.qr_code_2,
+              LucideIcons.qrCode,
               size: 96,
               color: BrutalColors.onBackground,
             ),
@@ -317,13 +321,17 @@ class _ShareIdCard extends StatelessWidget {
 
 /// "帳戶統計" card with two stat rows (days logged + this-month total).
 class _StatsCard extends StatelessWidget {
-  const _StatsCard({required this.daysLogged, required this.monthTotal});
+  const _StatsCard({required this.daysLogged, required this.monthNet});
 
-  final String daysLogged;
-  final String monthTotal;
+  final int daysLogged;
+  final int monthNet;
 
   @override
   Widget build(BuildContext context) {
+    final money = NumberFormat.decimalPattern();
+    final isPositive = monthNet >= 0;
+    final monthText =
+        '${isPositive ? '+' : '-'}\$${money.format(monthNet.abs())}';
     return BrutalCard(
       color: BrutalColors.surface,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
@@ -339,7 +347,7 @@ class _StatsCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 14),
-          _StatRow(label: 'account_days_logged'.tr(), value: daysLogged),
+          _StatRow(label: 'account_days_logged'.tr(), value: '$daysLogged'),
           const Divider(
             height: 24,
             thickness: BrutalSpec.borderWidthThin,
@@ -347,8 +355,10 @@ class _StatsCard extends StatelessWidget {
           ),
           _StatRow(
             label: 'account_month_total'.tr(),
-            value: monthTotal,
-            valueColor: BrutalColors.incomeInk,
+            value: monthText,
+            valueColor: isPositive
+                ? BrutalColors.incomeInk
+                : BrutalColors.secondary,
           ),
         ],
       ),
@@ -441,7 +451,7 @@ class _AccountMenuRow extends StatelessWidget {
           ),
           if (trailing != null) ...[const SizedBox(width: 10), trailing!],
           const SizedBox(width: 6),
-          Icon(Icons.chevron_right, size: 22, color: foreground),
+          Icon(LucideIcons.chevronRight, size: 22, color: foreground),
         ],
       ),
     );

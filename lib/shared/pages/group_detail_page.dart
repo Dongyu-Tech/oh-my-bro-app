@@ -586,87 +586,67 @@ class _SettleSheetState extends ConsumerState<_SettleSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-    return Padding(
-      padding: EdgeInsets.only(bottom: bottomInset),
-      child: Container(
-        decoration: const BoxDecoration(
-          color: BrutalColors.background,
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(BrutalSpec.cardRadius),
+    return BrutalSheet(
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'settle_title'.tr(),
+            style: BrutalText.headlineLgMobile(fontSize: 22),
           ),
-          boxShadow: [
-            BoxShadow(
-              color: BrutalColors.onBackground,
-              offset: Offset(0, -4),
-              blurRadius: 0,
+          const SizedBox(height: 4),
+          Text(
+            'group_pays_back'.tr(
+              namedArgs: {'from': widget.fromName, 'to': widget.toName},
             ),
-          ],
-        ),
-        padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
-        child: SafeArea(
-          top: false,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'settle_title'.tr(),
-                style: BrutalText.headlineLgMobile(fontSize: 22),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'group_pays_back'.tr(
-                  namedArgs: {'from': widget.fromName, 'to': widget.toName},
-                ),
-                style: BrutalText.labelBold(
-                  fontSize: 15,
-                  color: BrutalColors.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'settle_amount'.tr(),
-                style: BrutalText.labelBold(
-                  fontSize: 13,
-                  color: BrutalColors.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Container(
-                decoration: brutalDecoration(
-                  color: BrutalColors.surface,
-                  radius: BrutalSpec.pillRadius,
-                  offset: 3,
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 14),
-                child: TextField(
-                  controller: _amountCtrl,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  cursorColor: BrutalColors.onBackground,
-                  style: BrutalText.body(fontSize: 18),
-                  decoration: const InputDecoration(
-                    isDense: true,
-                    contentPadding: EdgeInsets.symmetric(vertical: 14),
-                    border: InputBorder.none,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 18),
-              PressableBrutal(
-                onTap: _confirm,
-                color: BrutalColors.primaryContainer,
-                alignment: Alignment.center,
-                padding: const EdgeInsets.symmetric(vertical: 15),
-                child: Text(
-                  'settle_confirm'.tr(),
-                  style: BrutalText.labelBold(fontSize: 17),
-                ),
-              ),
-            ],
+            style: BrutalText.labelBold(
+              fontSize: 15,
+              color: BrutalColors.onSurfaceVariant,
+            ),
           ),
-        ),
+          const SizedBox(height: 16),
+          Text(
+            'settle_amount'.tr(),
+            style: BrutalText.labelBold(
+              fontSize: 13,
+              color: BrutalColors.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Container(
+            decoration: brutalDecoration(
+              color: BrutalColors.surface,
+              radius: BrutalSpec.pillRadius,
+              offset: 3,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            child: TextField(
+              controller: _amountCtrl,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              cursorColor: BrutalColors.onBackground,
+              style: BrutalText.body(fontSize: 18),
+              decoration: const InputDecoration(
+                isDense: true,
+                contentPadding: EdgeInsets.symmetric(vertical: 14),
+                border: InputBorder.none,
+              ),
+            ),
+          ),
+          const SizedBox(height: 18),
+          PressableBrutal(
+            onTap: _confirm,
+            color: BrutalColors.primaryContainer,
+            alignment: Alignment.center,
+            padding: const EdgeInsets.symmetric(vertical: 15),
+            child: Text(
+              'settle_confirm'.tr(),
+              style: BrutalText.labelBold(fontSize: 17),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -818,88 +798,72 @@ class _InviteSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: BrutalColors.background,
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(BrutalSpec.cardRadius),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: BrutalColors.onBackground,
-            offset: Offset(0, -4),
-            blurRadius: 0,
-          ),
-        ],
-      ),
+    return BrutalSheet(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'invite_title'.tr(),
-              style: BrutalText.headlineLgMobile(fontSize: 22),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'invite_title'.tr(),
+            style: BrutalText.headlineLgMobile(fontSize: 22),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'invite_subtitle'.tr(),
+            style: BrutalText.body(
+              fontSize: 14,
+              color: BrutalColors.onSurfaceVariant,
             ),
-            const SizedBox(height: 4),
-            Text(
-              'invite_subtitle'.tr(),
-              style: BrutalText.body(
-                fontSize: 14,
+          ),
+          const SizedBox(height: 18),
+          // QR placeholder (visual only for the local MVP).
+          Center(
+            child: Container(
+              width: 160,
+              height: 160,
+              decoration: brutalDecoration(
+                color: BrutalColors.surface,
+                radius: BrutalSpec.cardRadius,
+                offset: 4,
+              ),
+              alignment: Alignment.center,
+              child: const Icon(LucideIcons.qrCode, size: 96),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Center(
+            child: Text(
+              'invite_scan'.tr(),
+              style: BrutalText.labelBold(
+                fontSize: 13,
                 color: BrutalColors.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: 18),
-            // QR placeholder (visual only for the local MVP).
-            Center(
-              child: Container(
-                width: 160,
-                height: 160,
-                decoration: brutalDecoration(
-                  color: BrutalColors.surface,
-                  radius: BrutalSpec.cardRadius,
-                  offset: 4,
+          ),
+          const SizedBox(height: 18),
+          _CopyRow(label: 'invite_code_label'.tr(), value: _code),
+          const SizedBox(height: 10),
+          _CopyRow(label: 'invite_link_label'.tr(), value: _link),
+          const SizedBox(height: 18),
+          PressableBrutal(
+            onTap: comingSoon,
+            color: BrutalColors.primaryContainer,
+            alignment: Alignment.center,
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(LucideIcons.share2, size: 18),
+                const SizedBox(width: 8),
+                Text(
+                  'invite_share'.tr(),
+                  style: BrutalText.labelBold(fontSize: 16),
                 ),
-                alignment: Alignment.center,
-                child: const Icon(LucideIcons.qrCode, size: 96),
-              ),
+              ],
             ),
-            const SizedBox(height: 8),
-            Center(
-              child: Text(
-                'invite_scan'.tr(),
-                style: BrutalText.labelBold(
-                  fontSize: 13,
-                  color: BrutalColors.onSurfaceVariant,
-                ),
-              ),
-            ),
-            const SizedBox(height: 18),
-            _CopyRow(label: 'invite_code_label'.tr(), value: _code),
-            const SizedBox(height: 10),
-            _CopyRow(label: 'invite_link_label'.tr(), value: _link),
-            const SizedBox(height: 18),
-            PressableBrutal(
-              onTap: comingSoon,
-              color: BrutalColors.primaryContainer,
-              alignment: Alignment.center,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(LucideIcons.share2, size: 18),
-                  const SizedBox(width: 8),
-                  Text(
-                    'invite_share'.tr(),
-                    style: BrutalText.labelBold(fontSize: 16),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -1020,99 +984,79 @@ class _EditGroupSheetState extends ConsumerState<_EditGroupSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-    return Padding(
-      padding: EdgeInsets.only(bottom: bottomInset),
-      child: Container(
-        decoration: const BoxDecoration(
-          color: BrutalColors.background,
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(BrutalSpec.cardRadius),
+    return BrutalSheet(
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'group_edit'.tr(),
+            style: BrutalText.headlineLgMobile(fontSize: 22),
           ),
-          boxShadow: [
-            BoxShadow(
-              color: BrutalColors.onBackground,
-              offset: Offset(0, -4),
-              blurRadius: 0,
+          const SizedBox(height: 14),
+          Container(
+            decoration: brutalDecoration(
+              color: BrutalColors.surface,
+              radius: BrutalSpec.pillRadius,
+              offset: 3,
             ),
-          ],
-        ),
-        padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
-        child: SafeArea(
-          top: false,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'group_edit'.tr(),
-                style: BrutalText.headlineLgMobile(fontSize: 22),
-              ),
-              const SizedBox(height: 14),
-              Container(
-                decoration: brutalDecoration(
-                  color: BrutalColors.surface,
-                  radius: BrutalSpec.pillRadius,
-                  offset: 3,
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            child: TextField(
+              controller: _nameCtrl,
+              cursorColor: BrutalColors.onBackground,
+              style: BrutalText.body(fontSize: 16),
+              decoration: InputDecoration(
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                border: InputBorder.none,
+                hintText: 'group_name_hint'.tr(),
+                hintStyle: BrutalText.body(
+                  fontSize: 16,
+                  color: BrutalColors.onSurfaceVariant,
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 14),
-                child: TextField(
-                  controller: _nameCtrl,
-                  cursorColor: BrutalColors.onBackground,
-                  style: BrutalText.body(fontSize: 16),
-                  decoration: InputDecoration(
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                    border: InputBorder.none,
-                    hintText: 'group_name_hint'.tr(),
-                    hintStyle: BrutalText.body(
-                      fontSize: 16,
-                      color: BrutalColors.onSurfaceVariant,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              for (var i = 0; i < _editColors.length; i++)
+                Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: GestureDetector(
+                    onTap: () => setState(() => _colorIndex = i),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: brutalDecoration(
+                        color: _editColors[i],
+                        radius: BrutalSpec.pillRadius,
+                        offset: _colorIndex == i ? 3 : 0,
+                        borderWidth: _colorIndex == i
+                            ? BrutalSpec.borderWidth
+                            : BrutalSpec.borderWidthThin,
+                      ),
+                      child: _colorIndex == i
+                          ? const Icon(LucideIcons.check, size: 18)
+                          : null,
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  for (var i = 0; i < _editColors.length; i++)
-                    Padding(
-                      padding: const EdgeInsets.only(right: 12),
-                      child: GestureDetector(
-                        onTap: () => setState(() => _colorIndex = i),
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: brutalDecoration(
-                            color: _editColors[i],
-                            radius: BrutalSpec.pillRadius,
-                            offset: _colorIndex == i ? 3 : 0,
-                            borderWidth: _colorIndex == i
-                                ? BrutalSpec.borderWidth
-                                : BrutalSpec.borderWidthThin,
-                          ),
-                          child: _colorIndex == i
-                              ? const Icon(LucideIcons.check, size: 18)
-                              : null,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 18),
-              PressableBrutal(
-                onTap: _save,
-                color: BrutalColors.primaryContainer,
-                alignment: Alignment.center,
-                padding: const EdgeInsets.symmetric(vertical: 15),
-                child: Text(
-                  'common_save'.tr(),
-                  style: BrutalText.labelBold(fontSize: 17),
-                ),
-              ),
             ],
           ),
-        ),
+          const SizedBox(height: 18),
+          PressableBrutal(
+            onTap: _save,
+            color: BrutalColors.primaryContainer,
+            alignment: Alignment.center,
+            padding: const EdgeInsets.symmetric(vertical: 15),
+            child: Text(
+              'common_save'.tr(),
+              style: BrutalText.labelBold(fontSize: 17),
+            ),
+          ),
+        ],
       ),
     );
   }

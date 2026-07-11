@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import 'package:heymybro/core/error/error_logger.dart';
 import 'package:heymybro/core/error/result.dart';
@@ -275,7 +276,7 @@ class _LoginBottomSheetState extends ConsumerState<_LoginBottomSheet> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Icon(
-                      Icons.error_outline,
+                      LucideIcons.circleAlert,
                       size: 18,
                       color: BrutalColors.secondary,
                     ),
