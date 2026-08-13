@@ -1,16 +1,23 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import 'package:heymybro/core/error/error_logger.dart';
 import 'package:heymybro/core/error/result.dart';
 import 'package:heymybro/shared/dialogs/basic_dialog.dart';
+import 'package:heymybro/shared/models/bro_code.dart';
+import 'package:heymybro/shared/models/friendship_model.dart';
 import 'package:heymybro/shared/pages/paywall_sheet.dart';
+import 'package:heymybro/shared/pages/share_id_sheet.dart';
 import 'package:heymybro/shared/provider/auth_provider.dart';
 import 'package:heymybro/shared/provider/entitlement_provider.dart';
+import 'package:heymybro/shared/provider/friendship_provider.dart';
 import 'package:heymybro/shared/provider/group_provider.dart';
 import 'package:heymybro/shared/provider/settings_provider.dart';
+import 'package:heymybro/shared/provider/user_provider.dart';
+import 'package:heymybro/shared/widgets/brutal_qr.dart';
 import 'package:heymybro/shared/widgets/brutalism.dart';
 
 /// "帳號 / Account" tab — profile header, shareable ID, account stats and the
@@ -35,11 +42,22 @@ class AccountPage extends ConsumerWidget {
     final user =
         ref.watch(currentUserProvider).asData?.value ??
         ref.watch(authServiceProvider).currentUser;
+    // public.users is the app's own record and wins where it has something;
+    // the auth provider's Google fields are the fallback for a build with no
+    // backend, and for the moment before the profile fetch lands.
+    final profile = ref.watch(myProfileProvider).asData?.value;
+
     final email = user?.email ?? '';
-    final name = (user?.displayName?.trim().isNotEmpty ?? false)
-        ? user!.displayName!.trim()
-        : (email.contains('@') ? email.split('@').first : 'Bro');
-    final handle = email.contains('@') ? '@${email.split('@').first}' : '';
+    final name = switch ((profile?.bestName, user?.displayName?.trim())) {
+      (final p?, _) when p.isNotEmpty => p,
+      (_, final g?) when g.isNotEmpty => g,
+      _ => email.contains('@') ? email.split('@').first : 'Bro',
+    };
+    final handle = switch (profile?.handle?.trim()) {
+      final h? when h.isNotEmpty => '@$h',
+      _ => email.contains('@') ? '@${email.split('@').first}' : '',
+    };
+    final photoUrl = profile?.effectiveAvatarUrl ?? user?.photoUrl;
 
     final daysLogged = ref.watch(daysLoggedProvider);
     // monthSpendProvider is spend magnitude (money out). With no income yet, the
@@ -72,10 +90,13 @@ class AccountPage extends ConsumerWidget {
                   name: name,
                   handle: handle,
                   email: email,
-                  photoUrl: user?.photoUrl,
+                  photoUrl: photoUrl,
                 ),
                 const SizedBox(height: 20),
-                const _ShareIdCard(),
+                _ShareIdCard(
+                  token: ref.watch(myShareTokenProvider).asData?.value,
+                  label: handle,
+                ),
                 const SizedBox(height: 20),
                 _StatsCard(daysLogged: daysLogged, monthNet: monthNet),
                 const SizedBox(height: 20),
@@ -172,7 +193,8 @@ class AccountPage extends ConsumerWidget {
 }
 
 /// Centered avatar + name/handle/email, on a white card with a small edit badge
-/// stuck to the avatar corner (comic-sticker style).
+/// stuck to the avatar corner (comic-sticker style). The whole card opens the
+/// profile editor — the badge was already drawn as if it did.
 class _ProfileHeader extends StatelessWidget {
   const _ProfileHeader({
     required this.name,
@@ -188,6 +210,14 @@ class _ProfileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => context.push('/profile/edit'),
+      behavior: HitTestBehavior.opaque,
+      child: _card(context),
+    );
+  }
+
+  Widget _card(BuildContext context) {
     return BrutalCard(
       color: BrutalColors.surface,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
@@ -200,36 +230,17 @@ class _ProfileHeader extends StatelessWidget {
             child: Stack(
               clipBehavior: Clip.none,
               children: [
-                Container(
-                  width: 96,
-                  height: 96,
-                  decoration: BoxDecoration(
-                    color: BrutalColors.primaryContainer,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: BrutalColors.onBackground,
-                      width: BrutalSpec.borderWidth,
-                    ),
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  alignment: Alignment.center,
-                  child: (photoUrl == null || photoUrl!.isEmpty)
-                      ? const Icon(
-                          LucideIcons.users,
-                          size: 44,
-                          color: BrutalColors.onBackground,
-                        )
-                      : Image.network(
-                          photoUrl!,
-                          width: 96,
-                          height: 96,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const Icon(
-                            LucideIcons.users,
-                            size: 44,
-                            color: BrutalColors.onBackground,
-                          ),
-                        ),
+                // The Google picture when there is one; otherwise the same
+                // first-letter monogram every other avatar in the app falls
+                // back to, rather than a generic people icon.
+                BrutalAvatar(
+                  name: name,
+                  photoUrl: photoUrl,
+                  size: 96,
+                  radius: 48, // fully rounded → circle
+                  color: BrutalColors.primaryContainer,
+                  borderWidth: BrutalSpec.borderWidth,
+                  fontSize: 44,
                 ),
                 Positioned(
                   top: -2,
@@ -281,36 +292,64 @@ class _ProfileHeader extends StatelessWidget {
   }
 }
 
-/// Yellow card holding a QR placeholder and a "scan to share" caption. Tappable
-/// (share is not wired yet).
+/// Yellow card holding a scannable QR of the user's share ID (their email) and
+/// a "scan to share" caption. Tapping opens [showShareIdSheet] — the same code,
+/// big and bright enough for someone else's camera.
 class _ShareIdCard extends StatelessWidget {
-  const _ShareIdCard();
+  const _ShareIdCard({required this.token, required this.label});
+
+  /// The short-lived code the QR encodes. Null in the gap before it is minted
+  /// (and on a build with no backend), where the old glyph placeholder stands
+  /// in rather than a QR of nothing.
+  ///
+  /// Neither the email nor the account id is the payload any more: scanning
+  /// skips the accept step, so whatever is in this code is a pass into your
+  /// friend list. It has to be something that expires.
+  final FriendToken? token;
+
+  /// The `@handle` printed under the code — identity for a human, where the
+  /// code itself is only meaningful to a scanner.
+  final String label;
 
   @override
   Widget build(BuildContext context) {
+    final share = token;
+    final hasShareId = share != null;
+    final payload = hasShareId ? BroCode(token: share.token).encode() : '';
+
     return PressableBrutal(
-      onTap: comingSoon,
+      onTap: hasShareId
+          ? () => showShareIdSheet(
+              context,
+              payload: payload,
+              label: label,
+              expiresAt: share.expiresAt,
+            )
+          : comingSoon,
       color: BrutalColors.primaryContainer,
       radius: BrutalSpec.cardRadius,
       restOffset: BrutalSpec.shadowOffsetMobile,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
       child: Column(
         children: [
-          Container(
-            width: 132,
-            height: 132,
-            decoration: brutalDecoration(
-              color: BrutalColors.surface,
-              radius: BrutalSpec.pillRadius,
-              offset: 0,
+          if (hasShareId)
+            BrutalQrCode(data: payload, size: 132)
+          else
+            Container(
+              width: 132,
+              height: 132,
+              decoration: brutalDecoration(
+                color: BrutalColors.surface,
+                radius: BrutalSpec.pillRadius,
+                offset: 0,
+              ),
+              alignment: Alignment.center,
+              child: const Icon(
+                LucideIcons.qrCode,
+                size: 96,
+                color: BrutalColors.onBackground,
+              ),
             ),
-            alignment: Alignment.center,
-            child: const Icon(
-              LucideIcons.qrCode,
-              size: 96,
-              color: BrutalColors.onBackground,
-            ),
-          ),
           const SizedBox(height: 14),
           Row(
             mainAxisSize: MainAxisSize.min,
