@@ -13,16 +13,25 @@ import 'core/services/auth_service.dart';
 import 'core/services/dev_auth_service.dart';
 import 'core/services/supabase_google_auth_service.dart';
 import 'shared/provider/auth_provider.dart';
+import 'shared/provider/friendship_provider.dart';
 import 'shared/provider/settings_provider.dart';
+import 'shared/provider/user_provider.dart';
+import 'shared/repositories/friendship_repository.dart';
+import 'shared/repositories/user_repository.dart';
 
-// Compile-time config, injected at build time via --dart-define /
-// --dart-define-from-file. This is the only config channel that survives onto a
-// device: a mobile app cannot read your host machine's .env at runtime. In dev,
-// source it from your 1Password-injected .env at BUILD time:
-//   flutter run --dart-define-from-file=.env
+// Compile-time config, injected at build time via --dart-define. This is the
+// only config channel that survives onto a device: a mobile app cannot read
+// your host machine's .env at runtime.
+//
+// In dev, source it from 1Password at BUILD time via the wrapper:
+//   tool/dev.sh run
+// Do NOT use --dart-define-from-file=.env — 1Password exposes `.env` as a named
+// pipe, and that flag gates on File.existsSync(), which is false for a FIFO.
 const _secretKey = String.fromEnvironment('SECRET_KEY');
 const _supabaseUrl = String.fromEnvironment('SUPABASE_URL');
-const _supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
+const _supabasePublishableKey = String.fromEnvironment(
+  'SUPABASE_PUBLISHABLE_KEY',
+);
 const _webClientId = String.fromEnvironment('WEB_CLIENT_ID');
 const _iosClientId = String.fromEnvironment('IOS_CLIENT_ID');
 
@@ -41,7 +50,8 @@ Future<void> main() async {
     mergeWith: {
       if (_secretKey.isNotEmpty) 'SECRET_KEY': _secretKey,
       if (_supabaseUrl.isNotEmpty) 'SUPABASE_URL': _supabaseUrl,
-      if (_supabaseAnonKey.isNotEmpty) 'SUPABASE_ANON_KEY': _supabaseAnonKey,
+      if (_supabasePublishableKey.isNotEmpty)
+        'SUPABASE_PUBLISHABLE_KEY': _supabasePublishableKey,
       if (_webClientId.isNotEmpty) 'WEB_CLIENT_ID': _webClientId,
       if (_iosClientId.isNotEmpty) 'IOS_CLIENT_ID': _iosClientId,
     },
@@ -49,7 +59,7 @@ Future<void> main() async {
 
   // Real Google + Supabase auth when its config is present; otherwise the no-op
   // service so the app still boots (CI, missing .env, tests).
-  final authService = await _resolveAuthService();
+  final backend = await _resolveBackend();
 
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
@@ -60,7 +70,15 @@ Future<void> main() async {
         // depending on sharedPreferencesProvider can synchronously read it.
         sharedPreferencesProvider.overrideWithValue(sharedPreferences),
         // Swap the no-op auth seam for the resolved real/no-op implementation.
-        authServiceProvider.overrideWithValue(authService),
+        authServiceProvider.overrideWithValue(backend.auth),
+        // Only reachable once Supabase.initialize has run; otherwise the
+        // unavailable seam keeps profile reads failing cleanly.
+        if (backend.supabaseReady) ...[
+          userRepositoryProvider.overrideWithValue(SupabaseUserRepository()),
+          friendshipRepositoryProvider.overrideWithValue(
+            SupabaseFriendshipRepository(),
+          ),
+        ],
       ],
       child: EasyLocalization(
         supportedLocales: const [Locale('en'), Locale('zh', 'TW')],
@@ -76,33 +94,55 @@ Future<void> main() async {
 /// Builds the real Supabase-backed auth service when all required config is
 /// present (initializing Supabase first), else falls back to [NoopAuthService]
 /// so the app still boots without a backend (keeps `.env` optional).
-Future<AuthService> _resolveAuthService() async {
+///
+/// [_Backend.supabaseReady] reports whether `Supabase.initialize` actually ran,
+/// which is what any other Supabase-backed provider must gate on — touching
+/// `Supabase.instance` before that throws.
+Future<_Backend> _resolveBackend() async {
   // Prefer compile-time dart-defines (the channel that works on-device); fall
   // back to a bundled .env via dotenv if one is ever present.
   final url = _config(_supabaseUrl, 'SUPABASE_URL');
-  final anonKey = _config(_supabaseAnonKey, 'SUPABASE_ANON_KEY');
+  final publishableKey = _config(
+    _supabasePublishableKey,
+    'SUPABASE_PUBLISHABLE_KEY',
+  );
   final webClientId = _config(_webClientId, 'WEB_CLIENT_ID');
   final iosClientId = _config(_iosClientId, 'IOS_CLIENT_ID');
 
   if (url == null ||
-      anonKey == null ||
+      publishableKey == null ||
       webClientId == null ||
       iosClientId == null) {
     // No real auth config. In debug builds use a dev bypass so the app is
     // reachable for local UI work (tap "Sign in with Google" → fake user →
     // into the app); release builds stay signed-out via the no-op service.
-    return kDebugMode ? DevAuthService() : NoopAuthService();
+    return _Backend(
+      auth: kDebugMode ? DevAuthService() : NoopAuthService(),
+      supabaseReady: false,
+    );
   }
 
-  // The project supplies a legacy `anon` key, for which `anonKey` is the correct
-  // parameter. Switch to `publishableKey` when migrating to the newer
-  // `sb_publishable_…` key format.
-  // ignore: deprecated_member_use
-  await Supabase.initialize(url: url, anonKey: anonKey);
-  return SupabaseGoogleAuthService(
-    webClientId: webClientId,
-    iosClientId: iosClientId,
+  // `sb_publishable_…` key. Publishable keys can be rotated and revoked
+  // independently of the secret key; the legacy `anon` JWT could not, and is
+  // being removed by Supabase. The key is public by design — RLS is the real
+  // boundary.
+  await Supabase.initialize(url: url, publishableKey: publishableKey);
+  return _Backend(
+    auth: SupabaseGoogleAuthService(
+      webClientId: webClientId,
+      iosClientId: iosClientId,
+    ),
+    supabaseReady: true,
   );
+}
+
+/// What boot resolved: the auth implementation, plus whether Supabase itself
+/// came up (so other backed providers know if they can be wired).
+class _Backend {
+  const _Backend({required this.auth, required this.supabaseReady});
+
+  final AuthService auth;
+  final bool supabaseReady;
 }
 
 /// Compile-time dart-define value if set, else the dotenv (`.env`) value, else
