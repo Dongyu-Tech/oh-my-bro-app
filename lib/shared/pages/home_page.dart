@@ -7,7 +7,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import 'package:heymybro/core/database/database.dart';
 import 'package:heymybro/core/error/error_logger.dart';
-import 'package:heymybro/shared/dialogs/basic_dialog.dart';
+import 'package:heymybro/shared/pages/join_room_sheet.dart';
 import 'package:heymybro/shared/provider/friend_provider.dart';
 import 'package:heymybro/shared/provider/group_provider.dart';
 import 'package:heymybro/shared/widgets/brutalism.dart';
@@ -109,7 +109,11 @@ class _HomePageState extends ConsumerState<HomePage> {
                       icon: LucideIcons.logIn,
                       title: 'circle_join_code'.tr(),
                       sub: 'home_join_sub'.tr(),
-                      onTap: () => context.push('/join'),
+                      onTap: () => showJoinRoomSheet(
+                        context,
+                        onJoined: (groupId) =>
+                            context.push('/group/$groupId/room'),
+                      ),
                     ),
                   ),
                 ],
@@ -414,30 +418,27 @@ class _DebtComposerState extends ConsumerState<_DebtComposer> {
       (a.isMe && b.isMe) || (a.friendId != null && a.friendId == b.friendId);
 
   Future<void> _pick(bool debtorSide) async {
-    final friends = ref.read(friendsProvider).asData?.value ?? const [];
-    final options = <_Party>[
-      _me,
-      for (final f in friends) (name: f.name, friendId: f.id, isMe: false),
-    ];
+    final friends = ref.read(friendsProvider).asData?.value ?? const <Friend>[];
     final current = debtorSide ? _debtor : _creditor;
-    final picked = await showChipPickerDialog<_Party>(
+    final picked = await _showPersonPickerSheet(
       context,
-      title: 'debt_pick_person'.tr(),
-      options: [
-        for (final p in options)
-          (
-            value: p,
-            label: p.name,
-            highlight: current != null && _same(p, current),
-          ),
-      ],
+      friends: friends,
+      selectedFriendId: current?.friendId,
     );
-    if (picked == null) return;
+    if (picked == null || !mounted) return;
+
+    // Exactly one side is always me. A debt between two *other* people isn't
+    // mine to record (friend_provider drops those from 帳本), and 我欠我 is
+    // nonsense — so picking a friend for one slot pins the other slot to me.
+    // That invariant is also why the picker never offers "我" as an option.
     setState(() {
+      final party = (name: picked.name, friendId: picked.id, isMe: false);
       if (debtorSide) {
-        _debtor = picked;
+        _debtor = party;
+        _creditor = _me;
       } else {
-        _creditor = picked;
+        _creditor = party;
+        _debtor = _me;
       }
     });
   }
@@ -594,6 +595,112 @@ class _Slot extends StatelessWidget {
             fontSize: 15,
             color: picked ? null : BrutalColors.onSurfaceVariant,
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Person picker for the debt composer: your bros as avatar + name.
+///
+/// "我" is deliberately not an option — [_DebtComposerState._pick] always pins
+/// the opposite slot to you, so offering yourself here could only produce
+/// 我欠我 or 別人欠別人, neither of which the composer records.
+Future<Friend?> _showPersonPickerSheet(
+  BuildContext context, {
+  required List<Friend> friends,
+  required String? selectedFriendId,
+}) {
+  return showModalBottomSheet<Friend>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (sheetContext) => BrutalSheet(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'debt_pick_person'.tr(),
+            style: BrutalText.headlineLgMobile(fontSize: 22),
+          ),
+          const SizedBox(height: 16),
+          if (friends.isEmpty)
+            _EmptyHint('debt_pick_empty'.tr())
+          else
+            ConstrainedBox(
+              // Cap the grid so a long bro list scrolls instead of shoving the
+              // sheet past the top of the screen.
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(sheetContext).size.height * 0.45,
+              ),
+              child: SingleChildScrollView(
+                child: Wrap(
+                  spacing: 10,
+                  runSpacing: 14,
+                  children: [
+                    for (final f in friends)
+                      _PersonTile(
+                        friend: f,
+                        selected: f.id == selectedFriendId,
+                        onTap: () => Navigator.of(sheetContext).pop(f),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    ),
+  );
+}
+
+/// One pickable bro: initial-in-a-box avatar over their name.
+class _PersonTile extends StatelessWidget {
+  const _PersonTile({
+    required this.friend,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final Friend friend;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: SizedBox(
+        width: 72,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Selection is carried by the avatar's own chrome: yellow fill, a
+            // full-weight border and a lifted shadow.
+            BrutalAvatar(
+              name: friend.name,
+              photoUrl: friend.avatarUrl,
+              size: 56,
+              fontSize: 24,
+              color: selected
+                  ? BrutalColors.primaryContainer
+                  : BrutalColors.surfaceContainerHigh,
+              offset: selected ? 3 : 0,
+              borderWidth: selected
+                  ? BrutalSpec.borderWidth
+                  : BrutalSpec.borderWidthThin,
+            ),
+            const SizedBox(height: 7),
+            Text(
+              friend.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: BrutalText.labelBold(fontSize: 12),
+            ),
+          ],
         ),
       ),
     );
