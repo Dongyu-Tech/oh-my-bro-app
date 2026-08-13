@@ -34,13 +34,20 @@ else falls back to a dev/no-op service. You do **not** need to write auth code.
 - Provide these 4 values (+ optional `SECRET_KEY`) as compile-time defines —
   they are the only config channel that survives onto a device:
   ```
-  flutter run --dart-define-from-file=.env      # dev
-  flutter build appbundle --release --dart-define-from-file=prod.env
+  tool/dev.sh run                                    # dev
+  tool/dev.sh build appbundle --release              # release
   ```
-  Keys (see `main.dart:23-27`): `SUPABASE_URL`, `SUPABASE_ANON_KEY`,
-  `WEB_CLIENT_ID`, `IOS_CLIENT_ID`. (`SECRET_KEY` is plumbed but currently
-  unused — do NOT put a real server secret in a dart-define; it ships in the
-  binary. The anon key is public-by-design; **RLS is the real boundary**.)
+  Keys: `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `WEB_CLIENT_ID`,
+  `IOS_CLIENT_ID`. (`SECRET_KEY` is plumbed but currently unused — do NOT put a
+  real server secret in a dart-define; it ships in the binary. The publishable
+  key is public-by-design; **RLS is the real boundary**.)
+
+  `tool/dev.sh` reads the 1Password-backed `.env` and expands it into
+  `--dart-define` flags. Do **not** use `--dart-define-from-file=.env`:
+  1Password exposes `.env` as a named pipe, and that flag gates on
+  `File.existsSync()`, which is false for a FIFO — it fails with "Did not find
+  the file" without ever reading it. Point `ENV_PIPE` at another file to
+  override the source.
 - The app maps the Supabase user via `_mapUser` → `AuthUserModel` (id, email,
   displayName, photoUrl). `user_metadata` is display-only, never trust it for authz.
 
@@ -136,7 +143,7 @@ paywall in `paywall_sheet.dart`.
 ## 6. Security must-dos (from the review — see LAUNCH_CHECKLIST.md)
 
 - Room codes: **CSPRNG, server-side** (§4).
-- **RLS enforced** for every table; the anon key is public.
+- **RLS enforced** for every table; the publishable key is public.
 - The local SQLite DB is **unencrypted** and `allowBackup=false` — decide the
   data-at-rest posture for the Play Data Safety form; consider SQLCipher if the
   threat model includes lost/rooted devices.
