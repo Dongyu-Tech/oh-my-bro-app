@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:uuid/uuid.dart';
@@ -265,12 +266,62 @@ class FriendService {
 
   final AppDatabase _db;
 
-  Future<String> addFriend(String name) async {
+  /// Save a bro from a resolved account — the only way to gain one now that
+  /// they must be real users. Idempotent on [userId]: adding the same person
+  /// twice refreshes their cached profile instead of stacking duplicate rows,
+  /// which matters because search and scan reach the same person by different
+  /// routes.
+  ///
+  /// Returns the local friend id.
+  Future<String> addBro({
+    required String userId,
+    required String name,
+    String? handle,
+    String? avatarUrl,
+  }) async {
+    final existing = await _db.findFriendByUserId(userId);
+    if (existing != null) {
+      await _db.updateFriendProfile(
+        existing.id,
+        handle: handle,
+        avatarUrl: avatarUrl,
+      );
+      return existing.id;
+    }
+
     final id = _uuid.v4();
     await _db.insertFriend(
-      FriendsCompanion.insert(id: id, name: name, createdAt: DateTime.now()),
+      FriendsCompanion.insert(
+        id: id,
+        name: name,
+        createdAt: DateTime.now(),
+        userId: Value(userId),
+        handle: Value(handle),
+        avatarUrl: Value(avatarUrl),
+      ),
     );
     return id;
+  }
+
+  /// Bring the local bro list in line with the server's accepted friendships:
+  /// add or refresh the ones that are there, trash the ones that are not.
+  ///
+  /// The prune is what makes a removal on the other side actually disappear
+  /// here — without it the list only ever grows. Pass the full accepted set,
+  /// never a partial one.
+  Future<void> syncAccepted(
+    Iterable<({String userId, String name, String? handle, String? avatarUrl})>
+    accepted,
+  ) async {
+    for (final bro in accepted) {
+      await addBro(
+        userId: bro.userId,
+        name: bro.name,
+        handle: bro.handle,
+        avatarUrl: bro.avatarUrl,
+      );
+    }
+    await _db.pruneUnlinkedFriends({for (final bro in accepted) bro.userId});
   }
 
   Future<void> renameFriend(String id, String name) =>

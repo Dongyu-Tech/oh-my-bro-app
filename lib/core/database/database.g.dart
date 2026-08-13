@@ -2126,6 +2126,35 @@ class $FriendsTable extends Friends with TableInfo<$FriendsTable, Friend> {
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _handleMeta = const VerificationMeta('handle');
+  @override
+  late final GeneratedColumn<String> handle = GeneratedColumn<String>(
+    'handle',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _avatarUrlMeta = const VerificationMeta(
+    'avatarUrl',
+  );
+  @override
+  late final GeneratedColumn<String> avatarUrl = GeneratedColumn<String>(
+    'avatar_url',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -2149,7 +2178,15 @@ class $FriendsTable extends Friends with TableInfo<$FriendsTable, Friend> {
     requiredDuringInsert: false,
   );
   @override
-  List<GeneratedColumn> get $columns => [id, name, createdAt, deletedAt];
+  List<GeneratedColumn> get $columns => [
+    id,
+    name,
+    userId,
+    handle,
+    avatarUrl,
+    createdAt,
+    deletedAt,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -2174,6 +2211,24 @@ class $FriendsTable extends Friends with TableInfo<$FriendsTable, Friend> {
       );
     } else if (isInserting) {
       context.missing(_nameMeta);
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    }
+    if (data.containsKey('handle')) {
+      context.handle(
+        _handleMeta,
+        handle.isAcceptableOrUnknown(data['handle']!, _handleMeta),
+      );
+    }
+    if (data.containsKey('avatar_url')) {
+      context.handle(
+        _avatarUrlMeta,
+        avatarUrl.isAcceptableOrUnknown(data['avatar_url']!, _avatarUrlMeta),
+      );
     }
     if (data.containsKey('created_at')) {
       context.handle(
@@ -2206,6 +2261,18 @@ class $FriendsTable extends Friends with TableInfo<$FriendsTable, Friend> {
         DriftSqlType.string,
         data['${effectivePrefix}name'],
       )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      ),
+      handle: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}handle'],
+      ),
+      avatarUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}avatar_url'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -2225,7 +2292,22 @@ class $FriendsTable extends Friends with TableInfo<$FriendsTable, Friend> {
 
 class Friend extends DataClass implements Insertable<Friend> {
   final String id;
+
+  /// What *I* call them. Seeded from their profile, then mine to change.
   final String name;
+
+  /// Their `public.users` id. Null only on rows added before bros had to be
+  /// real accounts — those keep working but can never show a picture.
+  final String? userId;
+
+  /// Their handle at the time they were added, so the row can be re-resolved
+  /// against the server later.
+  final String? handle;
+
+  /// Cached avatar URL. Kept locally on purpose: the list has to render before
+  /// (and without) a network round trip, and `users` RLS only lets us re-read
+  /// their row once the friendship also exists server-side.
+  final String? avatarUrl;
   final DateTime createdAt;
 
   /// Non-null once moved to the recycle bin (soft delete).
@@ -2233,6 +2315,9 @@ class Friend extends DataClass implements Insertable<Friend> {
   const Friend({
     required this.id,
     required this.name,
+    this.userId,
+    this.handle,
+    this.avatarUrl,
     required this.createdAt,
     this.deletedAt,
   });
@@ -2241,6 +2326,15 @@ class Friend extends DataClass implements Insertable<Friend> {
     final map = <String, Expression>{};
     map['id'] = Variable<String>(id);
     map['name'] = Variable<String>(name);
+    if (!nullToAbsent || userId != null) {
+      map['user_id'] = Variable<String>(userId);
+    }
+    if (!nullToAbsent || handle != null) {
+      map['handle'] = Variable<String>(handle);
+    }
+    if (!nullToAbsent || avatarUrl != null) {
+      map['avatar_url'] = Variable<String>(avatarUrl);
+    }
     map['created_at'] = Variable<DateTime>(createdAt);
     if (!nullToAbsent || deletedAt != null) {
       map['deleted_at'] = Variable<DateTime>(deletedAt);
@@ -2252,6 +2346,15 @@ class Friend extends DataClass implements Insertable<Friend> {
     return FriendsCompanion(
       id: Value(id),
       name: Value(name),
+      userId: userId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(userId),
+      handle: handle == null && nullToAbsent
+          ? const Value.absent()
+          : Value(handle),
+      avatarUrl: avatarUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(avatarUrl),
       createdAt: Value(createdAt),
       deletedAt: deletedAt == null && nullToAbsent
           ? const Value.absent()
@@ -2267,6 +2370,9 @@ class Friend extends DataClass implements Insertable<Friend> {
     return Friend(
       id: serializer.fromJson<String>(json['id']),
       name: serializer.fromJson<String>(json['name']),
+      userId: serializer.fromJson<String?>(json['userId']),
+      handle: serializer.fromJson<String?>(json['handle']),
+      avatarUrl: serializer.fromJson<String?>(json['avatarUrl']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
     );
@@ -2277,6 +2383,9 @@ class Friend extends DataClass implements Insertable<Friend> {
     return <String, dynamic>{
       'id': serializer.toJson<String>(id),
       'name': serializer.toJson<String>(name),
+      'userId': serializer.toJson<String?>(userId),
+      'handle': serializer.toJson<String?>(handle),
+      'avatarUrl': serializer.toJson<String?>(avatarUrl),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'deletedAt': serializer.toJson<DateTime?>(deletedAt),
     };
@@ -2285,11 +2394,17 @@ class Friend extends DataClass implements Insertable<Friend> {
   Friend copyWith({
     String? id,
     String? name,
+    Value<String?> userId = const Value.absent(),
+    Value<String?> handle = const Value.absent(),
+    Value<String?> avatarUrl = const Value.absent(),
     DateTime? createdAt,
     Value<DateTime?> deletedAt = const Value.absent(),
   }) => Friend(
     id: id ?? this.id,
     name: name ?? this.name,
+    userId: userId.present ? userId.value : this.userId,
+    handle: handle.present ? handle.value : this.handle,
+    avatarUrl: avatarUrl.present ? avatarUrl.value : this.avatarUrl,
     createdAt: createdAt ?? this.createdAt,
     deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
   );
@@ -2297,6 +2412,9 @@ class Friend extends DataClass implements Insertable<Friend> {
     return Friend(
       id: data.id.present ? data.id.value : this.id,
       name: data.name.present ? data.name.value : this.name,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      handle: data.handle.present ? data.handle.value : this.handle,
+      avatarUrl: data.avatarUrl.present ? data.avatarUrl.value : this.avatarUrl,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
     );
@@ -2307,6 +2425,9 @@ class Friend extends DataClass implements Insertable<Friend> {
     return (StringBuffer('Friend(')
           ..write('id: $id, ')
           ..write('name: $name, ')
+          ..write('userId: $userId, ')
+          ..write('handle: $handle, ')
+          ..write('avatarUrl: $avatarUrl, ')
           ..write('createdAt: $createdAt, ')
           ..write('deletedAt: $deletedAt')
           ..write(')'))
@@ -2314,13 +2435,17 @@ class Friend extends DataClass implements Insertable<Friend> {
   }
 
   @override
-  int get hashCode => Object.hash(id, name, createdAt, deletedAt);
+  int get hashCode =>
+      Object.hash(id, name, userId, handle, avatarUrl, createdAt, deletedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is Friend &&
           other.id == this.id &&
           other.name == this.name &&
+          other.userId == this.userId &&
+          other.handle == this.handle &&
+          other.avatarUrl == this.avatarUrl &&
           other.createdAt == this.createdAt &&
           other.deletedAt == this.deletedAt);
 }
@@ -2328,12 +2453,18 @@ class Friend extends DataClass implements Insertable<Friend> {
 class FriendsCompanion extends UpdateCompanion<Friend> {
   final Value<String> id;
   final Value<String> name;
+  final Value<String?> userId;
+  final Value<String?> handle;
+  final Value<String?> avatarUrl;
   final Value<DateTime> createdAt;
   final Value<DateTime?> deletedAt;
   final Value<int> rowid;
   const FriendsCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.handle = const Value.absent(),
+    this.avatarUrl = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.deletedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -2341,6 +2472,9 @@ class FriendsCompanion extends UpdateCompanion<Friend> {
   FriendsCompanion.insert({
     required String id,
     required String name,
+    this.userId = const Value.absent(),
+    this.handle = const Value.absent(),
+    this.avatarUrl = const Value.absent(),
     required DateTime createdAt,
     this.deletedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -2350,6 +2484,9 @@ class FriendsCompanion extends UpdateCompanion<Friend> {
   static Insertable<Friend> custom({
     Expression<String>? id,
     Expression<String>? name,
+    Expression<String>? userId,
+    Expression<String>? handle,
+    Expression<String>? avatarUrl,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? deletedAt,
     Expression<int>? rowid,
@@ -2357,6 +2494,9 @@ class FriendsCompanion extends UpdateCompanion<Friend> {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (name != null) 'name': name,
+      if (userId != null) 'user_id': userId,
+      if (handle != null) 'handle': handle,
+      if (avatarUrl != null) 'avatar_url': avatarUrl,
       if (createdAt != null) 'created_at': createdAt,
       if (deletedAt != null) 'deleted_at': deletedAt,
       if (rowid != null) 'rowid': rowid,
@@ -2366,6 +2506,9 @@ class FriendsCompanion extends UpdateCompanion<Friend> {
   FriendsCompanion copyWith({
     Value<String>? id,
     Value<String>? name,
+    Value<String?>? userId,
+    Value<String?>? handle,
+    Value<String?>? avatarUrl,
     Value<DateTime>? createdAt,
     Value<DateTime?>? deletedAt,
     Value<int>? rowid,
@@ -2373,6 +2516,9 @@ class FriendsCompanion extends UpdateCompanion<Friend> {
     return FriendsCompanion(
       id: id ?? this.id,
       name: name ?? this.name,
+      userId: userId ?? this.userId,
+      handle: handle ?? this.handle,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
       createdAt: createdAt ?? this.createdAt,
       deletedAt: deletedAt ?? this.deletedAt,
       rowid: rowid ?? this.rowid,
@@ -2387,6 +2533,15 @@ class FriendsCompanion extends UpdateCompanion<Friend> {
     }
     if (name.present) {
       map['name'] = Variable<String>(name.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (handle.present) {
+      map['handle'] = Variable<String>(handle.value);
+    }
+    if (avatarUrl.present) {
+      map['avatar_url'] = Variable<String>(avatarUrl.value);
     }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
@@ -2405,6 +2560,9 @@ class FriendsCompanion extends UpdateCompanion<Friend> {
     return (StringBuffer('FriendsCompanion(')
           ..write('id: $id, ')
           ..write('name: $name, ')
+          ..write('userId: $userId, ')
+          ..write('handle: $handle, ')
+          ..write('avatarUrl: $avatarUrl, ')
           ..write('createdAt: $createdAt, ')
           ..write('deletedAt: $deletedAt, ')
           ..write('rowid: $rowid')
@@ -5159,6 +5317,9 @@ typedef $$FriendsTableCreateCompanionBuilder =
     FriendsCompanion Function({
       required String id,
       required String name,
+      Value<String?> userId,
+      Value<String?> handle,
+      Value<String?> avatarUrl,
       required DateTime createdAt,
       Value<DateTime?> deletedAt,
       Value<int> rowid,
@@ -5167,6 +5328,9 @@ typedef $$FriendsTableUpdateCompanionBuilder =
     FriendsCompanion Function({
       Value<String> id,
       Value<String> name,
+      Value<String?> userId,
+      Value<String?> handle,
+      Value<String?> avatarUrl,
       Value<DateTime> createdAt,
       Value<DateTime?> deletedAt,
       Value<int> rowid,
@@ -5188,6 +5352,21 @@ class $$FriendsTableFilterComposer
 
   ColumnFilters<String> get name => $composableBuilder(
     column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get handle => $composableBuilder(
+    column: $table.handle,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get avatarUrl => $composableBuilder(
+    column: $table.avatarUrl,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5221,6 +5400,21 @@ class $$FriendsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get handle => $composableBuilder(
+    column: $table.handle,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get avatarUrl => $composableBuilder(
+    column: $table.avatarUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -5246,6 +5440,15 @@ class $$FriendsTableAnnotationComposer
 
   GeneratedColumn<String> get name =>
       $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<String> get handle =>
+      $composableBuilder(column: $table.handle, builder: (column) => column);
+
+  GeneratedColumn<String> get avatarUrl =>
+      $composableBuilder(column: $table.avatarUrl, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -5284,12 +5487,18 @@ class $$FriendsTableTableManager
               ({
                 Value<String> id = const Value.absent(),
                 Value<String> name = const Value.absent(),
+                Value<String?> userId = const Value.absent(),
+                Value<String?> handle = const Value.absent(),
+                Value<String?> avatarUrl = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime?> deletedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => FriendsCompanion(
                 id: id,
                 name: name,
+                userId: userId,
+                handle: handle,
+                avatarUrl: avatarUrl,
                 createdAt: createdAt,
                 deletedAt: deletedAt,
                 rowid: rowid,
@@ -5298,12 +5507,18 @@ class $$FriendsTableTableManager
               ({
                 required String id,
                 required String name,
+                Value<String?> userId = const Value.absent(),
+                Value<String?> handle = const Value.absent(),
+                Value<String?> avatarUrl = const Value.absent(),
                 required DateTime createdAt,
                 Value<DateTime?> deletedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => FriendsCompanion.insert(
                 id: id,
                 name: name,
+                userId: userId,
+                handle: handle,
+                avatarUrl: avatarUrl,
                 createdAt: createdAt,
                 deletedAt: deletedAt,
                 rowid: rowid,
