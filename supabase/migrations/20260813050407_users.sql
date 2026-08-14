@@ -4,8 +4,6 @@
 -- PostgREST at all, its raw_user_meta_data is readable only by its own owner
 -- and is user-editable (so it must never back an authorization decision), and
 -- it is managed by Supabase. Every app-level attribute lives here instead.
---
--- Apply with:  supabase db push          (or paste into the SQL editor)
 create table public.users (
   id uuid primary key references auth.users (id) on delete cascade,
 
@@ -200,4 +198,4 @@ $$;
 revoke execute on function public.find_user_by_handle(text) from anon, public;
 grant execute on function public.find_user_by_handle(text) to authenticated;
 
-alter publication supabase_realtime add table public.users;
+alter publication supabase_realtime add table public.users;;

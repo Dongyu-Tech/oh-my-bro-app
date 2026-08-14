@@ -1,21 +1,10 @@
--- Friendship is one mutual relationship, not two independent lists.
---
--- The pair is stored in canonical order (user_low < user_high) so there is
--- exactly one row per pair whichever direction it was created from — the
--- primary key then makes an A→B / B→A duplicate impossible rather than merely
--- unlikely. `requested_by` is what says who still owes an answer.
 create table public.friendships (
   user_low uuid not null references auth.users (id) on delete cascade,
   user_high uuid not null references auth.users (id) on delete cascade,
-
   status text not null check (status in ('pending', 'accepted')),
-
-  -- Whoever asked. The *other* party is the only one who can accept.
   requested_by uuid not null references auth.users (id) on delete cascade,
-
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-
   primary key (user_low, user_high),
   constraint friendships_ordered check (user_low < user_high)
 );
@@ -29,14 +18,6 @@ create trigger friendships_set_updated_at
   before update on public.friendships
   for each row execute function public.set_updated_at();
 
--- Short-lived codes behind the share QR. A raw user id in a QR would be a
--- permanent, un-revocable pass: screenshots get forwarded, and anyone holding
--- one could then add themselves with no consent. A code that expires bounds
--- that to a few minutes.
---
--- Deliberately reusable until it expires: the whole point is a table of people
--- scanning the code on your screen, and single-use would make everyone after
--- the first wait for a regenerate.
 create table public.friend_tokens (
   token text primary key,
   user_id uuid not null references auth.users (id) on delete cascade,
@@ -46,10 +27,6 @@ create table public.friend_tokens (
 
 create index friend_tokens_user_idx on public.friend_tokens (user_id);
 
--- ── Helpers ─────────────────────────────────────────────────────────────────
-
--- Rejection sampling (drop bytes >= 248 = 8*31) so no letter of the alphabet
--- is more likely than another — the same shape as private.random_invite_code.
 create or replace function private.random_token(len int)
 returns text
 language plpgsql
@@ -71,9 +48,6 @@ begin
 end;
 $$;
 
--- Any friendship at all, pending included: you have to be able to see the
--- profile of someone who just asked to be your bro, or the request is from
--- "unknown person".
 create or replace function private.has_friendship_with(uid uuid)
 returns boolean
 language sql
@@ -88,8 +62,6 @@ as $$
   );
 $$;
 
--- Supersedes the public.friends-based version from the users migration:
--- friendships is the source of truth now.
 create or replace function private.is_my_friend(uid uuid)
 returns boolean
 language sql
@@ -105,8 +77,6 @@ as $$
   );
 $$;
 
--- Widen user visibility to anyone I have a pending request with, so the
--- "accept?" prompt can show a name and a face.
 drop policy users_select on public.users;
 create policy users_select on public.users
   for select to authenticated
@@ -116,12 +86,9 @@ create policy users_select on public.users
     or private.shares_group_with(id)
   );
 
--- ── RLS ─────────────────────────────────────────────────────────────────────
 alter table public.friendships enable row level security;
 alter table public.friend_tokens enable row level security;
 
--- Read-only for the two people involved; every write goes through the RPCs
--- below, so a client can never mark itself accepted.
 grant select on public.friendships to authenticated;
 
 create policy friendships_select on public.friendships
@@ -130,18 +97,6 @@ create policy friendships_select on public.friendships
     user_low = (select auth.uid()) or user_high = (select auth.uid())
   );
 
--- No policies and no grants on friend_tokens on purpose: a token is only ever
--- minted and redeemed through a SECURITY DEFINER function. Being able to read
--- the table would turn it into a list of everyone's live codes.
-
--- ── RPCs ────────────────────────────────────────────────────────────────────
-
---Ask to be someone's bro. Returns one of:
---  'pending'   — request recorded, waiting on them
---  'accepted'  — they had already asked us, so this closed the loop
---  'already'   — already bros
---  'self'      — that's you
---  'not_found' — no such user
 create or replace function public.request_friend(target uuid)
 returns text
 language plpgsql
@@ -168,8 +123,6 @@ begin
 
   if found then
     if row_found.status = 'accepted' then return 'already'; end if;
-    -- They asked first and now we're asking too. Both sides have said yes, so
-    -- there is nothing left to confirm.
     if row_found.requested_by <> me then
       update public.friendships
          set status = 'accepted', updated_at = now()
@@ -185,8 +138,6 @@ begin
 end;
 $$;
 
---Answer a request. Only the person who did NOT send it may respond.
---Returns 'accepted' | 'rejected' | 'already' | 'not_found' | 'not_yours'.
 create or replace function public.respond_friend(other uuid, accept boolean)
 returns text
 language plpgsql
@@ -223,8 +174,6 @@ begin
 end;
 $$;
 
---Mint the code behind the share QR. Replaces this user's previous code, so
---only the one currently on screen works. Capped at an hour whatever is asked.
 create or replace function public.generate_friend_token(ttl_minutes int default 5)
 returns table (token text, expires_at timestamptz)
 language plpgsql
@@ -250,9 +199,6 @@ begin
 end;
 $$;
 
---Redeem a scanned code. Skips the accept step by design: holding up a code
---that dies in minutes is the consent. Returns the other user's id, or null
---when the code is unknown, expired, or your own.
 create or replace function public.accept_friend_token(t text)
 returns uuid
 language plpgsql
@@ -286,9 +232,6 @@ begin
 end;
 $$;
 
---Everything the 夥伴 tab needs in one call: accepted bros plus requests in
---both directions, each already joined to the other person's profile.
---`requested_by = auth.uid()` on a pending row means we are the ones waiting.
 create or replace function public.my_friendships()
 returns table (
   other_id uuid,
@@ -334,4 +277,4 @@ grant execute on function public.generate_friend_token(int) to authenticated;
 grant execute on function public.accept_friend_token(text) to authenticated;
 grant execute on function public.my_friendships() to authenticated;
 
-alter publication supabase_realtime add table public.friendships;
+alter publication supabase_realtime add table public.friendships;;

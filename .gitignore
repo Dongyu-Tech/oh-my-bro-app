@@ -59,3 +59,8 @@ local.*
 # Superpowers brainstorm/session scratch (local mockups + server state)
 .superpowers/
 config.txt
+
+# Supabase CLI scratch — holds the linked project ref and a pooler connection
+# string. Migration files under supabase/migrations/ ARE committed.
+supabase/.temp/
+supabase/.branches/

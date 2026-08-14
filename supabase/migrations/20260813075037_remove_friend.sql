@@ -27,4 +27,4 @@ end;
 $$;
 
 revoke execute on function public.remove_friend(uuid) from anon, public;
-grant execute on function public.remove_friend(uuid) to authenticated;
+grant execute on function public.remove_friend(uuid) to authenticated;;
