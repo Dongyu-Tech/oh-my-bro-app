@@ -137,6 +137,26 @@ void main() {
       expect(members.firstWhere((m) => !m.isMe).friendId, 'friend-1');
     });
 
+    test('a debt tidied out of the ledger comes back', () async {
+      await db.applyDebtProjection(_projection());
+      expect((await db.watchGroups().first).length, 1);
+
+      // Trashed on this device only — there is no such thing as deleting a
+      // debt the other person also has.
+      await db.deleteGroup((await db.watchGroups().first).single.id);
+      expect(await db.watchGroups().first, isEmpty);
+
+      // The next sync. insertOrIgnore alone would skip the existing row and
+      // leave deletedAt set, so this device would hide a debt the other one
+      // still showed — two accounts on genuinely different books, with no
+      // amount of syncing able to reconcile them. The server says it exists
+      // and both agreed; a local deletedAt is stale state, not a decision.
+      await db.applyDebtProjection(_projection());
+
+      expect((await db.watchGroups().first).length, 1);
+      expect((await db.watchAllExpenses().first).length, 1);
+    });
+
     test('a replay cannot inflate the balance', () async {
       // The bug this whole design exists to prevent: three arrivals of one
       // confirmation reading as 阿華 owing 1500.

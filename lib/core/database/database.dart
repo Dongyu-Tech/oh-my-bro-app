@@ -645,6 +645,22 @@ class AppDatabase extends _$AppDatabase {
           mode: InsertMode.insertOrIgnore,
         ),
       );
+
+      // Un-trash. insertOrIgnore skips a row that already exists, so without
+      // this a debt the user once tidied out of 帳本 could never come back —
+      // their device hiding it forever while the other still showed it, with
+      // no amount of syncing able to reconcile the two.
+      //
+      // The server says this debt exists and both sides agreed to it, and the
+      // server is the authority on that. A local deletedAt is stale state to
+      // correct, not a decision to honour — the same reasoning that lets a
+      // friend sync un-trash a bro the server still lists.
+      await (update(groups)
+            ..where((g) => g.id.equals(projection.group.id.value)))
+          .write(const GroupsCompanion(deletedAt: Value(null)));
+      await (update(expenses)
+            ..where((e) => e.id.equals(projection.expense.id.value)))
+          .write(const ExpensesCompanion(deletedAt: Value(null)));
     });
   }
 

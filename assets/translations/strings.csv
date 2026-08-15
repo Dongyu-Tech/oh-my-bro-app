@@ -391,3 +391,4 @@ debt_repay_sent,Sent — waiting for them,已送出 等對方確認
 debt_err_too_much,That's more than is owed,超過還欠的金額
 debt_repay_wait,Waiting for them to pay,等對方還款
 debt_repay_badge,Repayment,還款
+debt_cannot_delete,Both of you agreed to this — it cannot be deleted alone,這筆雙方都同意過 不能單方面刪除
