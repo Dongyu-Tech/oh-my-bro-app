@@ -9,6 +9,7 @@ import 'package:share_plus/share_plus.dart';
 
 import 'package:heymybro/core/database/database.dart';
 import 'package:heymybro/core/error/error_logger.dart';
+import 'package:heymybro/shared/provider/debt_provider.dart';
 import 'package:heymybro/shared/provider/group_provider.dart';
 import 'package:heymybro/shared/split/settlement.dart';
 import 'package:heymybro/shared/widgets/back_button.dart';
@@ -238,7 +239,13 @@ class _TopBar extends ConsumerWidget {
           const SizedBox(width: 8),
           _IconButton(
             icon: LucideIcons.trash2,
-            onTap: () => _confirmDelete(context, ref),
+            // A debt both sides agreed to is not one device's to delete. It
+            // would come straight back on the next sync anyway — the server
+            // still lists it — so offering a delete that silently reverts is
+            // worse than saying why it cannot happen.
+            onTap: ref.watch(debtProposalByGroupProvider).containsKey(groupId)
+                ? () => showErrorSnakeBar('debt_cannot_delete'.tr())
+                : () => _confirmDelete(context, ref),
           ),
         ],
       ),

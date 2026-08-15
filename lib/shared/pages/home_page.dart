@@ -71,22 +71,7 @@ class _HomePageState extends ConsumerState<HomePage> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(18, 20, 18, 32),
             children: [
-              // Big 粗哥 up top.
-              Center(
-                child: Image.asset(
-                  'assets/mascot/stickers/01_main-pointing.png',
-                  height: 150,
-                  fit: BoxFit.contain,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Center(
-                child: Text(
-                  'home_greeting'.tr(),
-                  textAlign: TextAlign.center,
-                  style: BrutalText.body(fontSize: 17, weight: FontWeight.w800),
-                ),
-              ),
+              const _HomeHeader(),
               const SizedBox(height: 18),
               // Quick personal-spend box (middle): type "午餐 120" → logged.
               _QuickAddBox(controller: _quickCtrl, onSubmit: _quickAdd),
@@ -140,6 +125,60 @@ class _HomePageState extends ConsumerState<HomePage> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// The 首頁 signboard. Wears the same marker-highlighted headline every other
+/// tab wears, so 首頁 reads as a titled page rather than a splash screen; 粗哥
+/// moves to the right at sticker size and the greeting becomes something he
+/// says, not a caption sitting under his feet.
+class _HomeHeader extends StatelessWidget {
+  const _HomeHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              MarkerHighlight(
+                child: Text(
+                  'home_title'.tr(),
+                  style: BrutalText.headlineLgMobile(fontSize: 30),
+                ),
+              ),
+              const SizedBox(height: 12),
+              // Full width of the column, not shrink-wrapped to the text, so
+              // the tail lands next to 粗哥 instead of trailing off mid-air.
+              SizedBox(
+                width: double.infinity,
+                child: BrutalSpeechBubble(
+                  child: Text(
+                    'home_greeting'.tr(),
+                    style: BrutalText.body(
+                      fontSize: 15,
+                      weight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Tilted like a sticker slapped on the page rather than a centred
+        // portrait — the bubble's tail points into his chest.
+        Transform.rotate(
+          angle: -0.05,
+          child: Image.asset(
+            'assets/mascot/stickers/01_main-pointing.png',
+            height: 116,
+            fit: BoxFit.contain,
+          ),
+        ),
+      ],
     );
   }
 }

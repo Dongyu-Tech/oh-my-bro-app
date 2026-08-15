@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:heymybro/core/database/database.dart';
 import 'package:heymybro/core/error/result.dart';
+import 'package:heymybro/shared/debt/debt_projection.dart';
 import 'package:heymybro/shared/models/debt_proposal_model.dart';
 import 'package:heymybro/shared/provider/database_provider.dart';
 import 'package:heymybro/shared/provider/debt_provider.dart';
@@ -277,6 +278,144 @@ void main() {
       () => container.read(unseenDeadEndsProvider).isEmpty,
       reason: 'the acknowledged rejection to disappear',
     );
+  });
+
+  test('a local settle inside an agreed debt is undone by the sync', () async {
+    final container = containerWith([_model(id: 'p1', status: 'confirmed')]);
+    final service = container.read(debtServiceProvider);
+    await service.refresh();
+
+    final group = (await db.watchGroups().first).single;
+    final members = await db.watchMembers(group.id).first;
+
+    // The old 結清: written locally, never sent anywhere. It zeroes the
+    // balance here, so the debt stops appearing — while the other side still
+    // sees it outstanding. Nothing about that reads as a bug from the inside.
+    await db.insertSettlement(
+      SettlementsCompanion.insert(
+        id: 'local-settle',
+        groupId: group.id,
+        fromMemberId: members.first.id,
+        toMemberId: members.last.id,
+        amount: 500,
+        createdAt: DateTime(2026, 8, 16),
+      ),
+    );
+    expect((await db.watchAllSettlements().first).length, 1);
+
+    await service.refresh();
+
+    expect(
+      await db.watchAllSettlements().first,
+      isEmpty,
+      reason: 'the server knows of no repayment, so this one is stale',
+    );
+  });
+
+  test('an agreed repayment survives the same sweep', () async {
+    final container = containerWith([
+      _model(id: 'p1', status: 'confirmed'),
+      _model(id: 'r1', status: 'confirmed').copyWith(
+        kind: 'repayment',
+        repaysId: 'p1',
+        amount: 200,
+        debtorId: 'them',
+      ),
+    ]);
+    final service = container.read(debtServiceProvider);
+    await service.refresh();
+    await service.refresh();
+
+    final settlements = await db.watchAllSettlements().first;
+    expect(settlements.length, 1);
+    expect(settlements.single.amount, 200);
+  });
+
+  test('a debt whose proposal is gone leaves the ledger too', () async {
+    final container = containerWith([_model(id: 'p1', status: 'confirmed')]);
+    final service = container.read(debtServiceProvider);
+    await service.refresh();
+    expect((await db.watchGroups().first).length, 1);
+
+    // Deleted server-side. Until the sweep existed the proposal vanished from
+    // the mirror while the debt it had projected stayed behind for good —
+    // sitting in 帳本 backed by nothing, and different from what the other
+    // account could see.
+    repo.rows = const [];
+    await service.refresh();
+
+    expect(await db.watchGroups().first, isEmpty);
+    expect(
+      await db.watchAllExpenses().first,
+      isEmpty,
+      reason: 'expenses and shares cascade off the group',
+    );
+  });
+
+  test('a rejected proposal takes its debt back out of the ledger', () async {
+    final container = containerWith([_model(id: 'p1', status: 'confirmed')]);
+    final service = container.read(debtServiceProvider);
+    await service.refresh();
+    expect((await db.watchGroups().first).length, 1);
+
+    repo.rows = [_model(id: 'p1', status: 'rejected')];
+    await service.refresh();
+
+    expect(await db.watchGroups().first, isEmpty);
+  });
+
+  test('a live debt survives the sweep', () async {
+    final container = containerWith([
+      _model(id: 'keep', status: 'confirmed'),
+      _model(id: 'drop', status: 'confirmed'),
+    ]);
+    final service = container.read(debtServiceProvider);
+    await service.refresh();
+    expect((await db.watchGroups().first).length, 2);
+
+    repo.rows = [_model(id: 'keep', status: 'confirmed')];
+    await service.refresh();
+
+    final groups = await db.watchGroups().first;
+    expect(groups.length, 1);
+    expect(groups.single.id, debtGroupId('keep'));
+  });
+
+  test('signed out, nothing is swept', () async {
+    // A signed-out session cannot have projected anything, so an empty fetch
+    // from that state is no evidence at all — and clearing the ledger on it
+    // would be destroying data for nothing.
+    db = AppDatabase.forExecutor(NativeDatabase.memory());
+    repo = _FakeDebtRepository([]);
+    final container = ProviderContainer(
+      overrides: [
+        appDatabaseProvider.overrideWithValue(db),
+        debtRepositoryProvider.overrideWithValue(repo),
+        myUserIdProvider.overrideWithValue(null),
+      ],
+    );
+    addTearDown(db.close);
+    addTearDown(container.dispose);
+    container.listen(debtProposalsProvider, (_, __) {});
+
+    await db.applyDebtProjection(
+      DebtProjection.build(
+        proposalId: 'someone-elses-session',
+        title: '晚餐',
+        amount: 500,
+        creditorUserId: 'me',
+        debtorUserId: 'them',
+        creditorName: 'me',
+        debtorName: '阿華',
+        iAmCreditor: true,
+        friendId: null,
+        confirmedAt: DateTime(2026, 8, 15),
+      ),
+    );
+
+    await container.read(debtServiceProvider).refresh();
+
+    expect((await db.watchGroups().first).length, 1);
   });
 
   test('a proposal deleted server-side stops being shown', () async {

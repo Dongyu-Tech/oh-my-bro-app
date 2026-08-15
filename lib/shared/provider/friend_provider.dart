@@ -283,6 +283,7 @@ class FriendService {
     if (existing != null) {
       await _db.updateFriendProfile(
         existing.id,
+        name: name,
         handle: handle,
         avatarUrl: avatarUrl,
       );
@@ -323,9 +324,6 @@ class FriendService {
     }
     await _db.pruneUnlinkedFriends({for (final bro in accepted) bro.userId});
   }
-
-  Future<void> renameFriend(String id, String name) =>
-      _db.renameFriend(id, name);
 
   Future<void> deleteFriend(String id) => _db.deleteFriend(id);
 
