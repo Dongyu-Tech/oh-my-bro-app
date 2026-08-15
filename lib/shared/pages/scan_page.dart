@@ -116,17 +116,23 @@ class _ScanPageState extends State<ScanPage> {
                           radius: BrutalSpec.cardRadius,
                           offset: BrutalSpec.shadowOffsetMobile,
                         ),
-                        clipBehavior: Clip.antiAlias,
-                        child: AspectRatio(
-                          aspectRatio: 1,
-                          child: MobileScanner(
-                            controller: _controller,
-                            onDetect: _onDetect,
-                            placeholderBuilder: (_) => const ColoredBox(
-                              color: BrutalColors.surfaceContainerHigh,
+                        // Inside the border, not outside — otherwise the
+                        // preview's square corners paint over it.
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(
+                            brutalInnerRadius(BrutalSpec.cardRadius),
+                          ),
+                          child: AspectRatio(
+                            aspectRatio: 1,
+                            child: MobileScanner(
+                              controller: _controller,
+                              onDetect: _onDetect,
+                              placeholderBuilder: (_) => const ColoredBox(
+                                color: BrutalColors.surfaceContainerHigh,
+                              ),
+                              errorBuilder: (_, error) =>
+                                  _ScannerError(error: error),
                             ),
-                            errorBuilder: (_, error) =>
-                                _ScannerError(error: error),
                           ),
                         ),
                       ),

@@ -7,9 +7,13 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import 'package:heymybro/core/database/database.dart';
 import 'package:heymybro/core/error/error_logger.dart';
+import 'package:heymybro/core/error/result.dart';
+import 'package:heymybro/shared/debt/debt_amount.dart';
 import 'package:heymybro/shared/pages/join_room_sheet.dart';
+import 'package:heymybro/shared/provider/debt_provider.dart';
 import 'package:heymybro/shared/provider/friend_provider.dart';
 import 'package:heymybro/shared/provider/group_provider.dart';
+import 'package:heymybro/shared/repositories/debt_repository.dart';
 import 'package:heymybro/shared/widgets/brutalism.dart';
 
 /// The 首頁 (Home) tab — the centre "throne" of the nav. A 揪團-first dashboard:
@@ -388,7 +392,12 @@ class _EmptyHint extends StatelessWidget {
 }
 
 /// A person on one side of a debt: your own account or a saved friend.
-typedef _Party = ({String name, String? friendId, bool isMe});
+///
+/// [userId] is the account behind them, which the proposal is addressed to.
+/// It is non-null for everyone the picker will hand back — friends without an
+/// account cannot be selected, because no device of theirs could ever receive
+/// the confirmation request.
+typedef _Party = ({String name, String? friendId, String? userId, bool isMe});
 
 /// "[人] 欠 [人] · 項目 · 金額" — records a direct debt with zero split maths.
 class _DebtComposer extends ConsumerStatefulWidget {
@@ -412,7 +421,12 @@ class _DebtComposerState extends ConsumerState<_DebtComposer> {
     super.dispose();
   }
 
-  _Party get _me => (name: 'group_me'.tr(), friendId: null, isMe: true);
+  _Party get _me => (
+    name: 'group_me'.tr(),
+    friendId: null,
+    userId: ref.read(myUserIdProvider),
+    isMe: true,
+  );
 
   bool _same(_Party a, _Party b) =>
       (a.isMe && b.isMe) || (a.friendId != null && a.friendId == b.friendId);
@@ -432,7 +446,12 @@ class _DebtComposerState extends ConsumerState<_DebtComposer> {
     // nonsense — so picking a friend for one slot pins the other slot to me.
     // That invariant is also why the picker never offers "我" as an option.
     setState(() {
-      final party = (name: picked.name, friendId: picked.id, isMe: false);
+      final party = (
+        name: picked.name,
+        friendId: picked.id,
+        userId: picked.userId,
+        isMe: false,
+      );
       if (debtorSide) {
         _debtor = party;
         _creditor = _me;
@@ -456,34 +475,65 @@ class _DebtComposerState extends ConsumerState<_DebtComposer> {
       return;
     }
     final title = _titleCtrl.text.trim();
-    final amount = int.tryParse(_amountCtrl.text.trim()) ?? 0;
     if (title.isEmpty) {
       showErrorSnakeBar('expense_title_required'.tr());
       return;
     }
-    if (amount <= 0) {
+
+    // Blank is allowed and means "let them fill it in"; junk and non-positive
+    // values are not.
+    final int? amount;
+    try {
+      amount = parseOptionalAmount(_amountCtrl.text);
+    } on FormatException {
       showErrorSnakeBar('expense_amount_required'.tr());
       return;
     }
+
+    // The debt is now a proposal the other side has to answer, so it needs an
+    // account to address, not just a name in my friend book.
+    final other = debtor.isMe ? creditor : debtor;
+    final otherUserId = other.userId;
+    final myUserId = ref.read(myUserIdProvider);
+    if (otherUserId == null) {
+      showErrorSnakeBar('debt_friend_no_account'.tr());
+      return;
+    }
+    if (myUserId == null) {
+      showErrorSnakeBar('debt_err_generic'.tr());
+      return;
+    }
+
     setState(() => _saving = true);
-    await ref
-        .read(groupServiceProvider)
-        .addDirectDebt(
-          debtor: debtor,
-          creditor: creditor,
+    final result = await ref
+        .read(debtServiceProvider)
+        .propose(
+          counterpartyUserId: otherUserId,
+          debtorUserId: debtor.isMe ? myUserId : otherUserId,
           title: title,
           amount: amount,
         );
     if (!mounted) return;
-    setState(() {
-      _saving = false;
-      _debtor = null;
-      _creditor = null;
-      _titleCtrl.clear();
-      _amountCtrl.clear();
-    });
-    FocusScope.of(context).unfocus();
-    showMessage('record_saved'.tr());
+    setState(() => _saving = false);
+
+    switch (result) {
+      case Ok(value: final outcome) when outcome.isSuccess:
+        setState(() {
+          _debtor = null;
+          _creditor = null;
+          _titleCtrl.clear();
+          _amountCtrl.clear();
+        });
+        FocusScope.of(context).unfocus();
+        showMessage('debt_sent'.tr());
+      case Ok(value: DebtOutcome.notFriends):
+        showErrorSnakeBar('debt_err_not_friends'.tr());
+      case Ok(value: DebtOutcome.badInput):
+        showErrorSnakeBar('debt_err_amount'.tr());
+      case Ok():
+      case Error():
+        showErrorSnakeBar('debt_err_generic'.tr());
+    }
   }
 
   @override
@@ -541,7 +591,8 @@ class _DebtComposerState extends ConsumerState<_DebtComposer> {
                 flex: 2,
                 child: _MiniField(
                   controller: _amountCtrl,
-                  hint: '\$0',
+                  // Blank is a real choice here, not an empty form.
+                  hint: 'debt_amount_hint'.tr(),
                   number: true,
                 ),
               ),
@@ -643,7 +694,15 @@ Future<Friend?> _showPersonPickerSheet(
                       _PersonTile(
                         friend: f,
                         selected: f.id == selectedFriendId,
-                        onTap: () => Navigator.of(sheetContext).pop(f),
+                        // Friends saved before bros had to be accounts have no
+                        // userId, so no device of theirs could ever receive
+                        // the confirmation. Picking one would strand the debt
+                        // in 確認中 forever, so it is refused up front.
+                        onTap: f.userId == null
+                            ? () => showErrorSnakeBar(
+                                'debt_friend_no_account'.tr(),
+                              )
+                            : () => Navigator.of(sheetContext).pop(f),
                       ),
                   ],
                 ),
@@ -669,38 +728,44 @@ class _PersonTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Accountless bros stay visible but read as unavailable — hiding them
+    // would just look like the friend had vanished.
+    final unavailable = friend.userId == null;
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
-      child: SizedBox(
-        width: 72,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Selection is carried by the avatar's own chrome: yellow fill, a
-            // full-weight border and a lifted shadow.
-            BrutalAvatar(
-              name: friend.name,
-              photoUrl: friend.avatarUrl,
-              size: 56,
-              fontSize: 24,
-              color: selected
-                  ? BrutalColors.primaryContainer
-                  : BrutalColors.surfaceContainerHigh,
-              offset: selected ? 3 : 0,
-              borderWidth: selected
-                  ? BrutalSpec.borderWidth
-                  : BrutalSpec.borderWidthThin,
-            ),
-            const SizedBox(height: 7),
-            Text(
-              friend.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: BrutalText.labelBold(fontSize: 12),
-            ),
-          ],
+      child: Opacity(
+        opacity: unavailable ? 0.4 : 1,
+        child: SizedBox(
+          width: 72,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Selection is carried by the avatar's own chrome: yellow fill, a
+              // full-weight border and a lifted shadow.
+              BrutalAvatar(
+                name: friend.name,
+                photoUrl: friend.avatarUrl,
+                size: 56,
+                fontSize: 24,
+                color: selected
+                    ? BrutalColors.primaryContainer
+                    : BrutalColors.surfaceContainerHigh,
+                offset: selected ? 3 : 0,
+                borderWidth: selected
+                    ? BrutalSpec.borderWidth
+                    : BrutalSpec.borderWidthThin,
+              ),
+              const SizedBox(height: 7),
+              Text(
+                friend.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: BrutalText.labelBold(fontSize: 12),
+              ),
+            ],
+          ),
         ),
       ),
     );
