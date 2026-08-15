@@ -12,11 +12,10 @@ import 'package:heymybro/shared/widgets/brutalism.dart';
 /// The screen a debt proposal opens onto — who is claiming what, and the
 /// answers along the bottom edge.
 ///
-/// Built as a claim slip rather than a form: a yellow header band naming who
-/// is asking, a hard rule under it (DESIGN.md — "Header: often separated by a
-/// horizontal black line"), then the amount as the largest thing on the
-/// screen. Somebody is asserting you owe them money; the number is the
-/// decision, so the number gets the space.
+/// Built as a claim slip rather than a form: the claim is a marker-highlighted
+/// caption at the top left with the claimant named under it, and the amount
+/// sits in the optical centre of the screen. Somebody is asserting you owe
+/// them money; the number is the decision, so the number gets the middle.
 ///
 /// It reads the proposal live rather than taking a copy, so if the other side
 /// withdraws it while you are looking, the page says so instead of letting you
@@ -100,35 +99,35 @@ class _Body extends ConsumerWidget {
 
     return Column(
       children: [
+        // Expanded, not scrolled: the slip fills the space between the back
+        // button and the answers, which is what puts the amount on the screen's
+        // centre line rather than wherever the content happens to end.
         Expanded(
-          child: SingleChildScrollView(
+          child: Padding(
             padding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
-            child: Column(
-              children: [
-                _ClaimSlip(proposal: proposal, iOwe: iOwe),
-                if (!myTurn) ...[
-                  const SizedBox(height: 18),
-                  Text(
-                    proposal.status == 'pending'
-                        ? 'debt_waiting_for'.tr(
-                            namedArgs: {'name': proposal.otherName ?? '?'},
-                          )
-                        : 'debt_confirm_settled'.tr(),
-                    textAlign: TextAlign.center,
-                    style: BrutalText.labelBold(
-                      fontSize: 13,
-                      color: BrutalColors.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ],
-            ),
+            child: _ClaimSlip(proposal: proposal, iOwe: iOwe),
           ),
         ),
+        if (!myTurn)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 4, 24, 0),
+            child: Text(
+              proposal.status == 'pending'
+                  ? 'debt_waiting_for'.tr(
+                      namedArgs: {'name': proposal.otherName ?? '?'},
+                    )
+                  : 'debt_confirm_settled'.tr(),
+              textAlign: TextAlign.center,
+              style: BrutalText.labelBold(
+                fontSize: 13,
+                color: BrutalColors.onSurfaceVariant,
+              ),
+            ),
+          ),
         // Pinned to the bottom edge rather than scrolled with the content: the
         // answer is the point of the screen and must never be below the fold.
         Padding(
-          padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+          padding: const EdgeInsets.fromLTRB(24, 10, 24, 16),
           child: myTurn
               ? _MyTurnActions(proposal: proposal)
               : _TheirTurnActions(proposal: proposal),
@@ -138,7 +137,7 @@ class _Body extends ConsumerWidget {
   }
 }
 
-/// The claim itself: who is asking (yellow band), a hard rule, then the money.
+/// The slip: claim top-left, money in the middle, 粗哥 leaning over the corner.
 class _ClaimSlip extends StatelessWidget {
   const _ClaimSlip({required this.proposal, required this.iOwe});
 
@@ -147,21 +146,15 @@ class _ClaimSlip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final name = proposal.otherName ?? '?';
-    final money = NumberFormat.decimalPattern();
-    final blank = proposal.amount == null;
-
-    // Semantic per DESIGN.md: red carries a liability, deep gold carries money
-    // coming back to you. The one glance at this screen should already say
-    // which way it goes.
-    final amountColor = iOwe ? BrutalColors.secondary : BrutalColors.incomeInk;
-
     return Stack(
+      // expand so the card fills the height it was given — the amount can only
+      // land on the centre line if the card knows how tall it is.
+      fit: StackFit.expand,
       clipBehavior: Clip.none,
       children: [
         Padding(
-          // Room for the sticker to sit over the top edge.
-          padding: const EdgeInsets.only(top: 40),
+          // Room for the sticker to lean over the top edge.
+          padding: const EdgeInsets.only(top: 34),
           child: Container(
             decoration: brutalDecoration(
               color: BrutalColors.surface,
@@ -169,77 +162,16 @@ class _ClaimSlip extends StatelessWidget {
               offset: BrutalSpec.shadowOffset,
             ),
             clipBehavior: Clip.antiAlias,
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
             child: Column(
-              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _Claimant(name: name, iOwe: iOwe, proposal: proposal),
-                Container(
-                  height: BrutalSpec.borderWidth,
-                  color: BrutalColors.onBackground,
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 26, 20, 24),
-                  child: Column(
-                    children: [
-                      Text(
-                        blank
-                            ? 'debt_amount_blank'.tr()
-                            : '\$${money.format(proposal.amount)}',
-                        textAlign: TextAlign.center,
-                        style: BrutalText.headlineLgMobile(
-                          fontSize: blank ? 20 : 52,
-                          color: blank
-                              ? BrutalColors.onSurfaceVariant
-                              : amountColor,
-                        ),
-                      ),
-                      if (proposal.originalAmount != null) ...[
-                        const SizedBox(height: 6),
-                        Text(
-                          'debt_was_amount'.tr(
-                            namedArgs: {
-                              'amount':
-                                  '\$${money.format(proposal.originalAmount)}',
-                            },
-                          ),
-                          // Struck through so "they changed it" reads without
-                          // needing the label to say so.
-                          style:
-                              BrutalText.body(
-                                fontSize: 13,
-                                color: BrutalColors.onSurfaceVariant,
-                              ).copyWith(
-                                decoration: TextDecoration.lineThrough,
-                                decorationColor: BrutalColors.onSurfaceVariant,
-                              ),
-                        ),
-                      ],
-                      const SizedBox(height: 18),
-                      BrutalPill(
-                        color: BrutalColors.surfaceContainerHigh,
-                        borderWidth: BrutalSpec.borderWidthThin,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 10,
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(LucideIcons.receipt, size: 16),
-                            const SizedBox(width: 8),
-                            Flexible(
-                              child: Text(
-                                proposal.title,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                textAlign: TextAlign.center,
-                                style: BrutalText.labelBold(fontSize: 15),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                _Claimant(proposal: proposal, iOwe: iOwe),
+                Expanded(
+                  child: Center(
+                    child: SingleChildScrollView(
+                      child: _Amount(proposal: proposal, iOwe: iOwe),
+                    ),
                   ),
                 ),
               ],
@@ -255,7 +187,7 @@ class _ClaimSlip extends StatelessWidget {
               iOwe
                   ? 'assets/mascot/stickers/07_weird-bill.png'
                   : 'assets/mascot/stickers/04_money-manage.png',
-              height: 92,
+              height: 88,
               fit: BoxFit.contain,
             ),
           ),
@@ -265,64 +197,133 @@ class _ClaimSlip extends StatelessWidget {
   }
 }
 
-/// Yellow header band: their face, their name, and what they are claiming.
+/// The claim, then who is making it — left-aligned, marker-highlighted, the
+/// same comic-caption treatment every other screen title in the app gets.
 class _Claimant extends StatelessWidget {
-  const _Claimant({
-    required this.name,
-    required this.iOwe,
-    required this.proposal,
-  });
+  const _Claimant({required this.proposal, required this.iOwe});
 
-  final String name;
-  final bool iOwe;
   final DebtProposal proposal;
+  final bool iOwe;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: BrutalColors.primaryContainer,
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-      child: Row(
-        children: [
-          BrutalAvatar(
-            name: name,
-            photoUrl: proposal.otherAvatarUrl,
-            size: 46,
-            fontSize: 20,
-            color: BrutalColors.surface,
-            borderWidth: BrutalSpec.borderWidth,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: BrutalText.headlineLgMobile(fontSize: 20),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  // The name is right above, so the sentence does not repeat
-                  // it — "阿華 / 說你欠他" reads as one line, not two.
-                  iOwe ? 'debt_claim_you_owe'.tr() : 'debt_claim_owes_you'.tr(),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: BrutalText.labelBold(
-                    fontSize: 13,
-                    color: BrutalColors.onPrimaryContainer,
-                  ),
-                ),
-              ],
+    final name = proposal.otherName ?? '?';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Align(
+          alignment: Alignment.centerLeft,
+          child: MarkerHighlight(
+            child: Text(
+              iOwe ? 'debt_claim_you_owe'.tr() : 'debt_claim_owes_you'.tr(),
+              style: BrutalText.headlineLgMobile(fontSize: 22),
             ),
           ),
-          // Leaves room for the sticker overlapping this corner.
-          const SizedBox(width: 64),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            BrutalAvatar(
+              name: name,
+              photoUrl: proposal.otherAvatarUrl,
+              size: 40,
+              fontSize: 18,
+              color: BrutalColors.surfaceContainerHigh,
+              borderWidth: BrutalSpec.borderWidthThin,
+            ),
+            const SizedBox(width: 10),
+            Flexible(
+              // Corner brackets mark this as the speaker of the line above,
+              // rather than a second heading competing with it.
+              child: Text(
+                '「$name」',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: BrutalText.headlineLgMobile(fontSize: 18),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// The number, its sign, and what it was for.
+class _Amount extends StatelessWidget {
+  const _Amount({required this.proposal, required this.iOwe});
+
+  final DebtProposal proposal;
+  final bool iOwe;
+
+  /// Money leaving you is signed and red; money coming back is green.
+  ///
+  /// The sign matters beyond decoration: it is the part that survives a
+  /// greyscale screenshot or a red-green colour blindness, so the direction is
+  /// never carried by the colour alone.
+  String _money(int value) {
+    final formatted = NumberFormat.decimalPattern().format(value);
+    return iOwe ? '-\$$formatted' : '\$$formatted';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final amount = proposal.amount;
+    final original = proposal.originalAmount;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          amount == null ? 'debt_amount_blank'.tr() : _money(amount),
+          textAlign: TextAlign.center,
+          style: BrutalText.headlineLgMobile(
+            fontSize: amount == null ? 20 : 52,
+            color: amount == null
+                ? BrutalColors.onSurfaceVariant
+                : (iOwe ? BrutalColors.secondary : BrutalColors.incomeGreen),
+          ),
+        ),
+        if (original != null) ...[
+          const SizedBox(height: 6),
+          Text(
+            'debt_was_amount'.tr(namedArgs: {'amount': _money(original)}),
+            // Struck through, so "they changed it" reads without a label
+            // spending a whole sentence saying so.
+            style:
+                BrutalText.body(
+                  fontSize: 13,
+                  color: BrutalColors.onSurfaceVariant,
+                ).copyWith(
+                  decoration: TextDecoration.lineThrough,
+                  decorationColor: BrutalColors.onSurfaceVariant,
+                ),
+          ),
         ],
-      ),
+        const SizedBox(height: 20),
+        BrutalPill(
+          color: BrutalColors.surfaceContainerHigh,
+          borderWidth: BrutalSpec.borderWidthThin,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(LucideIcons.receipt, size: 16),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  proposal.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: BrutalText.labelBold(fontSize: 15),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

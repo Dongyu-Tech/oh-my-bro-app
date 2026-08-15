@@ -25,6 +25,14 @@ abstract class BrutalColors {
   /// amount text uses this deep gold instead (~5:1 on the gold card).
   static const incomeInk = Color(0xFF745C00);
 
+  /// Income green for large amount TEXT on the warm light surfaces.
+  ///
+  /// Deliberately NOT [success] (#4ADE80): that green is tuned for the dark
+  /// theme in DESIGN.md and lands at roughly 1.4:1 against [background], so a
+  /// big number in it would be all but invisible here. Same hue, held down to
+  /// ~4.8:1 — still unmistakably green, and actually readable.
+  static const incomeGreen = Color(0xFF15803D);
+
   // Ink / text on warm background
   static const onBackground = Color(0xFF241A00);
   static const onSurfaceVariant = Color(0xFF4D4634);
