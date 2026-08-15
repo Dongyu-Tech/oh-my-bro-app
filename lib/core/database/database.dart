@@ -166,6 +166,20 @@ class Settlements extends Table {
 /// credit score without a line of code to exclude it.
 class DebtProposals extends Table {
   TextColumn get id => text()();
+
+  /// `debt` or `repayment`. A repayment needs the same agreement a debt does,
+  /// so it rides the same table and the same flow; it differs only in what a
+  /// confirmed one becomes locally, which answers it allows, and what the
+  /// screen shows.
+  TextColumn get kind => text().withDefault(const Constant('debt'))();
+
+  /// The debt this repayment clears. Null on a debt.
+  TextColumn get repaysId => text().nullable()();
+
+  /// What is still owed on this debt after every agreed repayment. Server-
+  /// computed, and only ever set on a confirmed debt.
+  IntColumn get outstanding => integer().nullable()();
+
   TextColumn get proposerId => text()();
   TextColumn get counterpartyId => text()();
 
@@ -236,7 +250,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forExecutor(super.executor);
 
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 11;
 
   // v1 table-less → v2 split schema → v3 PersonalEntries → v4 Friends +
   // Settlements + Members.friendId → v5 soft-delete (deletedAt) columns →
@@ -245,7 +259,8 @@ class AppDatabase extends _$AppDatabase {
   // v8 Friends.userId/handle/avatarUrl (a bro is a real account now) →
   // v9 DebtProposals (a logged debt is a proposal until both sides agree) →
   // v10 DebtProposals.confirmAlertAt (announce "they agreed" once, to the
-  // side that did not press accept). Bump
+  // side that did not press accept) → v11 DebtProposals.kind/repaysId/
+  // outstanding (a repayment needs agreeing to as well). Bump
   // BackupService.supportedSchemaVersions alongside any future change here.
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -287,6 +302,11 @@ class AppDatabase extends _$AppDatabase {
           // Only when the table already existed; a from<9 upgrade just
           // created it with this column present.
           await m.addColumn(debtProposals, debtProposals.confirmAlertAt);
+        }
+        if (from < 11 && from >= 9) {
+          await m.addColumn(debtProposals, debtProposals.kind);
+          await m.addColumn(debtProposals, debtProposals.repaysId);
+          await m.addColumn(debtProposals, debtProposals.outstanding);
         }
       }
     },
@@ -599,6 +619,12 @@ class AppDatabase extends _$AppDatabase {
       );
     });
   }
+
+  /// Land a confirmed repayment. Idempotent for the same reason the debt
+  /// projection is: the id comes from the repayment's own proposal, so a
+  /// replay writes nothing.
+  Future<void> applyRepaymentSettlement(SettlementsCompanion settlement) =>
+      into(settlements).insert(settlement, mode: InsertMode.insertOrIgnore);
 
   Future<void> deleteExpense(String expenseId) =>
       (update(expenses)..where((e) => e.id.equals(expenseId))).write(

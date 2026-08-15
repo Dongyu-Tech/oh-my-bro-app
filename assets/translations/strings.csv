@@ -128,6 +128,7 @@ record_with_who,Who's it with?,跟誰分？
 record_me,Just me,我自己
 record_personal_todo,Personal ledger coming soon,個人帳之後接帳本
 record_saved,Recorded!,記好囉！
+home_title,OH MY BRO,欸!粗哥
 home_greeting,Who's grabbing lunch today?,欸 今天要揪誰吃飯？
 home_gather_sub,A gathering + room code,約一攤・開房號
 home_join_sub,Got a code? tap here,朋友給碼就按
@@ -374,3 +375,19 @@ expense_title_required,What did you spend on,這筆是花什麼
 expense_amount_required,Enter an amount,填一下金額
 expense_custom_mismatch,Shares must add up to the total,每人金額加起來要等於總額
 expense_each,each,每人
+debt_repay_title,Paid you back,還你錢了
+debt_repay_claim,says they paid you back,說他還你錢了
+debt_repay_claim_mine,you said you paid them,你說你還了他
+debt_repay_subtitle,Check this repayment is right,確認這筆還款是否正確
+debt_field_repaid,Repaid,還款金額
+debt_field_outstanding,Still owed,尚欠金額
+debt_repay_leaves,"Leaves {amount}",還完剩 {amount}
+debt_repay_clears,Clears it,剛好還清
+debt_repay_accept,"Confirm I got {amount}",確認收到 {amount}
+debt_action_repay,Pay back,還款
+debt_repay_sheet_title,How much?,要還多少？
+debt_repay_sheet_hint,"At most {amount}",最多 {amount}
+debt_repay_sent,Sent — waiting for them,已送出 等對方確認
+debt_err_too_much,That's more than is owed,超過還欠的金額
+debt_repay_wait,Waiting for them to pay,等對方還款
+debt_repay_badge,Repayment,還款

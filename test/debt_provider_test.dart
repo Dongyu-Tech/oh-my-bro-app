@@ -40,6 +40,13 @@ class _FakeDebtRepository implements DebtRepository {
   }) async => const Result.ok(DebtOutcome.ok);
 
   @override
+  Future<Result<DebtOutcome>> proposeRepayment({
+    required String id,
+    required String repaysId,
+    required int amount,
+  }) async => const Result.ok(DebtOutcome.ok);
+
+  @override
   Future<Result<DebtOutcome>> cancel(String id) async =>
       const Result.ok(DebtOutcome.ok);
 }

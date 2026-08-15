@@ -82,6 +82,21 @@ final unseenConfirmationsProvider = Provider<List<DebtProposal>>((ref) {
       .toList();
 });
 
+/// Confirmed debts, keyed by the local group they were projected into.
+///
+/// The projection derives the group id from the proposal id, and that is a
+/// one-way function — so a debt card in 誰欠誰 cannot tell on its own whether
+/// it came from a shared proposal or a local gathering. This map is how it
+/// finds out, which decides whether repaying it can be confirmed by the other
+/// side or has to stay a local settle.
+final debtProposalByGroupProvider = Provider<Map<String, DebtProposal>>((ref) {
+  final all = ref.watch(debtProposalsProvider).asData?.value ?? const [];
+  return {
+    for (final d in all)
+      if (d.kind == 'debt' && d.status == 'confirmed') debtGroupId(d.id): d,
+  };
+});
+
 /// The one proposal to pop up next: waiting on me, and never popped before.
 /// One at a time on purpose — three popups in a row is not a notification.
 final nextPopupProvider = Provider<DebtProposal?>((ref) {
@@ -182,6 +197,9 @@ class DebtService {
       for (final r in rows)
         DebtProposalsCompanion.insert(
           id: r.id,
+          kind: Value(r.kind),
+          repaysId: Value(r.repaysId),
+          outstanding: Value(r.outstanding),
           proposerId: r.proposerId,
           counterpartyId: r.counterpartyId,
           debtorId: r.debtorId,
@@ -203,9 +221,43 @@ class DebtService {
         ),
     ]);
 
+    // Debts first, repayments second. A repayment's settlement points at the
+    // group and members the debt projects into, so those rows have to exist —
+    // and on a fresh install both arrive in the same batch.
     for (final r in rows) {
-      if (r.isConfirmed) await _project(r);
+      if (r.isConfirmed && !r.isRepayment) await _project(r);
     }
+    for (final r in rows) {
+      if (r.isConfirmed && r.isRepayment) await _projectRepayment(r);
+    }
+  }
+
+  /// Land a confirmed repayment as a settlement inside the debt it clears.
+  ///
+  /// Nothing new is invented: the ordinary netting already treats settlements
+  /// as debt-clearing, so this reduces the balance down exactly the path 結清
+  /// has always used.
+  Future<void> _projectRepayment(DebtProposalModel r) async {
+    final me = _ref.read(myUserIdProvider);
+    final amount = r.amount;
+    final debtId = r.repaysId;
+    if (me == null || amount == null || debtId == null) return;
+
+    // The payer is the debtor of the original debt, which is also this
+    // repayment's own debtorId — set that way when it was proposed.
+    final payer = r.debtorId;
+    final receiver = r.proposerId == payer ? r.counterpartyId : r.proposerId;
+
+    await _db.applyRepaymentSettlement(
+      buildRepaymentSettlement(
+        repaymentId: r.id,
+        debtId: debtId,
+        debtorUserId: payer,
+        creditorUserId: receiver,
+        amount: amount,
+        confirmedAt: r.resolvedAt ?? r.updatedAt,
+      ),
+    );
   }
 
   /// Land a confirmed proposal in the ledger. Safe to call repeatedly — see
@@ -271,6 +323,23 @@ class DebtService {
   /// is a race the banner wins — so this device's copy is marked *first*, and
   /// only then does the row land. I am the one who agreed; being told so is
   /// noise. The other side's copy still has it unset and will announce it.
+  /// Claim to have paid part or all of a debt. Only the debtor may — the
+  /// creditor is the one who confirms the money arrived.
+  Future<Result<DebtOutcome>> proposeRepayment({
+    required String debtId,
+    required int amount,
+  }) async {
+    final result = await _repo.proposeRepayment(
+      id: _uuid.v4(),
+      repaysId: debtId,
+      amount: amount,
+    );
+    if (result case Ok(value: final outcome) when outcome.isSuccess) {
+      await refresh();
+    }
+    return result;
+  }
+
   Future<Result<DebtOutcome>> accept(String id) async {
     final result = await _repo.respond(id: id, reply: DebtReply.accept);
     if (result case Ok(value: final outcome) when outcome.isSuccess) {

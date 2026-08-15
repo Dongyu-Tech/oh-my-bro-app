@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:share_plus/share_plus.dart';
 
+import 'package:heymybro/core/database/database.dart';
+import 'package:heymybro/shared/debt/debt_actions.dart';
 import 'package:heymybro/shared/pages/debt_proposal_card.dart';
 import 'package:heymybro/shared/pages/group_detail_page.dart';
 import 'package:heymybro/shared/provider/debt_provider.dart';
@@ -227,6 +229,8 @@ class _DebtCard extends ConsumerWidget {
     final relation = (owed ? 'tx_owes_you' : 'tx_you_owe').tr(
       namedArgs: {'name': debt.otherName},
     );
+    // The shared proposal this debt was projected from, if any.
+    final backing = ref.watch(debtProposalByGroupProvider)[debt.groupId];
 
     // Tap the card body to open the underlying gathering (for a direct debt,
     // that's the only place to edit/delete it — it's hidden from the 攤 lists).
@@ -284,22 +288,77 @@ class _DebtCard extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  _CardAction(
-                    icon: LucideIcons.checkCircle,
-                    color: BrutalColors.primary,
-                    onTap: () => showSettleSheet(
-                      context,
-                      groupId: debt.groupId,
-                      transfer: debt.transfer,
-                      fromName: owed ? debt.otherName : 'group_me'.tr(),
-                      toName: owed ? 'group_me'.tr() : debt.otherName,
-                    ),
-                  ),
+                  // A debt that came from a shared proposal cannot be settled
+                  // unilaterally: the other side has a copy, and clearing it
+                  // here alone would leave the two ledgers disagreeing. So it
+                  // goes through the repayment flow instead — and only the
+                  // person who owes can start one.
+                  if (backing == null)
+                    _CardAction(
+                      icon: LucideIcons.checkCircle,
+                      color: BrutalColors.primary,
+                      onTap: () => showSettleSheet(
+                        context,
+                        groupId: debt.groupId,
+                        transfer: debt.transfer,
+                        fromName: owed ? debt.otherName : 'group_me'.tr(),
+                        toName: owed ? 'group_me'.tr() : debt.otherName,
+                      ),
+                    )
+                  else if (owed)
+                    // They owe me — nothing for me to do but wait.
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 8,
+                      ),
+                      child: Text(
+                        'debt_repay_wait'.tr(),
+                        style: BrutalText.labelBold(
+                          fontSize: 12,
+                          color: BrutalColors.onSurfaceVariant,
+                        ),
+                      ),
+                    )
+                  else
+                    _RepayAction(debt: backing),
                 ],
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// "還款" on a debt that came from a shared proposal — a claim the other side
+/// has to confirm, not a number this device gets to decide on its own.
+class _RepayAction extends ConsumerWidget {
+  const _RepayAction({required this.debt});
+
+  final DebtProposal debt;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return PressableBrutal(
+      onTap: () => proposeRepayment(context, ref, debt),
+      color: BrutalColors.primaryContainer,
+      radius: BrutalSpec.pillRadius,
+      borderWidth: BrutalSpec.borderWidthThin,
+      restOffset: 2,
+      pressedOffset: 0,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(LucideIcons.handCoins, size: 16),
+          const SizedBox(width: 6),
+          Text(
+            'debt_action_repay'.tr(),
+            style: BrutalText.labelBold(fontSize: 13),
+          ),
+        ],
       ),
     );
   }
