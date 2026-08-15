@@ -38,6 +38,9 @@ dependencies:
   google_sign_in: ^7.2.0
 
   share_plus: ^12.0.1                # OS share sheet (invite links, ledger share)
+  mobile_scanner: ^7.1.4             # camera QR scan (夥伴 → 掃描); needs camera permission on both platforms
+  qr_flutter: ^4.1.0                 # QR *generation* (帳號 → 掃描分享 ID); the read side is mobile_scanner
+  screen_brightness: ^2.1.11         # app-only brightness boost while a QR is on screen; no permission needed
 
   # Add as project needs:
   # skeletonizer: ^2.1.3             # loading skeletons
@@ -45,11 +48,23 @@ dependencies:
   # url_launcher: ^6.3.2             # open URLs
   # package_info_plus: ^9.0.1        # app version
 
+# TEMPORARY — remove after upgrading the Flutter SDK.
+#
+# screen_brightness_ios 2.1.3+ declares `FlutterSceneLifeCycleDelegate`, a
+# symbol this project's Flutter (3.35.1, Aug 2025) does not ship, so the iOS
+# build dies with "Cannot find type 'FlutterSceneLifeCycleDelegate' in scope".
+# 2.1.2 is the last version that predates it and still implements both
+# set/resetApplicationScreenBrightness, which share_id_sheet.dart calls.
+# The real fix is `flutter upgrade`; delete this block once that happens.
+dependency_overrides:
+  screen_brightness_ios: 2.1.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
   build_runner: ^2.7.1
+  screen_brightness_platform_interface: ^2.1.2  # tests swap in a fake brightness platform
   freezed: ^3.2.3
   json_serializable: 6.11.2
   drift_dev: ^2.29.0

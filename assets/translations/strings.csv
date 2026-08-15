@@ -71,6 +71,8 @@ account_stats_title,Account stats,帳戶統計
 account_days_logged,Days logged,記帳天數
 account_month_total,This month,本月總額
 account_share_id,Scan to share ID,掃描分享 ID
+account_share_id_sheet_title,My share ID,我的分享 ID
+account_share_id_sheet_hint,Let your bro scan this to add you,讓你的 bro 掃這個把你加進去
 account_currency,Currency,幣別
 account_categories,Categories,分類管理
 account_export,Export Data,匯出資料
@@ -139,6 +141,7 @@ home_quick_need_amount,Add an amount — e.g. Lunch 120,後面加個金額 例�
 debt_composer_title,Log a debt,記一筆欠款
 debt_pick,Pick,選人
 debt_pick_person,Who?,選誰？
+debt_pick_empty,No bros yet — go add one!,先去加個朋友吧！
 debt_item_hint,Item,項目
 debt_record,Log,記下
 debt_need_people,Pick who's on each side,兩邊的人選好
@@ -213,7 +216,60 @@ trash_purge_all,Empty the bin,全部清空
 trash_purge_all_confirm,Empty the entire bin? This can't be undone.,清空整個回收桶？無法復原。
 friends_title,My bros,我的好友
 friend_add,Add a bro,加好友
-friend_add_hint,Bro's name,好友名字
+friend_add_hint,Bro's name / Email,好友名字 / Email
+friend_scan,Scan,掃描
+friend_search_hint,their_bro_id,對方的 ID
+friend_invite,Invite,邀請
+friend_request_sent,Invite sent — waiting for them.,已送出邀請 等對方同意
+friend_request_pending,Invite sent,已送出邀請
+friend_request_rejected,Turned down.,已拒絕
+friend_already,Already bros,已經是好友了
+friend_wants_to_add,wants to be your bro,想加你為好友
+friend_pending_count,{count} invite(s) waiting,{count} 個邀請等待回覆
+friend_refresh_failed,Couldn't refresh — check your connection.,更新失敗 檢查一下網路
+friend_remove_failed,Couldn't remove — check your connection.,刪除失敗 檢查一下網路
+confirm_delete_friend_mutual,They stop being your bro on both sides.,雙方都會解除好友關係
+scan_added_direct,Bro added!,已加為好友！
+scan_code_expired,That code has expired — ask for a fresh one.,這張碼已失效 請對方重新出示
+share_id_expires,Expires at {time},{time} 失效
+search_not_found,No bro with that ID.,找不到這個 ID 的人
+search_is_me,That's you!,這是你自己啦
+search_no_backend,Search needs the backend — not wired in this build.,搜尋要連後端 這個版本沒接
+handle_setup_title,Pick your bro ID,取一個專屬 ID
+handle_setup_hint,This is how other bros find you. You can change it later.,別人要用這個 ID 才找得到你。之後還能改。
+handle_placeholder,your_id,your_id
+handle_confirm,That's my ID,就用這個
+handle_saving,Saving…,儲存中…
+handle_taken,Someone already took that ID.,這個 ID 被人搶走了
+handle_no_profile,Profile not loaded yet — try again in a moment.,資料還沒載入完 等一下再試
+handle_error_empty,Pick an ID first.,先想一個 ID 吧
+handle_error_short,At least {min} characters.,至少要 {min} 個字
+handle_error_long,At most {max} characters.,最多 {max} 個字
+handle_error_chars,Letters numbers and underscore only.,只能用英文、數字和底線
+profile_edit_title,Edit profile,編輯個人資料
+profile_saved,Saved!,存好了！
+profile_unavailable,No profile on this build.,這個版本沒有連後端
+profile_field_name,Display name,顯示名稱
+profile_field_name_hint,What bros call you,大家怎麼叫你
+profile_field_handle,Bro ID,專屬 ID
+profile_field_gender,Gender,性別
+profile_field_birthday,Birthday,生日
+profile_field_birthday_hint,Not set,還沒設定
+profile_field_bio,About you,自我介紹
+profile_field_bio_hint,Say something about yourself,說說你自己
+gender_male,Male,男
+gender_female,Female,女
+gender_other,Other,其他
+gender_prefer_not_to_say,Rather not say,不想說
+account_edit_profile,Edit profile,編輯個人資料
+scan_title,Scan a bro,掃描好友
+scan_hint,Point the camera at your bro's QR code,把鏡頭對準對方的 QR code
+scan_torch,Torch,手電筒
+scan_torch_unavailable,No torch on this camera.,這台的相機沒有手電筒
+scan_invalid,That's not an Oh My Bro code.,這不是 Oh My Bro 的條碼
+scan_permission_denied,Camera is off — turn it on in Settings.,相機權限被關掉了 去設定開啟吧
+scan_error,The camera wouldn't start.,相機啟動失敗
+scan_friend_added,{name} is your bro now!,{name} 已加入好友！
 friend_empty,No bros yet — add one!,還沒有好友 加一個吧！
 friend_delete,Remove bro,刪好友
 credit_score,Credit score,信用評分

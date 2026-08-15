@@ -261,6 +261,95 @@ class _PressableBrutalState extends State<PressableBrutal> {
   }
 }
 
+/// Avatar with the app-wide fallback chain: **photo → first letter → `?`**.
+///
+/// Today only the signed-in user has a photo — their Google picture, carried on
+/// `AuthUserModel.photoUrl`. Friends are local rows with no account attached, so
+/// `photoUrl: null` is the normal case and they render the initial. Once the
+/// `profiles` table syncs, passing a member's avatar here is the only change
+/// needed for real pictures to appear everywhere at once.
+///
+/// Pass `radius: size / 2` for a circle; the default is the squarish
+/// [BrutalSpec.pillRadius] used by the list avatars.
+class BrutalAvatar extends StatelessWidget {
+  const BrutalAvatar({
+    super.key,
+    required this.name,
+    required this.size,
+    this.photoUrl,
+    this.color = BrutalColors.surfaceContainerHigh,
+    this.radius,
+    this.borderWidth = BrutalSpec.borderWidthThin,
+    this.offset = 0,
+    this.fontSize,
+  });
+
+  /// Drives the fallback initial. Never shown when a photo loads.
+  final String name;
+  final double size;
+  final String? photoUrl;
+  final Color color;
+  final double? radius;
+  final double borderWidth;
+  final double offset;
+  final double? fontSize;
+
+  /// Google avatar URLs carry a size directive (`…=s96-c`). Asking for the size
+  /// we actually draw avoids both an upscaled blur on the big account avatar
+  /// and a needless full-size download for a 50px list row. Anything else — a
+  /// Supabase Storage URL, once uploads land — passes through untouched.
+  String? _resolvedPhotoUrl(BuildContext context) {
+    final url = photoUrl?.trim();
+    if (url == null || url.isEmpty) return null;
+    if (!url.contains('googleusercontent.com')) return url;
+
+    final px = (size * MediaQuery.devicePixelRatioOf(context)).round();
+    return '${url.replaceFirst(RegExp(r'=s\d+(-c)?$'), '')}=s$px-c';
+  }
+
+  Widget _initial() {
+    return Text(
+      name.characters.isEmpty ? '?' : name.characters.first,
+      style: BrutalText.headlineLgMobile(fontSize: fontSize ?? size * 0.44),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final url = _resolvedPhotoUrl(context);
+
+    return Container(
+      width: size,
+      height: size,
+      decoration: brutalDecoration(
+        color: color,
+        radius: radius ?? BrutalSpec.pillRadius,
+        offset: offset,
+        borderWidth: borderWidth,
+      ),
+      clipBehavior: Clip.antiAlias,
+      alignment: Alignment.center,
+      child: url == null
+          ? _initial()
+          : Image.network(
+              url,
+              width: size,
+              height: size,
+              fit: BoxFit.cover,
+              // A broken, expired or offline picture must never leave a hole —
+              // it degrades to exactly what a photoless bro shows.
+              errorBuilder: (_, __, ___) => _initial(),
+              // Hold the monogram until there is a frame to draw. Not
+              // loadingBuilder: its `progress` is also null *before* the first
+              // chunk event arrives, so a slow connection would flash an empty
+              // circle instead of the initial.
+              frameBuilder: (_, child, frame, __) =>
+                  frame == null ? _initial() : child,
+            ),
+    );
+  }
+}
+
 /// Highlighter-marker band drawn *behind* its child, like a felt-tip stroke
 /// swiped across the lower portion of a heading. A core neo-brutalism motif —
 /// reuse for any title that needs the yellow underline emphasis.

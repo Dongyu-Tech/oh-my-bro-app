@@ -6,9 +6,13 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import 'package:heymybro/core/error/error_logger.dart';
+import 'package:heymybro/core/error/result.dart';
 import 'package:heymybro/shared/dialogs/basic_dialog.dart';
 import 'package:heymybro/shared/provider/friend_provider.dart';
+import 'package:heymybro/shared/provider/friendship_provider.dart';
 import 'package:heymybro/shared/provider/group_provider.dart';
+import 'package:heymybro/shared/repositories/user_repository.dart'
+    show BackendNotWiredException;
 import 'package:heymybro/shared/widgets/back_button.dart';
 import 'package:heymybro/shared/widgets/brutalism.dart';
 import 'package:heymybro/shared/widgets/confirm_dialog.dart';
@@ -73,14 +77,27 @@ class FriendDetailPage extends ConsumerWidget {
                         if (await confirmDialog(
                           context,
                           title: 'confirm_delete_friend'.tr(),
-                          message: 'confirm_delete_friend_msg'.tr(),
+                          // Say it out loud: unfriending is not "hide them
+                          // from my list", it removes them on their side too.
+                          message:
+                              '${'confirm_delete_friend_msg'.tr()}\n'
+                              '${'confirm_delete_friend_mutual'.tr()}',
                           confirmLabel: 'common_delete'.tr(),
                           danger: true,
                         )) {
-                          await ref
-                              .read(friendServiceProvider)
-                              .deleteFriend(friendId);
-                          if (context.mounted) context.pop();
+                          // Unfriending is mutual: this drops the relationship
+                          // on their side too, and only clears the local row
+                          // once the server has agreed.
+                          switch (await removeBro(ref, friend)) {
+                            case Ok():
+                              if (context.mounted) context.pop();
+                            case Error(error: final e):
+                              showErrorSnakeBar(
+                                e is BackendNotWiredException
+                                    ? 'search_no_backend'.tr()
+                                    : 'friend_remove_failed'.tr(),
+                              );
+                          }
                         }
                       },
                       color: BrutalColors.surface,

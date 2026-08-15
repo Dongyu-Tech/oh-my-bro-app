@@ -45,6 +45,9 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<!-- Camera is used only by the 夥伴 → 掃描 QR scanner (mobile_scanner). -->
+	<key>NSCameraUsageDescription</key>
+	<string>Oh My Bro uses the camera to scan a bro&apos;s QR code so you can add them.</string>
 	<!-- Google Sign-In: reversed iOS OAuth client ID, for the auth callback. -->
 	<key>CFBundleURLTypes</key>
 	<array>

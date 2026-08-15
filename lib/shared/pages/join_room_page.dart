@@ -1,52 +1,23 @@
-import 'package:collection/collection.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import 'package:heymybro/core/error/error_logger.dart';
-import 'package:heymybro/shared/provider/group_provider.dart';
+import 'package:heymybro/shared/pages/join_room_sheet.dart';
 import 'package:heymybro/shared/widgets/back_button.dart';
 import 'package:heymybro/shared/widgets/brutalism.dart';
 
-/// "Enter a room code to join." Local demo: matches the code against groups on
-/// THIS device (so a code you created here resolves); a real cross-device join
-/// needs the backend, which the not-found message calls out.
-class JoinRoomPage extends ConsumerStatefulWidget {
+/// Full-page "enter a room code to join".
+///
+/// 首頁 now opens [showJoinRoomSheet] instead of pushing here, but the `/join`
+/// route is kept because its path mirrors the invite link
+/// (`https://ohmybro.app/join/<code>`) and is where a deep link should land.
+/// The form itself lives in [JoinRoomForm] so both entry points stay identical.
+class JoinRoomPage extends ConsumerWidget {
   const JoinRoomPage({super.key});
 
   @override
-  ConsumerState<JoinRoomPage> createState() => _JoinRoomPageState();
-}
-
-class _JoinRoomPageState extends ConsumerState<JoinRoomPage> {
-  final _codeCtrl = TextEditingController();
-
-  @override
-  void dispose() {
-    _codeCtrl.dispose();
-    super.dispose();
-  }
-
-  void _join() {
-    final code = _codeCtrl.text.trim();
-    if (code.length < 6) {
-      showErrorSnakeBar('join_hint'.tr());
-      return;
-    }
-    final groups = ref.read(groupsProvider).asData?.value ?? const [];
-    final match = groups.where((g) => roomCodeFor(g.id) == code).firstOrNull;
-    if (match == null) {
-      showErrorSnakeBar('join_not_found'.tr());
-      return;
-    }
-    context.pushReplacement('/group/${match.id}/room');
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: BrutalColors.background,
       body: SafeArea(
@@ -82,63 +53,9 @@ class _JoinRoomPageState extends ConsumerState<JoinRoomPage> {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    Container(
-                      decoration: brutalDecoration(
-                        color: BrutalColors.surface,
-                        radius: BrutalSpec.cardRadius,
-                        offset: BrutalSpec.shadowOffsetMobile,
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 18),
-                      child: TextField(
-                        controller: _codeCtrl,
-                        cursorColor: BrutalColors.onBackground,
-                        keyboardType: TextInputType.number,
-                        textAlign: TextAlign.center,
-                        maxLength: 6,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                        ],
-                        style: BrutalText.display(
-                          fontSize: 40,
-                        ).copyWith(letterSpacing: 10),
-                        decoration: InputDecoration(
-                          counterText: '',
-                          border: InputBorder.none,
-                          hintText: '••••••',
-                          hintStyle: BrutalText.display(
-                            fontSize: 40,
-                            color: BrutalColors.outline,
-                          ).copyWith(letterSpacing: 10),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Center(
-                      child: Text(
-                        'join_hint'.tr(),
-                        style: BrutalText.labelBold(
-                          fontSize: 13,
-                          color: BrutalColors.onSurfaceVariant,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    PressableBrutal(
-                      onTap: _join,
-                      color: BrutalColors.primaryContainer,
-                      alignment: Alignment.center,
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(LucideIcons.logIn, size: 20),
-                          const SizedBox(width: 8),
-                          Text(
-                            'join_button'.tr(),
-                            style: BrutalText.labelBold(fontSize: 17),
-                          ),
-                        ],
-                      ),
+                    JoinRoomForm(
+                      onJoined: (groupId) =>
+                          context.pushReplacement('/group/$groupId/room'),
                     ),
                   ],
                 ),
