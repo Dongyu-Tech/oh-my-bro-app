@@ -415,6 +415,34 @@ class AppDatabase extends _$AppDatabase {
         DebtProposalsCompanion(poppedAt: Value(DateTime.now())),
       );
 
+  /// Delete every direct-debt group that no live proposal accounts for.
+  ///
+  /// The projection writes these rows and, until this existed, nothing ever
+  /// removed them — so a proposal deleted server-side left its debt behind on
+  /// the device permanently, with nothing backing it. Same lesson as the
+  /// mirror one layer up: a sync that can only add cannot express a deletion.
+  ///
+  /// Members, expenses, shares and settlements all cascade off the group, so
+  /// removing it takes the whole debt with it.
+  ///
+  /// Only ever call this after a SUCCESSFUL fetch. An empty set legitimately
+  /// means "the server has no debts", and passing one after a failed fetch
+  /// would clear the ledger.
+  ///
+  /// Note this cannot distinguish an orphan from a direct debt recorded by the
+  /// old local-only composer — both are `isDirect` groups with ids no proposal
+  /// derives. Those predate debts needing agreement and are swept too.
+  Future<void> purgeOrphanDirectDebts(Set<String> liveGroupIds) {
+    return (delete(groups)..where((g) {
+          // `NOT IN ()` is a syntax error, so an empty set means "every direct
+          // debt is an orphan" and needs no exclusion clause at all.
+          return liveGroupIds.isEmpty
+              ? g.isDirect.equals(true)
+              : g.isDirect.equals(true) & g.id.isNotIn(liveGroupIds.toList());
+        }))
+        .go();
+  }
+
   Future<void> markDebtConfirmAlertSeen(String id) =>
       (update(debtProposals)..where((d) => d.id.equals(id))).write(
         DebtProposalsCompanion(confirmAlertAt: Value(DateTime.now())),

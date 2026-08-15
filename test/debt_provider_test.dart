@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:heymybro/core/database/database.dart';
 import 'package:heymybro/core/error/result.dart';
+import 'package:heymybro/shared/debt/debt_projection.dart';
 import 'package:heymybro/shared/models/debt_proposal_model.dart';
 import 'package:heymybro/shared/provider/database_provider.dart';
 import 'package:heymybro/shared/provider/debt_provider.dart';
@@ -277,6 +278,93 @@ void main() {
       () => container.read(unseenDeadEndsProvider).isEmpty,
       reason: 'the acknowledged rejection to disappear',
     );
+  });
+
+  test('a debt whose proposal is gone leaves the ledger too', () async {
+    final container = containerWith([_model(id: 'p1', status: 'confirmed')]);
+    final service = container.read(debtServiceProvider);
+    await service.refresh();
+    expect((await db.watchGroups().first).length, 1);
+
+    // Deleted server-side. Until the sweep existed the proposal vanished from
+    // the mirror while the debt it had projected stayed behind for good —
+    // sitting in 帳本 backed by nothing, and different from what the other
+    // account could see.
+    repo.rows = const [];
+    await service.refresh();
+
+    expect(await db.watchGroups().first, isEmpty);
+    expect(
+      await db.watchAllExpenses().first,
+      isEmpty,
+      reason: 'expenses and shares cascade off the group',
+    );
+  });
+
+  test('a rejected proposal takes its debt back out of the ledger', () async {
+    final container = containerWith([_model(id: 'p1', status: 'confirmed')]);
+    final service = container.read(debtServiceProvider);
+    await service.refresh();
+    expect((await db.watchGroups().first).length, 1);
+
+    repo.rows = [_model(id: 'p1', status: 'rejected')];
+    await service.refresh();
+
+    expect(await db.watchGroups().first, isEmpty);
+  });
+
+  test('a live debt survives the sweep', () async {
+    final container = containerWith([
+      _model(id: 'keep', status: 'confirmed'),
+      _model(id: 'drop', status: 'confirmed'),
+    ]);
+    final service = container.read(debtServiceProvider);
+    await service.refresh();
+    expect((await db.watchGroups().first).length, 2);
+
+    repo.rows = [_model(id: 'keep', status: 'confirmed')];
+    await service.refresh();
+
+    final groups = await db.watchGroups().first;
+    expect(groups.length, 1);
+    expect(groups.single.id, debtGroupId('keep'));
+  });
+
+  test('signed out, nothing is swept', () async {
+    // A signed-out session cannot have projected anything, so an empty fetch
+    // from that state is no evidence at all — and clearing the ledger on it
+    // would be destroying data for nothing.
+    db = AppDatabase.forExecutor(NativeDatabase.memory());
+    repo = _FakeDebtRepository([]);
+    final container = ProviderContainer(
+      overrides: [
+        appDatabaseProvider.overrideWithValue(db),
+        debtRepositoryProvider.overrideWithValue(repo),
+        myUserIdProvider.overrideWithValue(null),
+      ],
+    );
+    addTearDown(db.close);
+    addTearDown(container.dispose);
+    container.listen(debtProposalsProvider, (_, __) {});
+
+    await db.applyDebtProjection(
+      DebtProjection.build(
+        proposalId: 'someone-elses-session',
+        title: '晚餐',
+        amount: 500,
+        creditorUserId: 'me',
+        debtorUserId: 'them',
+        creditorName: 'me',
+        debtorName: '阿華',
+        iAmCreditor: true,
+        friendId: null,
+        confirmedAt: DateTime(2026, 8, 15),
+      ),
+    );
+
+    await container.read(debtServiceProvider).refresh();
+
+    expect((await db.watchGroups().first).length, 1);
   });
 
   test('a proposal deleted server-side stops being shown', () async {

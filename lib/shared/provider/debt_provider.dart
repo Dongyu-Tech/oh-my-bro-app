@@ -230,6 +230,21 @@ class DebtService {
     for (final r in rows) {
       if (r.isConfirmed && r.isRepayment) await _projectRepayment(r);
     }
+
+    // Then take away what no longer belongs. Projecting is what puts a debt in
+    // the ledger; without the matching sweep, a proposal deleted or rejected
+    // server-side leaves its debt sitting there for good, backed by nothing —
+    // two accounts looking at genuinely different books.
+    //
+    // Guarded on being signed in: `me == null` means we cannot have projected
+    // anything this session, and clearing the ledger from that state would be
+    // destroying data on no evidence at all.
+    if (_ref.read(myUserIdProvider) != null) {
+      await _db.purgeOrphanDirectDebts({
+        for (final r in rows)
+          if (r.isConfirmed && !r.isRepayment) debtGroupId(r.id),
+      });
+    }
   }
 
   /// Land a confirmed repayment as a settlement inside the debt it clears.
