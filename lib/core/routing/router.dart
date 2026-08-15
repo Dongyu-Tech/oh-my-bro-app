@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:heymybro/shared/models/auth_user_model.dart';
 import 'package:heymybro/shared/pages/app_shell.dart';
+import 'package:heymybro/shared/pages/debt_confirm_page.dart';
 import 'package:heymybro/shared/pages/friend_ledger_page.dart';
 import 'package:heymybro/shared/pages/friend_detail_page.dart';
 import 'package:heymybro/shared/pages/gatherings_list_page.dart';
@@ -89,6 +90,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/scan', builder: (_, __) => const ScanPage()),
       // Unified record form (personal / into a circle), pushed from home.
       GoRoute(path: '/record', builder: (_, __) => const RecordPage()),
+      // A debt awaiting an answer, opened automatically by DebtPopupHost the
+      // moment one arrives and tappable from 帳本's 待確認 block.
+      GoRoute(
+        path: '/debt/:id',
+        builder: (_, state) =>
+            DebtConfirmPage(proposalId: state.pathParameters['id']!),
+      ),
 
       // All gatherings (active + archived), pushed from the home "view all".
       GoRoute(

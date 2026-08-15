@@ -26,7 +26,7 @@ final groupsProvider = StreamProvider<List<Group>>((ref) {
 });
 
 /// Real gatherings for the "攤" lists — every group EXCEPT the synthetic
-/// 2-person groups the debt composer mints ([GroupService.addDirectDebt]).
+/// 2-person groups a confirmed debt is projected into (see `DebtProjection`).
 /// Those direct debts still flow into [myDebtsProvider]/帳本 and 信用分; they're
 /// just hidden from the 揪團 dashboard so they don't clutter it. Newest first
 /// (inherits [groupsProvider]'s order).
@@ -212,8 +212,7 @@ int alreadyBookedShare({
   return personalEntries
       .where(
         (e) =>
-            e.sourceSettlementId != null &&
-            ids.contains(e.sourceSettlementId),
+            e.sourceSettlementId != null && ids.contains(e.sourceSettlementId),
       )
       .fold(0, (sum, e) => sum + e.amount);
 }
@@ -397,6 +396,17 @@ class GroupService {
   /// Record a direct debt "[debtor] 欠 [creditor] $amount ([title])" with zero
   /// splitting: it becomes a 2-person gathering where the creditor "paid" and
   /// the debtor owes the whole amount, so it flows into 帳本/結清/信用分.
+  ///
+  /// **Unused, and must stay that way.** A debt is now a proposal the other
+  /// side has to confirm (`DebtService.propose` → `DebtProjection`), and this
+  /// writes one straight into the ledger with nobody's agreement. Wiring it
+  /// back into a screen would silently reintroduce debts the other person
+  /// never accepted.
+  ///
+  /// It survives only because removing it belongs with the wider cleanup of
+  /// the `isDirect` synthetic-group trick, not with the feature that
+  /// obsoleted it.
+  @Deprecated('Use DebtService.propose — a debt needs the other side to agree')
   Future<void> addDirectDebt({
     required ({String name, String? friendId, bool isMe}) debtor,
     required ({String name, String? friendId, bool isMe}) creditor,

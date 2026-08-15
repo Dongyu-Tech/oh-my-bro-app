@@ -23,10 +23,10 @@ class Groups extends Table {
   IntColumn get colorValue => integer()();
   BoolColumn get isArchived => boolean().withDefault(const Constant(false))();
 
-  /// A synthetic 2-person group minted by the debt composer
-  /// ([GroupService.addDirectDebt]) to record "A 欠 B $x". It still feeds 帳本
-  /// (債務紀錄) and 信用分, but is hidden from the "攤" (gathering) lists so
-  /// direct debts don't clutter the揪團 dashboard.
+  /// A synthetic 2-person group a confirmed debt is projected into (see
+  /// [DebtProjection]) to record "A 欠 B $x". It still feeds 帳本 (債務紀錄)
+  /// and 信用分, but is hidden from the "攤" (gathering) lists so direct debts
+  /// don't clutter the 揪團 dashboard.
   BoolColumn get isDirect => boolean().withDefault(const Constant(false))();
   DateTimeColumn get createdAt => dateTime()();
 

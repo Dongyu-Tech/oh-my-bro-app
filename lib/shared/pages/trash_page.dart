@@ -312,79 +312,85 @@ class _TrashBanner extends StatelessWidget {
         radius: BrutalSpec.pillRadius,
         offset: 3,
       ),
-      clipBehavior: Clip.antiAlias,
-      child: Row(
-        children: [
-          // Coloured end-cap with the item's icon — bordered on its inner edge
-          // so it reads as an intentional cap in the hard-border style, not a
-          // flat colour block bleeding into the card.
-          Container(
-            width: 52,
-            height: double.infinity,
-            decoration: BoxDecoration(
-              color: color,
-              border: Border(
-                right: BorderSide(
-                  color: BrutalColors.onBackground,
-                  width: BrutalSpec.borderWidth,
-                ),
-              ),
-            ),
-            alignment: Alignment.center,
-            child: Icon(icon, size: 22, color: capIcon),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: BrutalText.labelBold(fontSize: 15).copyWith(
-                    decoration: TextDecoration.lineThrough,
-                    decorationColor: BrutalColors.secondary,
-                    decorationThickness: 2,
+      // Inside the border, not outside — otherwise the coloured end-cap's
+      // square corners paint over it and the card looks unfinished.
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(
+          brutalInnerRadius(BrutalSpec.pillRadius),
+        ),
+        child: Row(
+          children: [
+            // Coloured end-cap with the item's icon — bordered on its inner edge
+            // so it reads as an intentional cap in the hard-border style, not a
+            // flat colour block bleeding into the card.
+            Container(
+              width: 52,
+              height: double.infinity,
+              decoration: BoxDecoration(
+                color: color,
+                border: Border(
+                  right: BorderSide(
+                    color: BrutalColors.onBackground,
+                    width: BrutalSpec.borderWidth,
                   ),
                 ),
-                if (trailing != null)
+              ),
+              alignment: Alignment.center,
+              child: Icon(icon, size: 22, color: capIcon),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text(
-                    trailing!,
-                    style: BrutalText.labelBold(
-                      fontSize: 12,
-                      color: BrutalColors.onSurfaceVariant,
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: BrutalText.labelBold(fontSize: 15).copyWith(
+                      decoration: TextDecoration.lineThrough,
+                      decorationColor: BrutalColors.secondary,
+                      decorationThickness: 2,
                     ),
                   ),
-              ],
-            ),
-          ),
-          GestureDetector(
-            onTap: onRestore,
-            behavior: HitTestBehavior.opaque,
-            child: const Padding(
-              padding: EdgeInsets.all(9),
-              child: Icon(
-                LucideIcons.rotateCcw,
-                size: 20,
-                color: BrutalColors.success,
+                  if (trailing != null)
+                    Text(
+                      trailing!,
+                      style: BrutalText.labelBold(
+                        fontSize: 12,
+                        color: BrutalColors.onSurfaceVariant,
+                      ),
+                    ),
+                ],
               ),
             ),
-          ),
-          GestureDetector(
-            onTap: onPurge,
-            behavior: HitTestBehavior.opaque,
-            child: const Padding(
-              padding: EdgeInsets.fromLTRB(6, 9, 12, 9),
-              child: Icon(
-                LucideIcons.trash2,
-                size: 20,
-                color: BrutalColors.secondary,
+            GestureDetector(
+              onTap: onRestore,
+              behavior: HitTestBehavior.opaque,
+              child: const Padding(
+                padding: EdgeInsets.all(9),
+                child: Icon(
+                  LucideIcons.rotateCcw,
+                  size: 20,
+                  color: BrutalColors.success,
+                ),
               ),
             ),
-          ),
-        ],
+            GestureDetector(
+              onTap: onPurge,
+              behavior: HitTestBehavior.opaque,
+              child: const Padding(
+                padding: EdgeInsets.fromLTRB(6, 9, 12, 9),
+                child: Icon(
+                  LucideIcons.trash2,
+                  size: 20,
+                  color: BrutalColors.secondary,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
