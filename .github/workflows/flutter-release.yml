@@ -41,8 +41,16 @@ jobs:
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
+          # SECRET_KEY is deliberately absent from this list. It is still wired
+          # through to the build, but nothing reads it back — `_config()` only
+          # ever asks dotenv for the four Supabase/Google values — so requiring
+          # it would block a correct release over a value with nothing on the
+          # other end. Add it here on the day something consumes it.
+          #
+          # IOS_CLIENT_ID is required even for an Android-only release:
+          # `_resolveBackend()` wants all four or it falls back to the no-op.
           missing=""
-          for name in SECRET_KEY SUPABASE_URL SUPABASE_PUBLISHABLE_KEY \
+          for name in SUPABASE_URL SUPABASE_PUBLISHABLE_KEY \
                       WEB_CLIENT_ID IOS_CLIENT_ID \
                       ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD \
                       ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
