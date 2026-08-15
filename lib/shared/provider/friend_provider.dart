@@ -1,9 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../core/database/database.dart';
 import 'database_provider.dart';
 import 'group_provider.dart';
+
+part 'friend_provider.freezed.dart';
 
 const _uuid = Uuid();
 
@@ -69,25 +72,23 @@ final globalNetProvider = Provider<Map<String, int>>((ref) {
 
 /// A friend's comic credit score, derived from their behaviour across every
 /// gathering they've been linked into.
-class CreditScore {
-  const CreditScore({
-    required this.score,
-    required this.outstanding,
-    required this.repaidCount,
-    required this.gatherings,
-  });
+@freezed
+abstract class CreditScore with _$CreditScore {
+  const CreditScore._();
 
-  /// 0–100. Higher = a more trustworthy bro.
-  final int score;
+  const factory CreditScore({
+    /// 0–100. Higher = a more trustworthy bro.
+    required int score,
 
-  /// How much they currently owe, unsettled, across all gatherings.
-  final int outstanding;
+    /// How much they currently owe, unsettled, across all gatherings.
+    required int outstanding,
 
-  /// How many times they've paid someone back.
-  final int repaidCount;
+    /// How many times they've paid someone back.
+    required int repaidCount,
 
-  /// Number of gatherings they've joined.
-  final int gatherings;
+    /// Number of gatherings they've joined.
+    required int gatherings,
+  }) = _CreditScore;
 
   /// CSV verdict key — 粗哥's ruling.
   String get verdictKey => switch (score) {
@@ -138,18 +139,14 @@ final friendCreditProvider = Provider.family<CreditScore, String>((
 // ── Mutual-debt netting (direct debts only) ──────────────────────────────────
 
 /// One repayment that would clear a single direct debt between me and a friend.
-class DirectSettleAction {
-  const DirectSettleAction({
-    required this.groupId,
-    required this.fromMemberId,
-    required this.toMemberId,
-    required this.amount,
-  });
-
-  final String groupId;
-  final String fromMemberId;
-  final String toMemberId;
-  final int amount;
+@freezed
+abstract class DirectSettleAction with _$DirectSettleAction {
+  const factory DirectSettleAction({
+    required String groupId,
+    required String fromMemberId,
+    required String toMemberId,
+    required int amount,
+  }) = _DirectSettleAction;
 }
 
 /// Ids of the live, active direct-debt groups (the synthetic 2-person groups the

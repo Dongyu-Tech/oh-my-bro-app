@@ -1,29 +1,22 @@
-// Pure split-the-bill math — no Flutter / Drift imports, so it's trivially
-// unit-testable. All amounts are whole TWD (integers).
+// Pure split-the-bill math — no Flutter / Drift imports (freezed_annotation is
+// plain Dart), so it's trivially unit-testable. All amounts are whole TWD
+// (integers).
+
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'settlement.freezed.dart';
 
 /// One suggested repayment: [from] pays [to] the given [amount].
-class Transfer {
-  const Transfer({required this.from, required this.to, required this.amount});
+@freezed
+abstract class Transfer with _$Transfer {
+  const factory Transfer({
+    /// Member id of the debtor (pays).
+    required String from,
 
-  /// Member id of the debtor (pays).
-  final String from;
-
-  /// Member id of the creditor (receives).
-  final String to;
-  final int amount;
-
-  @override
-  bool operator ==(Object other) =>
-      other is Transfer &&
-      other.from == from &&
-      other.to == to &&
-      other.amount == amount;
-
-  @override
-  int get hashCode => Object.hash(from, to, amount);
-
-  @override
-  String toString() => 'Transfer($from -> $to: $amount)';
+    /// Member id of the creditor (receives).
+    required String to,
+    required int amount,
+  }) = _Transfer;
 }
 
 /// Split [amount] equally across [n] members. Distributes the rounding
