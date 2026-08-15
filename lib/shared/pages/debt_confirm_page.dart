@@ -177,89 +177,102 @@ class _ClaimSlip extends StatelessWidget {
               radius: 20,
               offset: BrutalSpec.shadowOffset,
             ),
-            clipBehavior: Clip.antiAlias,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _Claimant(proposal: proposal, iOwe: iOwe),
-                const BrutalDivider(margin: EdgeInsets.zero),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _FieldLabel('debt_field_item'.tr()),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          const Text('🧾', style: TextStyle(fontSize: 30)),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              proposal.title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: BrutalText.headlineLgMobile(fontSize: 34),
+            // Clipped to the INSIDE of the border. Clipping on the Container
+            // clips to the outer rounded rect instead, which let the yellow
+            // band's square corners paint straight over the top of the border.
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(brutalInnerRadius(20)),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _Claimant(proposal: proposal, iOwe: iOwe),
+                  const BrutalDivider(margin: EdgeInsets.zero),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _FieldLabel('debt_field_item'.tr()),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            const Text('🧾', style: TextStyle(fontSize: 30)),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                proposal.title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: BrutalText.headlineLgMobile(
+                                  fontSize: 34,
+                                ),
+                              ),
                             ),
+                          ],
+                        ),
+                        const BrutalDivider(
+                          thickness: BrutalSpec.borderWidthThin,
+                          margin: EdgeInsets.symmetric(vertical: 16),
+                        ),
+                        _FieldLabel('debt_field_amount'.tr()),
+                        const SizedBox(height: 6),
+                        if (blank)
+                          Text(
+                            'debt_amount_blank'.tr(),
+                            style: BrutalText.headlineLgMobile(
+                              fontSize: 22,
+                              color: BrutalColors.onSurfaceVariant,
+                            ),
+                          )
+                        else
+                          MarkerHighlight(
+                            // A low band reads as a marker stroke UNDER the
+                            // digits rather than a highlight across them.
+                            heightFactor: 0.18,
+                            padding: const EdgeInsets.only(
+                              right: 12,
+                              bottom: 2,
+                            ),
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                '\$${money.format(proposal.amount)}',
+                                maxLines: 1,
+                                style: BrutalText.headlineLgMobile(
+                                  fontSize: 76,
+                                ),
+                              ),
+                            ),
+                          ),
+                        if (proposal.originalAmount != null) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            'debt_was_amount'.tr(
+                              namedArgs: {
+                                'amount':
+                                    '\$${money.format(proposal.originalAmount)}',
+                              },
+                            ),
+                            // Struck through so "they changed it" reads without
+                            // spending a sentence saying so.
+                            style:
+                                BrutalText.body(
+                                  fontSize: 13,
+                                  color: BrutalColors.onSurfaceVariant,
+                                ).copyWith(
+                                  decoration: TextDecoration.lineThrough,
+                                  decorationColor:
+                                      BrutalColors.onSurfaceVariant,
+                                ),
                           ),
                         ],
-                      ),
-                      const BrutalDivider(
-                        thickness: BrutalSpec.borderWidthThin,
-                        margin: EdgeInsets.symmetric(vertical: 16),
-                      ),
-                      _FieldLabel('debt_field_amount'.tr()),
-                      const SizedBox(height: 6),
-                      if (blank)
-                        Text(
-                          'debt_amount_blank'.tr(),
-                          style: BrutalText.headlineLgMobile(
-                            fontSize: 22,
-                            color: BrutalColors.onSurfaceVariant,
-                          ),
-                        )
-                      else
-                        MarkerHighlight(
-                          // A low band reads as a marker stroke UNDER the
-                          // digits rather than a highlight across them.
-                          heightFactor: 0.18,
-                          padding: const EdgeInsets.only(right: 12, bottom: 2),
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              '\$${money.format(proposal.amount)}',
-                              maxLines: 1,
-                              style: BrutalText.headlineLgMobile(fontSize: 76),
-                            ),
-                          ),
-                        ),
-                      if (proposal.originalAmount != null) ...[
-                        const SizedBox(height: 8),
-                        Text(
-                          'debt_was_amount'.tr(
-                            namedArgs: {
-                              'amount':
-                                  '\$${money.format(proposal.originalAmount)}',
-                            },
-                          ),
-                          // Struck through so "they changed it" reads without
-                          // spending a sentence saying so.
-                          style:
-                              BrutalText.body(
-                                fontSize: 13,
-                                color: BrutalColors.onSurfaceVariant,
-                              ).copyWith(
-                                decoration: TextDecoration.lineThrough,
-                                decorationColor: BrutalColors.onSurfaceVariant,
-                              ),
-                        ),
                       ],
-                    ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

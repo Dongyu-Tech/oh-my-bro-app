@@ -94,6 +94,26 @@ BoxDecoration brutalDecoration({
   );
 }
 
+/// The radius the *inside* edge of a [brutalDecoration] border follows.
+///
+/// Needed because `Container(decoration: brutalDecoration(…), clipBehavior:
+/// Clip.antiAlias)` does not do what it looks like it does. It clips to the
+/// **outer** rounded rect. The child is inset by the border, but its own
+/// corners stay square — so anything painting edge to edge (a coloured header
+/// band, a photo, a camera preview) lays those square corners straight over
+/// the border and eats it, leaving the top of the card looking broken.
+///
+/// Wrap such a child in `ClipRRect(borderRadius:
+/// BorderRadius.circular(brutalInnerRadius(radius, borderWidth)))` instead of
+/// clipping on the Container.
+double brutalInnerRadius(
+  double radius, [
+  double borderWidth = BrutalSpec.borderWidth,
+]) {
+  final inner = radius - borderWidth;
+  return inner < 0 ? 0 : inner;
+}
+
 /// Reusable static (non-interactive) card with thick border + hard shadow.
 class BrutalCard extends StatelessWidget {
   const BrutalCard({
@@ -317,34 +337,44 @@ class BrutalAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final url = _resolvedPhotoUrl(context);
+    final r = radius ?? BrutalSpec.pillRadius;
+    // The box the photo actually gets, once the border has taken its share.
+    final inner = size - borderWidth * 2;
 
     return Container(
       width: size,
       height: size,
       decoration: brutalDecoration(
         color: color,
-        radius: radius ?? BrutalSpec.pillRadius,
+        radius: r,
         offset: offset,
         borderWidth: borderWidth,
       ),
-      clipBehavior: Clip.antiAlias,
       alignment: Alignment.center,
       child: url == null
           ? _initial()
-          : Image.network(
-              url,
-              width: size,
-              height: size,
-              fit: BoxFit.cover,
-              // A broken, expired or offline picture must never leave a hole —
-              // it degrades to exactly what a photoless bro shows.
-              errorBuilder: (_, __, ___) => _initial(),
-              // Hold the monogram until there is a frame to draw. Not
-              // loadingBuilder: its `progress` is also null *before* the first
-              // chunk event arrives, so a slow connection would flash an empty
-              // circle instead of the initial.
-              frameBuilder: (_, child, frame, __) =>
-                  frame == null ? _initial() : child,
+          // Clipped to the inside of the border, not the outside — see
+          // [brutalInnerRadius]. Clipping on the Container instead lets the
+          // photo's square corners paint over the border.
+          : ClipRRect(
+              borderRadius: BorderRadius.circular(
+                brutalInnerRadius(r, borderWidth),
+              ),
+              child: Image.network(
+                url,
+                width: inner,
+                height: inner,
+                fit: BoxFit.cover,
+                // A broken, expired or offline picture must never leave a
+                // hole — it degrades to exactly what a photoless bro shows.
+                errorBuilder: (_, __, ___) => _initial(),
+                // Hold the monogram until there is a frame to draw. Not
+                // loadingBuilder: its `progress` is also null *before* the
+                // first chunk event arrives, so a slow connection would flash
+                // an empty circle instead of the initial.
+                frameBuilder: (_, child, frame, __) =>
+                    frame == null ? _initial() : child,
+              ),
             ),
     );
   }
