@@ -24,6 +24,34 @@ String debtMemberId(String proposalId, String userId) =>
 String debtShareId(String proposalId, String memberId) =>
     _uuid.v5(_debtNamespace, 'share:$proposalId:$memberId');
 
+/// A repayment lands as a settlement inside the debt it clears, so its id is
+/// derived from the repayment's own proposal — same replay protection as
+/// everything else here.
+String debtSettlementId(String repaymentId) =>
+    _uuid.v5(_debtNamespace, 'settlement:$repaymentId');
+
+/// The settlement a confirmed repayment becomes: money moving from the debtor
+/// to the creditor inside the group the original debt was projected into.
+///
+/// Nothing new is invented — the ordinary netting already treats settlements
+/// as debt-clearing, so a repayment reduces the balance through exactly the
+/// same path 結清 always has.
+SettlementsCompanion buildRepaymentSettlement({
+  required String repaymentId,
+  required String debtId,
+  required String debtorUserId,
+  required String creditorUserId,
+  required int amount,
+  required DateTime confirmedAt,
+}) => SettlementsCompanion.insert(
+  id: debtSettlementId(repaymentId),
+  groupId: debtGroupId(debtId),
+  fromMemberId: debtMemberId(debtId, debtorUserId),
+  toMemberId: debtMemberId(debtId, creditorUserId),
+  amount: amount,
+  createdAt: confirmedAt,
+);
+
 /// The local rows a confirmed proposal becomes: the same
 /// group + members + expense + shares shape `GroupService.addDirectDebt`
 /// already produced, so 帳本 / 信用分 / 結清 need no changes to understand it.

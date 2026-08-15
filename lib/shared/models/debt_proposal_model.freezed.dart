@@ -15,7 +15,11 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$DebtProposalModel {
 
- String get id;@JsonKey(name: 'proposer_id') String get proposerId;@JsonKey(name: 'counterparty_id') String get counterpartyId;/// Whoever owes the money — always one of the two parties.
+ String get id;/// `debt` or `repayment`.
+ String get kind;/// The debt this repayment clears; null on a debt.
+@JsonKey(name: 'repays_id') String? get repaysId;/// What is still owed after every agreed repayment. Server-computed, and
+/// only ever present on a confirmed debt.
+ int? get outstanding;@JsonKey(name: 'proposer_id') String get proposerId;@JsonKey(name: 'counterparty_id') String get counterpartyId;/// Whoever owes the money — always one of the two parties.
 @JsonKey(name: 'debtor_id') String get debtorId; String get title;/// Null means the proposer left it blank for the other side to fill in.
  int? get amount;/// The previous figure, set when the other side counters.
 @JsonKey(name: 'original_amount') int? get originalAmount; String get status;/// Whose turn it is; null on every terminal status.
@@ -32,16 +36,16 @@ $DebtProposalModelCopyWith<DebtProposalModel> get copyWith => _$DebtProposalMode
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DebtProposalModel&&(identical(other.id, id) || other.id == id)&&(identical(other.proposerId, proposerId) || other.proposerId == proposerId)&&(identical(other.counterpartyId, counterpartyId) || other.counterpartyId == counterpartyId)&&(identical(other.debtorId, debtorId) || other.debtorId == debtorId)&&(identical(other.title, title) || other.title == title)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.originalAmount, originalAmount) || other.originalAmount == originalAmount)&&(identical(other.status, status) || other.status == status)&&(identical(other.awaitingId, awaitingId) || other.awaitingId == awaitingId)&&(identical(other.round, round) || other.round == round)&&(identical(other.rejectReason, rejectReason) || other.rejectReason == rejectReason)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.resolvedAt, resolvedAt) || other.resolvedAt == resolvedAt)&&(identical(other.otherId, otherId) || other.otherId == otherId)&&(identical(other.otherHandle, otherHandle) || other.otherHandle == otherHandle)&&(identical(other.otherDisplayName, otherDisplayName) || other.otherDisplayName == otherDisplayName)&&(identical(other.otherAvatarUrl, otherAvatarUrl) || other.otherAvatarUrl == otherAvatarUrl));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DebtProposalModel&&(identical(other.id, id) || other.id == id)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.repaysId, repaysId) || other.repaysId == repaysId)&&(identical(other.outstanding, outstanding) || other.outstanding == outstanding)&&(identical(other.proposerId, proposerId) || other.proposerId == proposerId)&&(identical(other.counterpartyId, counterpartyId) || other.counterpartyId == counterpartyId)&&(identical(other.debtorId, debtorId) || other.debtorId == debtorId)&&(identical(other.title, title) || other.title == title)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.originalAmount, originalAmount) || other.originalAmount == originalAmount)&&(identical(other.status, status) || other.status == status)&&(identical(other.awaitingId, awaitingId) || other.awaitingId == awaitingId)&&(identical(other.round, round) || other.round == round)&&(identical(other.rejectReason, rejectReason) || other.rejectReason == rejectReason)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.resolvedAt, resolvedAt) || other.resolvedAt == resolvedAt)&&(identical(other.otherId, otherId) || other.otherId == otherId)&&(identical(other.otherHandle, otherHandle) || other.otherHandle == otherHandle)&&(identical(other.otherDisplayName, otherDisplayName) || other.otherDisplayName == otherDisplayName)&&(identical(other.otherAvatarUrl, otherAvatarUrl) || other.otherAvatarUrl == otherAvatarUrl));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,proposerId,counterpartyId,debtorId,title,amount,originalAmount,status,awaitingId,round,rejectReason,createdAt,updatedAt,resolvedAt,otherId,otherHandle,otherDisplayName,otherAvatarUrl);
+int get hashCode => Object.hashAll([runtimeType,id,kind,repaysId,outstanding,proposerId,counterpartyId,debtorId,title,amount,originalAmount,status,awaitingId,round,rejectReason,createdAt,updatedAt,resolvedAt,otherId,otherHandle,otherDisplayName,otherAvatarUrl]);
 
 @override
 String toString() {
-  return 'DebtProposalModel(id: $id, proposerId: $proposerId, counterpartyId: $counterpartyId, debtorId: $debtorId, title: $title, amount: $amount, originalAmount: $originalAmount, status: $status, awaitingId: $awaitingId, round: $round, rejectReason: $rejectReason, createdAt: $createdAt, updatedAt: $updatedAt, resolvedAt: $resolvedAt, otherId: $otherId, otherHandle: $otherHandle, otherDisplayName: $otherDisplayName, otherAvatarUrl: $otherAvatarUrl)';
+  return 'DebtProposalModel(id: $id, kind: $kind, repaysId: $repaysId, outstanding: $outstanding, proposerId: $proposerId, counterpartyId: $counterpartyId, debtorId: $debtorId, title: $title, amount: $amount, originalAmount: $originalAmount, status: $status, awaitingId: $awaitingId, round: $round, rejectReason: $rejectReason, createdAt: $createdAt, updatedAt: $updatedAt, resolvedAt: $resolvedAt, otherId: $otherId, otherHandle: $otherHandle, otherDisplayName: $otherDisplayName, otherAvatarUrl: $otherAvatarUrl)';
 }
 
 
@@ -52,7 +56,7 @@ abstract mixin class $DebtProposalModelCopyWith<$Res>  {
   factory $DebtProposalModelCopyWith(DebtProposalModel value, $Res Function(DebtProposalModel) _then) = _$DebtProposalModelCopyWithImpl;
 @useResult
 $Res call({
- String id,@JsonKey(name: 'proposer_id') String proposerId,@JsonKey(name: 'counterparty_id') String counterpartyId,@JsonKey(name: 'debtor_id') String debtorId, String title, int? amount,@JsonKey(name: 'original_amount') int? originalAmount, String status,@JsonKey(name: 'awaiting_id') String? awaitingId, int round,@JsonKey(name: 'reject_reason') String? rejectReason,@JsonKey(name: 'created_at') DateTime createdAt,@JsonKey(name: 'updated_at') DateTime updatedAt,@JsonKey(name: 'resolved_at') DateTime? resolvedAt,@JsonKey(name: 'other_id') String? otherId,@JsonKey(name: 'other_handle') String? otherHandle,@JsonKey(name: 'other_display_name') String? otherDisplayName,@JsonKey(name: 'other_avatar_url') String? otherAvatarUrl
+ String id, String kind,@JsonKey(name: 'repays_id') String? repaysId, int? outstanding,@JsonKey(name: 'proposer_id') String proposerId,@JsonKey(name: 'counterparty_id') String counterpartyId,@JsonKey(name: 'debtor_id') String debtorId, String title, int? amount,@JsonKey(name: 'original_amount') int? originalAmount, String status,@JsonKey(name: 'awaiting_id') String? awaitingId, int round,@JsonKey(name: 'reject_reason') String? rejectReason,@JsonKey(name: 'created_at') DateTime createdAt,@JsonKey(name: 'updated_at') DateTime updatedAt,@JsonKey(name: 'resolved_at') DateTime? resolvedAt,@JsonKey(name: 'other_id') String? otherId,@JsonKey(name: 'other_handle') String? otherHandle,@JsonKey(name: 'other_display_name') String? otherDisplayName,@JsonKey(name: 'other_avatar_url') String? otherAvatarUrl
 });
 
 
@@ -69,10 +73,13 @@ class _$DebtProposalModelCopyWithImpl<$Res>
 
 /// Create a copy of DebtProposalModel
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? proposerId = null,Object? counterpartyId = null,Object? debtorId = null,Object? title = null,Object? amount = freezed,Object? originalAmount = freezed,Object? status = null,Object? awaitingId = freezed,Object? round = null,Object? rejectReason = freezed,Object? createdAt = null,Object? updatedAt = null,Object? resolvedAt = freezed,Object? otherId = freezed,Object? otherHandle = freezed,Object? otherDisplayName = freezed,Object? otherAvatarUrl = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? kind = null,Object? repaysId = freezed,Object? outstanding = freezed,Object? proposerId = null,Object? counterpartyId = null,Object? debtorId = null,Object? title = null,Object? amount = freezed,Object? originalAmount = freezed,Object? status = null,Object? awaitingId = freezed,Object? round = null,Object? rejectReason = freezed,Object? createdAt = null,Object? updatedAt = null,Object? resolvedAt = freezed,Object? otherId = freezed,Object? otherHandle = freezed,Object? otherDisplayName = freezed,Object? otherAvatarUrl = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as String,proposerId: null == proposerId ? _self.proposerId : proposerId // ignore: cast_nullable_to_non_nullable
+as String,kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
+as String,repaysId: freezed == repaysId ? _self.repaysId : repaysId // ignore: cast_nullable_to_non_nullable
+as String?,outstanding: freezed == outstanding ? _self.outstanding : outstanding // ignore: cast_nullable_to_non_nullable
+as int?,proposerId: null == proposerId ? _self.proposerId : proposerId // ignore: cast_nullable_to_non_nullable
 as String,counterpartyId: null == counterpartyId ? _self.counterpartyId : counterpartyId // ignore: cast_nullable_to_non_nullable
 as String,debtorId: null == debtorId ? _self.debtorId : debtorId // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
@@ -174,10 +181,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'proposer_id')  String proposerId, @JsonKey(name: 'counterparty_id')  String counterpartyId, @JsonKey(name: 'debtor_id')  String debtorId,  String title,  int? amount, @JsonKey(name: 'original_amount')  int? originalAmount,  String status, @JsonKey(name: 'awaiting_id')  String? awaitingId,  int round, @JsonKey(name: 'reject_reason')  String? rejectReason, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(name: 'updated_at')  DateTime updatedAt, @JsonKey(name: 'resolved_at')  DateTime? resolvedAt, @JsonKey(name: 'other_id')  String? otherId, @JsonKey(name: 'other_handle')  String? otherHandle, @JsonKey(name: 'other_display_name')  String? otherDisplayName, @JsonKey(name: 'other_avatar_url')  String? otherAvatarUrl)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String kind, @JsonKey(name: 'repays_id')  String? repaysId,  int? outstanding, @JsonKey(name: 'proposer_id')  String proposerId, @JsonKey(name: 'counterparty_id')  String counterpartyId, @JsonKey(name: 'debtor_id')  String debtorId,  String title,  int? amount, @JsonKey(name: 'original_amount')  int? originalAmount,  String status, @JsonKey(name: 'awaiting_id')  String? awaitingId,  int round, @JsonKey(name: 'reject_reason')  String? rejectReason, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(name: 'updated_at')  DateTime updatedAt, @JsonKey(name: 'resolved_at')  DateTime? resolvedAt, @JsonKey(name: 'other_id')  String? otherId, @JsonKey(name: 'other_handle')  String? otherHandle, @JsonKey(name: 'other_display_name')  String? otherDisplayName, @JsonKey(name: 'other_avatar_url')  String? otherAvatarUrl)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _DebtProposalModel() when $default != null:
-return $default(_that.id,_that.proposerId,_that.counterpartyId,_that.debtorId,_that.title,_that.amount,_that.originalAmount,_that.status,_that.awaitingId,_that.round,_that.rejectReason,_that.createdAt,_that.updatedAt,_that.resolvedAt,_that.otherId,_that.otherHandle,_that.otherDisplayName,_that.otherAvatarUrl);case _:
+return $default(_that.id,_that.kind,_that.repaysId,_that.outstanding,_that.proposerId,_that.counterpartyId,_that.debtorId,_that.title,_that.amount,_that.originalAmount,_that.status,_that.awaitingId,_that.round,_that.rejectReason,_that.createdAt,_that.updatedAt,_that.resolvedAt,_that.otherId,_that.otherHandle,_that.otherDisplayName,_that.otherAvatarUrl);case _:
   return orElse();
 
 }
@@ -195,10 +202,10 @@ return $default(_that.id,_that.proposerId,_that.counterpartyId,_that.debtorId,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'proposer_id')  String proposerId, @JsonKey(name: 'counterparty_id')  String counterpartyId, @JsonKey(name: 'debtor_id')  String debtorId,  String title,  int? amount, @JsonKey(name: 'original_amount')  int? originalAmount,  String status, @JsonKey(name: 'awaiting_id')  String? awaitingId,  int round, @JsonKey(name: 'reject_reason')  String? rejectReason, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(name: 'updated_at')  DateTime updatedAt, @JsonKey(name: 'resolved_at')  DateTime? resolvedAt, @JsonKey(name: 'other_id')  String? otherId, @JsonKey(name: 'other_handle')  String? otherHandle, @JsonKey(name: 'other_display_name')  String? otherDisplayName, @JsonKey(name: 'other_avatar_url')  String? otherAvatarUrl)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String kind, @JsonKey(name: 'repays_id')  String? repaysId,  int? outstanding, @JsonKey(name: 'proposer_id')  String proposerId, @JsonKey(name: 'counterparty_id')  String counterpartyId, @JsonKey(name: 'debtor_id')  String debtorId,  String title,  int? amount, @JsonKey(name: 'original_amount')  int? originalAmount,  String status, @JsonKey(name: 'awaiting_id')  String? awaitingId,  int round, @JsonKey(name: 'reject_reason')  String? rejectReason, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(name: 'updated_at')  DateTime updatedAt, @JsonKey(name: 'resolved_at')  DateTime? resolvedAt, @JsonKey(name: 'other_id')  String? otherId, @JsonKey(name: 'other_handle')  String? otherHandle, @JsonKey(name: 'other_display_name')  String? otherDisplayName, @JsonKey(name: 'other_avatar_url')  String? otherAvatarUrl)  $default,) {final _that = this;
 switch (_that) {
 case _DebtProposalModel():
-return $default(_that.id,_that.proposerId,_that.counterpartyId,_that.debtorId,_that.title,_that.amount,_that.originalAmount,_that.status,_that.awaitingId,_that.round,_that.rejectReason,_that.createdAt,_that.updatedAt,_that.resolvedAt,_that.otherId,_that.otherHandle,_that.otherDisplayName,_that.otherAvatarUrl);case _:
+return $default(_that.id,_that.kind,_that.repaysId,_that.outstanding,_that.proposerId,_that.counterpartyId,_that.debtorId,_that.title,_that.amount,_that.originalAmount,_that.status,_that.awaitingId,_that.round,_that.rejectReason,_that.createdAt,_that.updatedAt,_that.resolvedAt,_that.otherId,_that.otherHandle,_that.otherDisplayName,_that.otherAvatarUrl);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -215,10 +222,10 @@ return $default(_that.id,_that.proposerId,_that.counterpartyId,_that.debtorId,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'proposer_id')  String proposerId, @JsonKey(name: 'counterparty_id')  String counterpartyId, @JsonKey(name: 'debtor_id')  String debtorId,  String title,  int? amount, @JsonKey(name: 'original_amount')  int? originalAmount,  String status, @JsonKey(name: 'awaiting_id')  String? awaitingId,  int round, @JsonKey(name: 'reject_reason')  String? rejectReason, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(name: 'updated_at')  DateTime updatedAt, @JsonKey(name: 'resolved_at')  DateTime? resolvedAt, @JsonKey(name: 'other_id')  String? otherId, @JsonKey(name: 'other_handle')  String? otherHandle, @JsonKey(name: 'other_display_name')  String? otherDisplayName, @JsonKey(name: 'other_avatar_url')  String? otherAvatarUrl)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String kind, @JsonKey(name: 'repays_id')  String? repaysId,  int? outstanding, @JsonKey(name: 'proposer_id')  String proposerId, @JsonKey(name: 'counterparty_id')  String counterpartyId, @JsonKey(name: 'debtor_id')  String debtorId,  String title,  int? amount, @JsonKey(name: 'original_amount')  int? originalAmount,  String status, @JsonKey(name: 'awaiting_id')  String? awaitingId,  int round, @JsonKey(name: 'reject_reason')  String? rejectReason, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(name: 'updated_at')  DateTime updatedAt, @JsonKey(name: 'resolved_at')  DateTime? resolvedAt, @JsonKey(name: 'other_id')  String? otherId, @JsonKey(name: 'other_handle')  String? otherHandle, @JsonKey(name: 'other_display_name')  String? otherDisplayName, @JsonKey(name: 'other_avatar_url')  String? otherAvatarUrl)?  $default,) {final _that = this;
 switch (_that) {
 case _DebtProposalModel() when $default != null:
-return $default(_that.id,_that.proposerId,_that.counterpartyId,_that.debtorId,_that.title,_that.amount,_that.originalAmount,_that.status,_that.awaitingId,_that.round,_that.rejectReason,_that.createdAt,_that.updatedAt,_that.resolvedAt,_that.otherId,_that.otherHandle,_that.otherDisplayName,_that.otherAvatarUrl);case _:
+return $default(_that.id,_that.kind,_that.repaysId,_that.outstanding,_that.proposerId,_that.counterpartyId,_that.debtorId,_that.title,_that.amount,_that.originalAmount,_that.status,_that.awaitingId,_that.round,_that.rejectReason,_that.createdAt,_that.updatedAt,_that.resolvedAt,_that.otherId,_that.otherHandle,_that.otherDisplayName,_that.otherAvatarUrl);case _:
   return null;
 
 }
@@ -230,10 +237,17 @@ return $default(_that.id,_that.proposerId,_that.counterpartyId,_that.debtorId,_t
 @JsonSerializable()
 
 class _DebtProposalModel extends DebtProposalModel {
-  const _DebtProposalModel({required this.id, @JsonKey(name: 'proposer_id') required this.proposerId, @JsonKey(name: 'counterparty_id') required this.counterpartyId, @JsonKey(name: 'debtor_id') required this.debtorId, required this.title, this.amount, @JsonKey(name: 'original_amount') this.originalAmount, required this.status, @JsonKey(name: 'awaiting_id') this.awaitingId, this.round = 0, @JsonKey(name: 'reject_reason') this.rejectReason, @JsonKey(name: 'created_at') required this.createdAt, @JsonKey(name: 'updated_at') required this.updatedAt, @JsonKey(name: 'resolved_at') this.resolvedAt, @JsonKey(name: 'other_id') this.otherId, @JsonKey(name: 'other_handle') this.otherHandle, @JsonKey(name: 'other_display_name') this.otherDisplayName, @JsonKey(name: 'other_avatar_url') this.otherAvatarUrl}): super._();
+  const _DebtProposalModel({required this.id, this.kind = 'debt', @JsonKey(name: 'repays_id') this.repaysId, this.outstanding, @JsonKey(name: 'proposer_id') required this.proposerId, @JsonKey(name: 'counterparty_id') required this.counterpartyId, @JsonKey(name: 'debtor_id') required this.debtorId, required this.title, this.amount, @JsonKey(name: 'original_amount') this.originalAmount, required this.status, @JsonKey(name: 'awaiting_id') this.awaitingId, this.round = 0, @JsonKey(name: 'reject_reason') this.rejectReason, @JsonKey(name: 'created_at') required this.createdAt, @JsonKey(name: 'updated_at') required this.updatedAt, @JsonKey(name: 'resolved_at') this.resolvedAt, @JsonKey(name: 'other_id') this.otherId, @JsonKey(name: 'other_handle') this.otherHandle, @JsonKey(name: 'other_display_name') this.otherDisplayName, @JsonKey(name: 'other_avatar_url') this.otherAvatarUrl}): super._();
   factory _DebtProposalModel.fromJson(Map<String, dynamic> json) => _$DebtProposalModelFromJson(json);
 
 @override final  String id;
+/// `debt` or `repayment`.
+@override@JsonKey() final  String kind;
+/// The debt this repayment clears; null on a debt.
+@override@JsonKey(name: 'repays_id') final  String? repaysId;
+/// What is still owed after every agreed repayment. Server-computed, and
+/// only ever present on a confirmed debt.
+@override final  int? outstanding;
 @override@JsonKey(name: 'proposer_id') final  String proposerId;
 @override@JsonKey(name: 'counterparty_id') final  String counterpartyId;
 /// Whoever owes the money — always one of the two parties.
@@ -269,16 +283,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DebtProposalModel&&(identical(other.id, id) || other.id == id)&&(identical(other.proposerId, proposerId) || other.proposerId == proposerId)&&(identical(other.counterpartyId, counterpartyId) || other.counterpartyId == counterpartyId)&&(identical(other.debtorId, debtorId) || other.debtorId == debtorId)&&(identical(other.title, title) || other.title == title)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.originalAmount, originalAmount) || other.originalAmount == originalAmount)&&(identical(other.status, status) || other.status == status)&&(identical(other.awaitingId, awaitingId) || other.awaitingId == awaitingId)&&(identical(other.round, round) || other.round == round)&&(identical(other.rejectReason, rejectReason) || other.rejectReason == rejectReason)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.resolvedAt, resolvedAt) || other.resolvedAt == resolvedAt)&&(identical(other.otherId, otherId) || other.otherId == otherId)&&(identical(other.otherHandle, otherHandle) || other.otherHandle == otherHandle)&&(identical(other.otherDisplayName, otherDisplayName) || other.otherDisplayName == otherDisplayName)&&(identical(other.otherAvatarUrl, otherAvatarUrl) || other.otherAvatarUrl == otherAvatarUrl));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DebtProposalModel&&(identical(other.id, id) || other.id == id)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.repaysId, repaysId) || other.repaysId == repaysId)&&(identical(other.outstanding, outstanding) || other.outstanding == outstanding)&&(identical(other.proposerId, proposerId) || other.proposerId == proposerId)&&(identical(other.counterpartyId, counterpartyId) || other.counterpartyId == counterpartyId)&&(identical(other.debtorId, debtorId) || other.debtorId == debtorId)&&(identical(other.title, title) || other.title == title)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.originalAmount, originalAmount) || other.originalAmount == originalAmount)&&(identical(other.status, status) || other.status == status)&&(identical(other.awaitingId, awaitingId) || other.awaitingId == awaitingId)&&(identical(other.round, round) || other.round == round)&&(identical(other.rejectReason, rejectReason) || other.rejectReason == rejectReason)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.resolvedAt, resolvedAt) || other.resolvedAt == resolvedAt)&&(identical(other.otherId, otherId) || other.otherId == otherId)&&(identical(other.otherHandle, otherHandle) || other.otherHandle == otherHandle)&&(identical(other.otherDisplayName, otherDisplayName) || other.otherDisplayName == otherDisplayName)&&(identical(other.otherAvatarUrl, otherAvatarUrl) || other.otherAvatarUrl == otherAvatarUrl));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,proposerId,counterpartyId,debtorId,title,amount,originalAmount,status,awaitingId,round,rejectReason,createdAt,updatedAt,resolvedAt,otherId,otherHandle,otherDisplayName,otherAvatarUrl);
+int get hashCode => Object.hashAll([runtimeType,id,kind,repaysId,outstanding,proposerId,counterpartyId,debtorId,title,amount,originalAmount,status,awaitingId,round,rejectReason,createdAt,updatedAt,resolvedAt,otherId,otherHandle,otherDisplayName,otherAvatarUrl]);
 
 @override
 String toString() {
-  return 'DebtProposalModel(id: $id, proposerId: $proposerId, counterpartyId: $counterpartyId, debtorId: $debtorId, title: $title, amount: $amount, originalAmount: $originalAmount, status: $status, awaitingId: $awaitingId, round: $round, rejectReason: $rejectReason, createdAt: $createdAt, updatedAt: $updatedAt, resolvedAt: $resolvedAt, otherId: $otherId, otherHandle: $otherHandle, otherDisplayName: $otherDisplayName, otherAvatarUrl: $otherAvatarUrl)';
+  return 'DebtProposalModel(id: $id, kind: $kind, repaysId: $repaysId, outstanding: $outstanding, proposerId: $proposerId, counterpartyId: $counterpartyId, debtorId: $debtorId, title: $title, amount: $amount, originalAmount: $originalAmount, status: $status, awaitingId: $awaitingId, round: $round, rejectReason: $rejectReason, createdAt: $createdAt, updatedAt: $updatedAt, resolvedAt: $resolvedAt, otherId: $otherId, otherHandle: $otherHandle, otherDisplayName: $otherDisplayName, otherAvatarUrl: $otherAvatarUrl)';
 }
 
 
@@ -289,7 +303,7 @@ abstract mixin class _$DebtProposalModelCopyWith<$Res> implements $DebtProposalM
   factory _$DebtProposalModelCopyWith(_DebtProposalModel value, $Res Function(_DebtProposalModel) _then) = __$DebtProposalModelCopyWithImpl;
 @override @useResult
 $Res call({
- String id,@JsonKey(name: 'proposer_id') String proposerId,@JsonKey(name: 'counterparty_id') String counterpartyId,@JsonKey(name: 'debtor_id') String debtorId, String title, int? amount,@JsonKey(name: 'original_amount') int? originalAmount, String status,@JsonKey(name: 'awaiting_id') String? awaitingId, int round,@JsonKey(name: 'reject_reason') String? rejectReason,@JsonKey(name: 'created_at') DateTime createdAt,@JsonKey(name: 'updated_at') DateTime updatedAt,@JsonKey(name: 'resolved_at') DateTime? resolvedAt,@JsonKey(name: 'other_id') String? otherId,@JsonKey(name: 'other_handle') String? otherHandle,@JsonKey(name: 'other_display_name') String? otherDisplayName,@JsonKey(name: 'other_avatar_url') String? otherAvatarUrl
+ String id, String kind,@JsonKey(name: 'repays_id') String? repaysId, int? outstanding,@JsonKey(name: 'proposer_id') String proposerId,@JsonKey(name: 'counterparty_id') String counterpartyId,@JsonKey(name: 'debtor_id') String debtorId, String title, int? amount,@JsonKey(name: 'original_amount') int? originalAmount, String status,@JsonKey(name: 'awaiting_id') String? awaitingId, int round,@JsonKey(name: 'reject_reason') String? rejectReason,@JsonKey(name: 'created_at') DateTime createdAt,@JsonKey(name: 'updated_at') DateTime updatedAt,@JsonKey(name: 'resolved_at') DateTime? resolvedAt,@JsonKey(name: 'other_id') String? otherId,@JsonKey(name: 'other_handle') String? otherHandle,@JsonKey(name: 'other_display_name') String? otherDisplayName,@JsonKey(name: 'other_avatar_url') String? otherAvatarUrl
 });
 
 
@@ -306,10 +320,13 @@ class __$DebtProposalModelCopyWithImpl<$Res>
 
 /// Create a copy of DebtProposalModel
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? proposerId = null,Object? counterpartyId = null,Object? debtorId = null,Object? title = null,Object? amount = freezed,Object? originalAmount = freezed,Object? status = null,Object? awaitingId = freezed,Object? round = null,Object? rejectReason = freezed,Object? createdAt = null,Object? updatedAt = null,Object? resolvedAt = freezed,Object? otherId = freezed,Object? otherHandle = freezed,Object? otherDisplayName = freezed,Object? otherAvatarUrl = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? kind = null,Object? repaysId = freezed,Object? outstanding = freezed,Object? proposerId = null,Object? counterpartyId = null,Object? debtorId = null,Object? title = null,Object? amount = freezed,Object? originalAmount = freezed,Object? status = null,Object? awaitingId = freezed,Object? round = null,Object? rejectReason = freezed,Object? createdAt = null,Object? updatedAt = null,Object? resolvedAt = freezed,Object? otherId = freezed,Object? otherHandle = freezed,Object? otherDisplayName = freezed,Object? otherAvatarUrl = freezed,}) {
   return _then(_DebtProposalModel(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as String,proposerId: null == proposerId ? _self.proposerId : proposerId // ignore: cast_nullable_to_non_nullable
+as String,kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
+as String,repaysId: freezed == repaysId ? _self.repaysId : repaysId // ignore: cast_nullable_to_non_nullable
+as String?,outstanding: freezed == outstanding ? _self.outstanding : outstanding // ignore: cast_nullable_to_non_nullable
+as int?,proposerId: null == proposerId ? _self.proposerId : proposerId // ignore: cast_nullable_to_non_nullable
 as String,counterpartyId: null == counterpartyId ? _self.counterpartyId : counterpartyId // ignore: cast_nullable_to_non_nullable
 as String,debtorId: null == debtorId ? _self.debtorId : debtorId // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable

@@ -46,54 +46,30 @@ class DebtProposalCard extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                BrutalPill(
-                  color: pending
-                      ? BrutalColors.surfaceContainerHigh
-                      : BrutalColors.secondary,
-                  radius: BrutalSpec.pillRadius,
-                  borderWidth: BrutalSpec.borderWidthThin,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 9,
-                    vertical: 3,
-                  ),
-                  child: Text(
-                    pending
-                        ? 'debt_pending_title'.tr()
-                        : _terminalLabel(proposal.status),
-                    style: BrutalText.labelBold(
-                      fontSize: 12,
-                      color: pending ? null : BrutalColors.onError,
-                    ),
-                  ),
-                ),
-                const Spacer(),
-                Flexible(
-                  child: Text(
-                    proposal.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: BrutalText.labelBold(
-                      fontSize: 12,
-                      color: BrutalColors.onSurfaceVariant,
-                    ),
-                  ),
-                ),
-              ],
+            // Who it is with, up in the corner with their face on it. The
+            // state chip sits right after the name so "阿華 · 欠你錢" reads as
+            // one phrase instead of two things at opposite ends of the card.
+            DebtPartyLine(
+              name: name,
+              avatarUrl: proposal.otherAvatarUrl,
+              badge: pending
+                  ? (owed ? 'circle_card_owes_you' : 'group_you_owe').tr()
+                  : _terminalLabel(proposal.status),
+              badgeColor: pending
+                  ? BrutalColors.surfaceContainerHigh
+                  : BrutalColors.secondary,
+              badgeInk: pending ? null : BrutalColors.onError,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Expanded(
                   child: Text(
-                    (owed ? 'tx_owes_you' : 'tx_you_owe').tr(
-                      namedArgs: {'name': name},
-                    ),
+                    proposal.title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: BrutalText.headlineLgMobile(fontSize: 19),
+                    style: BrutalText.headlineLgMobile(fontSize: 20),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -164,6 +140,69 @@ class DebtProposalCard extends ConsumerWidget {
       return 'debt_state_rejected'.tr(namedArgs: {'reason': reason!});
     }
     return 'debt_action_dismiss'.tr();
+  }
+}
+
+/// The top line of a debt card: who it is with, and what kind it is.
+///
+/// Left-aligned, so it starts on the same edge as the item title and the rest
+/// of the card. A right-aligned head reads as a stray label rather than the
+/// first line of the card it belongs to.
+///
+/// Shared by both card types so a debt looks the same whether it has been
+/// agreed yet or not — the only thing that should differ between them is the
+/// footer, and how loudly the amount is drawn.
+class DebtPartyLine extends StatelessWidget {
+  const DebtPartyLine({
+    required this.name,
+    required this.badge,
+    required this.badgeColor,
+    this.avatarUrl,
+    this.badgeInk,
+    super.key,
+  });
+
+  final String name;
+  final String? avatarUrl;
+  final String badge;
+  final Color badgeColor;
+  final Color? badgeInk;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        BrutalAvatar(
+          name: name,
+          photoUrl: avatarUrl,
+          size: 26,
+          fontSize: 12,
+          borderWidth: BrutalSpec.borderWidthThin,
+        ),
+        const SizedBox(width: 7),
+        Flexible(
+          child: Text(
+            name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: BrutalText.labelBold(fontSize: 14),
+          ),
+        ),
+        const SizedBox(width: 7),
+        BrutalPill(
+          color: badgeColor,
+          radius: BrutalSpec.pillRadius,
+          borderWidth: BrutalSpec.borderWidthThin,
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          child: Text(
+            badge,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: BrutalText.labelBold(fontSize: 11, color: badgeInk),
+          ),
+        ),
+      ],
+    );
   }
 }
 

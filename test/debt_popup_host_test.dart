@@ -78,6 +78,7 @@ class _SpyDebtService extends DebtService {
 /// A debt the other side has just agreed to, not yet announced here.
 DebtProposal _confirmed({String id = 'c1'}) => DebtProposal(
   id: id,
+  kind: 'debt',
   proposerId: 'me',
   counterpartyId: 'them',
   debtorId: 'them',
@@ -93,6 +94,7 @@ DebtProposal _confirmed({String id = 'c1'}) => DebtProposal(
 
 DebtProposal _proposal({String id = 'p1'}) => DebtProposal(
   id: id,
+  kind: 'debt',
   proposerId: 'them',
   counterpartyId: 'me',
   debtorId: 'me',

@@ -9,6 +9,9 @@ part of 'debt_proposal_model.dart';
 _DebtProposalModel _$DebtProposalModelFromJson(Map<String, dynamic> json) =>
     _DebtProposalModel(
       id: json['id'] as String,
+      kind: json['kind'] as String? ?? 'debt',
+      repaysId: json['repays_id'] as String?,
+      outstanding: (json['outstanding'] as num?)?.toInt(),
       proposerId: json['proposer_id'] as String,
       counterpartyId: json['counterparty_id'] as String,
       debtorId: json['debtor_id'] as String,
@@ -33,6 +36,9 @@ _DebtProposalModel _$DebtProposalModelFromJson(Map<String, dynamic> json) =>
 Map<String, dynamic> _$DebtProposalModelToJson(_DebtProposalModel instance) =>
     <String, dynamic>{
       'id': instance.id,
+      'kind': instance.kind,
+      'repays_id': instance.repaysId,
+      'outstanding': instance.outstanding,
       'proposer_id': instance.proposerId,
       'counterparty_id': instance.counterpartyId,
       'debtor_id': instance.debtorId,

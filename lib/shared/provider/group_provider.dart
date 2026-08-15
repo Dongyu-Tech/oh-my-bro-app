@@ -7,6 +7,7 @@ import 'package:uuid/uuid.dart';
 import '../../core/database/database.dart';
 import '../split/settlement.dart';
 import 'database_provider.dart';
+import 'friend_provider.dart';
 
 part 'group_provider.freezed.dart';
 
@@ -275,6 +276,10 @@ abstract class DebtRecord with _$DebtRecord {
     required String groupName,
     required String otherName,
 
+    /// Their picture, via the member's linked [Friend]. Null for a member who
+    /// was never linked to one, or who simply has no photo.
+    String? otherAvatarUrl,
+
     /// true = they owe me, false = I owe them.
     required bool owedToMe,
 
@@ -291,6 +296,11 @@ final myDebtsProvider = Provider<List<DebtRecord>>((ref) {
   final groups = (ref.watch(groupsProvider).asData?.value ?? const []).where(
     (g) => !g.isArchived,
   );
+  final avatarByFriendId = {
+    for (final f
+        in ref.watch(friendsProvider).asData?.value ?? const <Friend>[])
+      f.id: f.avatarUrl,
+  };
   final out = <DebtRecord>[];
   for (final g in groups) {
     final summary = ref.watch(groupSummaryProvider(g.id)).asData?.value;
@@ -299,6 +309,11 @@ final myDebtsProvider = Provider<List<DebtRecord>>((ref) {
     final me = members.where((m) => m.isMe).map((m) => m.id).firstOrNull;
     if (me == null) continue;
     final nameOf = {for (final m in members) m.id: m.name};
+    // Members carry a friendId, and the picture lives on the friend.
+    final avatarOf = {
+      for (final m in members)
+        m.id: m.friendId == null ? null : avatarByFriendId[m.friendId],
+    };
     for (final t in summary.transfers) {
       if (t.from == me) {
         out.add(
@@ -306,6 +321,7 @@ final myDebtsProvider = Provider<List<DebtRecord>>((ref) {
             groupId: g.id,
             groupName: g.name,
             otherName: nameOf[t.to] ?? '?',
+            otherAvatarUrl: avatarOf[t.to],
             owedToMe: false,
             transfer: t,
           ),
@@ -316,6 +332,7 @@ final myDebtsProvider = Provider<List<DebtRecord>>((ref) {
             groupId: g.id,
             groupName: g.name,
             otherName: nameOf[t.from] ?? '?',
+            otherAvatarUrl: avatarOf[t.from],
             owedToMe: true,
             transfer: t,
           ),

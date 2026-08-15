@@ -17,6 +17,7 @@ DebtProposal _proposal({
   String proposerId = 'them',
 }) => DebtProposal(
   id: id,
+  kind: 'debt',
   proposerId: proposerId,
   counterpartyId: 'me',
   debtorId: debtorId,

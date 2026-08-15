@@ -32,6 +32,13 @@ enum DebtOutcome {
   /// Already countered once; only accept or reject remain.
   roundExhausted,
 
+  /// More than is still owed. Overpaying is a new debt the other way round,
+  /// not a repayment.
+  tooMuch,
+
+  /// Repayments cannot be haggled over.
+  noCounter,
+
   /// That's you.
   self,
 
@@ -46,6 +53,8 @@ enum DebtOutcome {
     'no_amount' => noAmount,
     'bad_amount' || 'bad_title' || 'bad_debtor' || 'bad_action' => badInput,
     'round_exhausted' => roundExhausted,
+    'too_much' => tooMuch,
+    'no_counter' => noCounter,
     'self' => self,
     _ => unknown,
   };
@@ -87,6 +96,14 @@ abstract class DebtRepository {
     String? reason,
   });
 
+  /// Claim to have paid part or all of a debt. Only the debtor may; the
+  /// creditor confirms receipt.
+  Future<Result<DebtOutcome>> proposeRepayment({
+    required String id,
+    required String repaysId,
+    required int amount,
+  });
+
   /// Withdraw my own proposal before the other side answers.
   Future<Result<DebtOutcome>> cancel(String id);
 }
@@ -115,6 +132,13 @@ class UnavailableDebtRepository implements DebtRepository {
     required DebtReply reply,
     int? amount,
     String? reason,
+  }) async => const Result.error(BackendNotWiredException());
+
+  @override
+  Future<Result<DebtOutcome>> proposeRepayment({
+    required String id,
+    required String repaysId,
+    required int amount,
   }) async => const Result.error(BackendNotWiredException());
 
   @override
@@ -210,6 +234,24 @@ class SupabaseDebtRepository implements DebtRepository {
       return Result.ok(_outcome('respond_debt', wire));
     } on Exception catch (e, st) {
       logAppError('respond_debt', e, st);
+      return Result.error(e);
+    }
+  }
+
+  @override
+  Future<Result<DebtOutcome>> proposeRepayment({
+    required String id,
+    required String repaysId,
+    required int amount,
+  }) async {
+    try {
+      final wire = await _client.rpc<String?>(
+        'propose_repayment',
+        params: {'p_id': id, 'p_repays': repaysId, 'p_amount': amount},
+      );
+      return Result.ok(_outcome('propose_repayment', wire));
+    } on Exception catch (e, st) {
+      logAppError('propose_repayment', e, st);
       return Result.error(e);
     }
   }

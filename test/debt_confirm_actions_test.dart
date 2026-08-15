@@ -11,7 +11,8 @@ import 'package:heymybro/shared/repositories/debt_repository.dart';
 DebtProposal _proposal({String? awaitingId = 'me', int? amount = 500}) =>
     DebtProposal(
       id: 'p1',
-      proposerId: 'them',
+      kind: 'debt',
+  proposerId: 'them',
       counterpartyId: 'me',
       debtorId: 'me',
       title: '晚餐',
