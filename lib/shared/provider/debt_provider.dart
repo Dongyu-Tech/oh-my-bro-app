@@ -34,9 +34,21 @@ final debtProposalsProvider = StreamProvider<List<DebtProposal>>((ref) {
 });
 
 /// The signed-in user's id, or null. Every "is this mine / is it my turn"
-/// question needs it.
+/// question needs it — and so does projection, which skips everything without
+/// one.
+///
+/// Watches the stream first, exactly as every other provider in the app does.
+/// Reading `authServiceProvider.currentUser` alone looks equivalent and is not:
+/// that provider hands back the same service instance forever, so a Provider
+/// built only on it computes once and caches the answer for the whole session.
+/// Session restore is asynchronous, so that cached answer is whatever happened
+/// to be true the first time anything asked — often null at cold start, and
+/// then null for good.
 final myUserIdProvider = Provider<String?>((ref) {
-  return ref.watch(authServiceProvider).currentUser?.id;
+  final user =
+      ref.watch(currentUserProvider).asData?.value ??
+      ref.watch(authServiceProvider).currentUser;
+  return user?.id;
 });
 
 /// Waiting on me to answer.
@@ -116,6 +128,17 @@ final debtServiceProvider = Provider<DebtService>((ref) {
   final service = DebtService(ref);
   ref.onDispose(service.dispose);
   service.start();
+
+  // Sync again the moment a user actually appears. start() fires immediately,
+  // which at cold start can be before session restore has finished — and a
+  // pass with nobody signed in projects nothing at all, because projection has
+  // no "me" to decide which side of the debt is yours. Nothing else would ever
+  // retry: the proposals are already mirrored, so no push arrives to prompt
+  // one, and the debts simply never appear in 帳本.
+  ref.listen(myUserIdProvider, (previous, next) {
+    if (previous != next && next != null) unawaited(service.refresh());
+  });
+
   return service;
 });
 
