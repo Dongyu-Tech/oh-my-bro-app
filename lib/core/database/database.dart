@@ -362,23 +362,33 @@ class AppDatabase extends _$AppDatabase {
     debtProposals,
   )..orderBy([(d) => OrderingTerm.desc(d.updatedAt)])).watch();
 
-  /// The newest `updatedAt` held locally, which the catch-up fetch passes as
-  /// its `p_since`. Null when we hold nothing, meaning "fetch everything".
-  Future<DateTime?> latestDebtProposalUpdatedAt() async {
-    final newest = debtProposals.updatedAt.max();
-    final row = await (selectOnly(
-      debtProposals,
-    )..addColumns([newest])).getSingleOrNull();
-    return row?.read(newest);
-  }
-
-  /// Absorb server rows.
+  /// Replace the local mirror with exactly what the server returned.
   ///
-  /// Callers must leave `poppedAt`/`dismissedAt` absent in the companions:
-  /// they are this device's business and the server knows nothing about them,
-  /// so including them would re-arm an already dismissed popup on every sync.
-  Future<void> upsertDebtProposals(List<DebtProposalsCompanion> rows) =>
-      batch((b) => b.insertAllOnConflictUpdate(debtProposals, rows));
+  /// Upsert alone is not enough. It can only ever add and update, so anything
+  /// deleted server-side stays on the device forever — a debt that no longer
+  /// exists, still listed, opening onto "this one is no longer here". The
+  /// server is the authority on which proposals exist, so rows it did not
+  /// return are removed.
+  ///
+  /// Only ever call this with a list that actually came back from a successful
+  /// fetch: an empty list from a failed one would wipe the mirror.
+  ///
+  /// Callers must leave `poppedAt`/`dismissedAt`/`confirmAlertAt` absent in the
+  /// companions: they are this device's business and the server knows nothing
+  /// about them, so including them would re-arm popups and banners the user has
+  /// already dealt with on every single sync.
+  Future<void> syncDebtProposals(List<DebtProposalsCompanion> rows) {
+    return transaction(() async {
+      if (rows.isEmpty) {
+        // `NOT IN ()` is a syntax error, so "keep nothing" needs no clause.
+        await delete(debtProposals).go();
+        return;
+      }
+      final keep = [for (final r in rows) r.id.value];
+      await (delete(debtProposals)..where((d) => d.id.isNotIn(keep))).go();
+      await batch((b) => b.insertAllOnConflictUpdate(debtProposals, rows));
+    });
+  }
 
   Future<void> markDebtPopped(String id) =>
       (update(debtProposals)..where((d) => d.id.equals(id))).write(

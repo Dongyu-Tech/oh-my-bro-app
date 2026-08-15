@@ -41,16 +41,12 @@ void main() {
   });
 
   test('upsert keeps the device-local popped flag', () async {
-    await db.upsertDebtProposals([
-      _row('p1', updatedAt: DateTime(2026, 8, 15)),
-    ]);
+    await db.syncDebtProposals([_row('p1', updatedAt: DateTime(2026, 8, 15))]);
     await db.markDebtPopped('p1');
 
     // The other side counters, so the row syncs again. That must not re-arm
     // a popup the user has already seen.
-    await db.upsertDebtProposals([
-      _row('p1', updatedAt: DateTime(2026, 8, 16)),
-    ]);
+    await db.syncDebtProposals([_row('p1', updatedAt: DateTime(2026, 8, 16))]);
 
     final rows = await db.watchDebtProposals().first;
     expect(rows.single.poppedAt, isNotNull);
@@ -58,37 +54,37 @@ void main() {
   });
 
   test('upsert keeps the device-local dismissed flag', () async {
-    await db.upsertDebtProposals([
-      _row('p1', updatedAt: DateTime(2026, 8, 15)),
-    ]);
+    await db.syncDebtProposals([_row('p1', updatedAt: DateTime(2026, 8, 15))]);
     await db.markDebtDismissed('p1');
-    await db.upsertDebtProposals([
-      _row('p1', updatedAt: DateTime(2026, 8, 16)),
-    ]);
+    await db.syncDebtProposals([_row('p1', updatedAt: DateTime(2026, 8, 16))]);
 
     final rows = await db.watchDebtProposals().first;
     expect(rows.single.dismissedAt, isNotNull);
   });
 
-  test('latestDebtProposalUpdatedAt drives the catch-up fetch', () async {
-    expect(
-      await db.latestDebtProposalUpdatedAt(),
-      isNull,
-      reason:
-          'holding nothing must mean "fetch everything", not "fetch since '
-          'the epoch of whatever default we picked"',
-    );
-
-    await db.upsertDebtProposals([
+  test('a row the server no longer returns is dropped', () async {
+    await db.syncDebtProposals([
       _row('p1', updatedAt: DateTime(2026, 8, 15)),
       _row('p2', updatedAt: DateTime(2026, 8, 17)),
     ]);
 
-    expect(await db.latestDebtProposalUpdatedAt(), DateTime(2026, 8, 17));
+    // p2 was deleted server-side. Upserting alone would leave it here for
+    // good: listed, tappable, and opening onto "this one is no longer here".
+    await db.syncDebtProposals([_row('p1', updatedAt: DateTime(2026, 8, 15))]);
+
+    final rows = await db.watchDebtProposals().first;
+    expect(rows.map((r) => r.id), ['p1']);
+  });
+
+  test('an empty server list empties the mirror', () async {
+    await db.syncDebtProposals([_row('p1', updatedAt: DateTime(2026, 8, 15))]);
+    await db.syncDebtProposals(const []);
+
+    expect(await db.watchDebtProposals().first, isEmpty);
   });
 
   test('watch orders by newest activity first', () async {
-    await db.upsertDebtProposals([
+    await db.syncDebtProposals([
       _row('old', updatedAt: DateTime(2026, 8, 10)),
       _row('new', updatedAt: DateTime(2026, 8, 20)),
     ]);

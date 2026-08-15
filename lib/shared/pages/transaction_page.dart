@@ -241,37 +241,30 @@ class _DebtCard extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                _TypeBadge(
-                  label: owed
-                      ? 'circle_card_owes_you'.tr()
-                      : 'group_you_owe'.tr(),
-                  color: owed
-                      ? BrutalColors.secondary
-                      : BrutalColors.surfaceContainerHigh,
-                  textColor: owed ? BrutalColors.onError : null,
-                ),
-                const Spacer(),
-                Text(
-                  debt.groupName,
-                  style: BrutalText.labelBold(
-                    fontSize: 12,
-                    color: BrutalColors.onSurfaceVariant,
-                  ),
-                ),
-              ],
+            DebtPartyLine(
+              name: debt.otherName,
+              avatarUrl: debt.otherAvatarUrl,
+              badge: owed ? 'circle_card_owes_you'.tr() : 'group_you_owe'.tr(),
+              badgeColor: owed
+                  ? BrutalColors.secondary
+                  : BrutalColors.surfaceContainerHigh,
+              badgeInk: owed ? BrutalColors.onError : null,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Expanded(
                   child: Text(
-                    relation,
-                    style: BrutalText.headlineLgMobile(fontSize: 19),
+                    // What the debt is for — the group name is the item, since
+                    // a direct debt's group is minted from its title.
+                    debt.groupName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: BrutalText.headlineLgMobile(fontSize: 20),
                   ),
                 ),
+                const SizedBox(width: 8),
                 Text(
                   '${owed ? '+' : '-'}\$${money.format(debt.amount)}',
                   style: BrutalText.display(fontSize: 26, color: amountColor),
@@ -307,29 +300,6 @@ class _DebtCard extends ConsumerWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _TypeBadge extends StatelessWidget {
-  const _TypeBadge({required this.label, required this.color, this.textColor});
-  final String label;
-  final Color color;
-  final Color? textColor;
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: brutalDecoration(
-        color: color,
-        radius: BrutalSpec.pillRadius,
-        offset: 0,
-        borderWidth: BrutalSpec.borderWidthThin,
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-      child: Text(
-        label,
-        style: BrutalText.labelBold(fontSize: 12, color: textColor),
       ),
     );
   }

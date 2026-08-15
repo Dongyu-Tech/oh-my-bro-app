@@ -154,10 +154,19 @@ class DebtService {
     }
   }
 
-  /// Pull anything newer than what we hold and mirror it locally.
+  /// Pull the full picture and make the local mirror match it.
+  ///
+  /// Deliberately not an incremental "anything newer than what I hold" fetch.
+  /// That can only ever add, so a proposal deleted server-side stays on the
+  /// device forever — listed, tappable, and opening onto "this one is no
+  /// longer here". The server decides what exists; a fetch that cannot express
+  /// deletion cannot honour that.
+  ///
+  /// The cost is a handful of rows per call, since a proposal only exists
+  /// between two friends and only until it is answered. That is not a price
+  /// worth the class of bug the optimisation buys.
   Future<void> refresh() async {
-    final since = await _db.latestDebtProposalUpdatedAt();
-    switch (await _repo.list(since: since)) {
+    switch (await _repo.list()) {
       case Ok(value: final rows):
         await _absorb(rows);
       case Error(error: BackendNotWiredException()):
@@ -167,11 +176,9 @@ class DebtService {
     }
   }
 
-  /// Write server rows into Drift and land any that are confirmed.
+  /// Make Drift match the server exactly, then land any confirmed rows.
   Future<void> _absorb(List<DebtProposalModel> rows) async {
-    if (rows.isEmpty) return;
-
-    await _db.upsertDebtProposals([
+    await _db.syncDebtProposals([
       for (final r in rows)
         DebtProposalsCompanion.insert(
           id: r.id,

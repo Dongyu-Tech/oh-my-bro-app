@@ -150,39 +150,47 @@ class _ConfirmedAlert extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-      child: Material(
-        // Transparent: the brutal decoration below draws every pixel. Material
-        // is here only so the text has a canvas to paint on outside a Scaffold.
-        color: Colors.transparent,
-        child: Container(
-          decoration: brutalDecoration(
-            color: BrutalColors.primaryContainer,
-            radius: BrutalSpec.cardRadius,
-            offset: BrutalSpec.shadowOffsetMobile,
-          ),
-          padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
-          child: Row(
-            children: [
-              const Icon(LucideIcons.circleCheck, size: 22),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'debt_alert_confirmed'.tr(
-                    namedArgs: {'name': proposal.otherName ?? '?'},
+      // Flick it away, the way anything that appears at the top of a phone
+      // expects to be dismissed. The ✗ stays for anyone who does not think to
+      // try, but reaching for a small target should not be the only way out.
+      child: Dismissible(
+        key: ValueKey('debt-alert-${proposal.id}'),
+        direction: DismissDirection.up,
+        onDismissed: (_) => onDismiss(),
+        child: Material(
+          // Transparent: the brutal decoration below draws every pixel. Material
+          // is here only so the text has a canvas to paint on outside a Scaffold.
+          color: Colors.transparent,
+          child: Container(
+            decoration: brutalDecoration(
+              color: BrutalColors.primaryContainer,
+              radius: BrutalSpec.cardRadius,
+              offset: BrutalSpec.shadowOffsetMobile,
+            ),
+            padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
+            child: Row(
+              children: [
+                const Icon(LucideIcons.circleCheck, size: 22),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'debt_alert_confirmed'.tr(
+                      namedArgs: {'name': proposal.otherName ?? '?'},
+                    ),
+                    style: BrutalText.labelBold(fontSize: 14),
                   ),
-                  style: BrutalText.labelBold(fontSize: 14),
                 ),
-              ),
-              const SizedBox(width: 8),
-              GestureDetector(
-                onTap: onDismiss,
-                behavior: HitTestBehavior.opaque,
-                child: const Padding(
-                  padding: EdgeInsets.all(6),
-                  child: Icon(LucideIcons.x, size: 20),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: onDismiss,
+                  behavior: HitTestBehavior.opaque,
+                  child: const Padding(
+                    padding: EdgeInsets.all(6),
+                    child: Icon(LucideIcons.x, size: 20),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
