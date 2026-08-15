@@ -280,6 +280,57 @@ void main() {
     );
   });
 
+  test('a local settle inside an agreed debt is undone by the sync', () async {
+    final container = containerWith([_model(id: 'p1', status: 'confirmed')]);
+    final service = container.read(debtServiceProvider);
+    await service.refresh();
+
+    final group = (await db.watchGroups().first).single;
+    final members = await db.watchMembers(group.id).first;
+
+    // The old 結清: written locally, never sent anywhere. It zeroes the
+    // balance here, so the debt stops appearing — while the other side still
+    // sees it outstanding. Nothing about that reads as a bug from the inside.
+    await db.insertSettlement(
+      SettlementsCompanion.insert(
+        id: 'local-settle',
+        groupId: group.id,
+        fromMemberId: members.first.id,
+        toMemberId: members.last.id,
+        amount: 500,
+        createdAt: DateTime(2026, 8, 16),
+      ),
+    );
+    expect((await db.watchAllSettlements().first).length, 1);
+
+    await service.refresh();
+
+    expect(
+      await db.watchAllSettlements().first,
+      isEmpty,
+      reason: 'the server knows of no repayment, so this one is stale',
+    );
+  });
+
+  test('an agreed repayment survives the same sweep', () async {
+    final container = containerWith([
+      _model(id: 'p1', status: 'confirmed'),
+      _model(id: 'r1', status: 'confirmed').copyWith(
+        kind: 'repayment',
+        repaysId: 'p1',
+        amount: 200,
+        debtorId: 'them',
+      ),
+    ]);
+    final service = container.read(debtServiceProvider);
+    await service.refresh();
+    await service.refresh();
+
+    final settlements = await db.watchAllSettlements().first;
+    expect(settlements.length, 1);
+    expect(settlements.single.amount, 200);
+  });
+
   test('a debt whose proposal is gone leaves the ledger too', () async {
     final container = containerWith([_model(id: 'p1', status: 'confirmed')]);
     final service = container.read(debtServiceProvider);

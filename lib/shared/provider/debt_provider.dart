@@ -221,13 +221,6 @@ class DebtService {
     final confirmedDebts = rows
         .where((r) => r.isConfirmed && !r.isRepayment)
         .toList();
-    logAppTrace(
-      'debt sync',
-      'fetched=${rows.length} '
-          'confirmedDebts=${confirmedDebts.length} '
-          'me=${me ?? "NOBODY SIGNED IN"} '
-          'titles=${confirmedDebts.map((r) => r.title).toList()}',
-    );
     await _db.syncDebtProposals([
       for (final r in rows)
         DebtProposalsCompanion.insert(
@@ -284,7 +277,7 @@ class DebtService {
         logAppError('project repayment "${r.title}"', e, st);
       }
     }
-    logAppTrace('debt sync', 'projected=$projected settlements=$settled');
+
 
     // Then take away what no longer belongs. Projecting is what puts a debt in
     // the ledger; without the matching sweep, a proposal deleted or rejected
@@ -295,29 +288,27 @@ class DebtService {
     // anything this session, and clearing the ledger from that state would be
     // destroying data on no evidence at all.
     if (me != null) {
-      await _db.purgeOrphanDirectDebts({
+      final projectedGroups = {
         for (final r in confirmedDebts) debtGroupId(r.id),
+      };
+      // Settlements first, then whole debts. Inside a projected group the
+      // server is the authority on the repayments too — a settlement written
+      // by the old local 結清 never reached it, and left the debt looking
+      // cleared here while the other side still saw it outstanding. Nothing
+      // about that reads as a bug from the inside: the debt just stops
+      // appearing, exactly as a settled one should.
+      await _db.purgeUnbackedSettlements(projectedGroups, {
+        for (final r in rows)
+          if (r.isConfirmed && r.isRepayment) debtSettlementId(r.id),
       });
+      await _db.purgeOrphanDirectDebts(projectedGroups);
     }
 
-    // What the ledger is actually left holding. If this disagrees with the
-    // line above, the break is below the sync and not in it.
-    final live = await _db.watchGroups().first;
-    final all = await _db.allGroupsIncludingHidden();
-    final exp = await _db.allExpensesIncludingHidden();
     logAppTrace(
       'debt sync',
-      'expenses: total=${exp.length} '
-          'trashed=${exp.where((e) => e.deletedAt != null).length} '
-          'amounts=${exp.map((e) => "${e.title}:${e.amount}"
-              "${e.deletedAt == null ? "" : " TRASHED"}").toList()}',
-    );
-    logAppTrace(
-      'debt sync',
-      'groups: live=${live.length} total=${all.length} '
-          'archived=${all.where((g) => g.isArchived).length} '
-          'trashed=${all.where((g) => g.deletedAt != null).length} '
-          'names=${live.map((g) => g.name).toList()}',
+      'fetched=${rows.length} debts=${confirmedDebts.length} '
+          'projected=$projected settlements=$settled '
+          'me=${me ?? "NOBODY SIGNED IN"}',
     );
   }
 

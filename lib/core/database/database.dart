@@ -453,6 +453,35 @@ class AppDatabase extends _$AppDatabase {
         .go();
   }
 
+  /// Remove settlements inside a projected debt that no agreed repayment
+  /// accounts for.
+  ///
+  /// Inside these groups the server is the authority on the repayments as well
+  /// as the debt. A settlement written by the old local 結清 — which never
+  /// reached the server — silently zeroes the balance here while the other
+  /// side still sees the debt outstanding. It does not look like a bug from
+  /// the inside: the debt simply stops appearing, as a settled one should.
+  ///
+  /// Scoped to projected groups, so an ordinary gathering's settlements, which
+  /// have no server counterpart to check against, are untouched.
+  ///
+  /// Only ever call this after a SUCCESSFUL fetch.
+  Future<void> purgeUnbackedSettlements(
+    Set<String> projectedGroupIds,
+    Set<String> agreedSettlementIds,
+  ) {
+    if (projectedGroupIds.isEmpty) return Future.value();
+    return (delete(settlements)..where((s) {
+          final inProjected = s.groupId.isIn(projectedGroupIds.toList());
+          // `NOT IN ()` is a syntax error, so "none are agreed" needs no
+          // exclusion clause at all.
+          return agreedSettlementIds.isEmpty
+              ? inProjected
+              : inProjected & s.id.isNotIn(agreedSettlementIds.toList());
+        }))
+        .go();
+  }
+
   Future<void> markDebtConfirmAlertSeen(String id) =>
       (update(debtProposals)..where((d) => d.id.equals(id))).write(
         DebtProposalsCompanion(confirmAlertAt: Value(DateTime.now())),
