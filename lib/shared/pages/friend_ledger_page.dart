@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import 'package:heymybro/shared/pages/transaction_card.dart';
 import 'package:heymybro/shared/widgets/brutalism.dart';
@@ -106,7 +107,7 @@ class _BackButton extends StatelessWidget {
         alignment: Alignment.center,
         onTap: () => context.pop(),
         child: const Icon(
-          Icons.arrow_back,
+          LucideIcons.arrowLeft,
           color: BrutalColors.onBackground,
           size: 24,
         ),

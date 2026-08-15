@@ -16,21 +16,21 @@ part 'app_settings_model.g.dart';
 
 extension ThemeModeX on ThemeMode {
   static ThemeMode fromString(String? value) => switch (value) {
-        'system' => ThemeMode.system,
-        'light' => ThemeMode.light,
-        'dark' => ThemeMode.dark,
-        _ => ThemeMode.system,
-      };
+    'system' => ThemeMode.system,
+    'light' => ThemeMode.light,
+    'dark' => ThemeMode.dark,
+    _ => ThemeMode.system,
+  };
 }
 
 enum AppLanguage { english, chinese }
 
 extension AppLanguageX on AppLanguage {
   static AppLanguage fromString(String? value) => switch (value) {
-        'chinese' || 'zh' || 'zh_TW' => AppLanguage.chinese,
-        'english' || 'en' => AppLanguage.english,
-        _ => _systemDefault(),
-      };
+    'chinese' || 'zh' || 'zh_TW' => AppLanguage.chinese,
+    'english' || 'en' => AppLanguage.english,
+    _ => _systemDefault(),
+  };
 
   static AppLanguage _systemDefault() {
     final locales = ui.PlatformDispatcher.instance.locales;
@@ -40,9 +40,9 @@ extension AppLanguageX on AppLanguage {
   }
 
   Locale get locale => switch (this) {
-        AppLanguage.english => const Locale('en'),
-        AppLanguage.chinese => const Locale('zh', 'TW'),
-      };
+    AppLanguage.english => const Locale('en'),
+    AppLanguage.chinese => const Locale('zh', 'TW'),
+  };
 }
 
 class ColorIntConverter implements JsonConverter<Color, int> {

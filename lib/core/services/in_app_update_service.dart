@@ -10,7 +10,9 @@ import '../error/result.dart';
 /// Android side (typically `com.google.android.play:app-update`). iOS is a
 /// no-op until/unless you implement an equivalent App Store check.
 class InAppUpdateService {
-  static const _channel = MethodChannel('com.dongyutech.heymybro/in_app_update');
+  static const _channel = MethodChannel(
+    'com.dongyutech.heymybro/in_app_update',
+  );
 
   /// Returns true if a Play Store update is available. iOS always returns
   /// false (no native implementation by design).

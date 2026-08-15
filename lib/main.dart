@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:easy_localization_loader/easy_localization_loader.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -9,6 +10,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app.dart';
 import 'core/services/auth_service.dart';
+import 'core/services/dev_auth_service.dart';
 import 'core/services/supabase_google_auth_service.dart';
 import 'shared/provider/auth_provider.dart';
 import 'shared/provider/settings_provider.dart';
@@ -86,7 +88,10 @@ Future<AuthService> _resolveAuthService() async {
       anonKey == null ||
       webClientId == null ||
       iosClientId == null) {
-    return NoopAuthService();
+    // No real auth config. In debug builds use a dev bypass so the app is
+    // reachable for local UI work (tap "Sign in with Google" → fake user →
+    // into the app); release builds stay signed-out via the no-op service.
+    return kDebugMode ? DevAuthService() : NoopAuthService();
   }
 
   // The project supplies a legacy `anon` key, for which `anonKey` is the correct

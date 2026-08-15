@@ -33,10 +33,12 @@ class AppSettingsRepository {
   }
 
   AppSettingsModel load() {
-    final themeMode =
-        ThemeModeX.fromString(_sp.getString(AppSettingsKey.themeMode.value));
-    final language =
-        AppLanguageX.fromString(_sp.getString(AppSettingsKey.language.value));
+    final themeMode = ThemeModeX.fromString(
+      _sp.getString(AppSettingsKey.themeMode.value),
+    );
+    final language = AppLanguageX.fromString(
+      _sp.getString(AppSettingsKey.language.value),
+    );
     final colorInt = _sp.getInt(AppSettingsKey.themeColor.value);
 
     return AppSettingsModel(

@@ -30,9 +30,8 @@ class NoopAuthService implements AuthService {
   Stream<AuthUserModel?> get userChanges => _controller.stream;
 
   @override
-  Future<Result<AuthUserModel>> signIn() async => Result.error(
-        AuthNotWiredException('AuthService.signIn not wired yet'),
-      );
+  Future<Result<AuthUserModel>> signIn() async =>
+      Result.error(AuthNotWiredException('AuthService.signIn not wired yet'));
 
   @override
   Future<Result<void>> signOut() async {
