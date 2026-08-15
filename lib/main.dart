@@ -13,9 +13,11 @@ import 'core/services/auth_service.dart';
 import 'core/services/dev_auth_service.dart';
 import 'core/services/supabase_google_auth_service.dart';
 import 'shared/provider/auth_provider.dart';
+import 'shared/provider/debt_provider.dart';
 import 'shared/provider/friendship_provider.dart';
 import 'shared/provider/settings_provider.dart';
 import 'shared/provider/user_provider.dart';
+import 'shared/repositories/debt_repository.dart';
 import 'shared/repositories/friendship_repository.dart';
 import 'shared/repositories/user_repository.dart';
 
@@ -78,6 +80,7 @@ Future<void> main() async {
           friendshipRepositoryProvider.overrideWithValue(
             SupabaseFriendshipRepository(),
           ),
+          debtRepositoryProvider.overrideWithValue(SupabaseDebtRepository()),
         ],
       ],
       child: EasyLocalization(

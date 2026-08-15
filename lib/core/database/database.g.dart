@@ -2998,6 +2998,1050 @@ class SettlementsCompanion extends UpdateCompanion<Settlement> {
   }
 }
 
+class $DebtProposalsTable extends DebtProposals
+    with TableInfo<$DebtProposalsTable, DebtProposal> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $DebtProposalsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _proposerIdMeta = const VerificationMeta(
+    'proposerId',
+  );
+  @override
+  late final GeneratedColumn<String> proposerId = GeneratedColumn<String>(
+    'proposer_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _counterpartyIdMeta = const VerificationMeta(
+    'counterpartyId',
+  );
+  @override
+  late final GeneratedColumn<String> counterpartyId = GeneratedColumn<String>(
+    'counterparty_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _debtorIdMeta = const VerificationMeta(
+    'debtorId',
+  );
+  @override
+  late final GeneratedColumn<String> debtorId = GeneratedColumn<String>(
+    'debtor_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  @override
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+    'title',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _amountMeta = const VerificationMeta('amount');
+  @override
+  late final GeneratedColumn<int> amount = GeneratedColumn<int>(
+    'amount',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _originalAmountMeta = const VerificationMeta(
+    'originalAmount',
+  );
+  @override
+  late final GeneratedColumn<int> originalAmount = GeneratedColumn<int>(
+    'original_amount',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _awaitingIdMeta = const VerificationMeta(
+    'awaitingId',
+  );
+  @override
+  late final GeneratedColumn<String> awaitingId = GeneratedColumn<String>(
+    'awaiting_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _roundMeta = const VerificationMeta('round');
+  @override
+  late final GeneratedColumn<int> round = GeneratedColumn<int>(
+    'round',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _rejectReasonMeta = const VerificationMeta(
+    'rejectReason',
+  );
+  @override
+  late final GeneratedColumn<String> rejectReason = GeneratedColumn<String>(
+    'reject_reason',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _otherNameMeta = const VerificationMeta(
+    'otherName',
+  );
+  @override
+  late final GeneratedColumn<String> otherName = GeneratedColumn<String>(
+    'other_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _otherAvatarUrlMeta = const VerificationMeta(
+    'otherAvatarUrl',
+  );
+  @override
+  late final GeneratedColumn<String> otherAvatarUrl = GeneratedColumn<String>(
+    'other_avatar_url',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _resolvedAtMeta = const VerificationMeta(
+    'resolvedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> resolvedAt = GeneratedColumn<DateTime>(
+    'resolved_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _poppedAtMeta = const VerificationMeta(
+    'poppedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> poppedAt = GeneratedColumn<DateTime>(
+    'popped_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _dismissedAtMeta = const VerificationMeta(
+    'dismissedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> dismissedAt = GeneratedColumn<DateTime>(
+    'dismissed_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    proposerId,
+    counterpartyId,
+    debtorId,
+    title,
+    amount,
+    originalAmount,
+    status,
+    awaitingId,
+    round,
+    rejectReason,
+    otherName,
+    otherAvatarUrl,
+    createdAt,
+    updatedAt,
+    resolvedAt,
+    poppedAt,
+    dismissedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'debt_proposals';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<DebtProposal> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('proposer_id')) {
+      context.handle(
+        _proposerIdMeta,
+        proposerId.isAcceptableOrUnknown(data['proposer_id']!, _proposerIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_proposerIdMeta);
+    }
+    if (data.containsKey('counterparty_id')) {
+      context.handle(
+        _counterpartyIdMeta,
+        counterpartyId.isAcceptableOrUnknown(
+          data['counterparty_id']!,
+          _counterpartyIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_counterpartyIdMeta);
+    }
+    if (data.containsKey('debtor_id')) {
+      context.handle(
+        _debtorIdMeta,
+        debtorId.isAcceptableOrUnknown(data['debtor_id']!, _debtorIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_debtorIdMeta);
+    }
+    if (data.containsKey('title')) {
+      context.handle(
+        _titleMeta,
+        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_titleMeta);
+    }
+    if (data.containsKey('amount')) {
+      context.handle(
+        _amountMeta,
+        amount.isAcceptableOrUnknown(data['amount']!, _amountMeta),
+      );
+    }
+    if (data.containsKey('original_amount')) {
+      context.handle(
+        _originalAmountMeta,
+        originalAmount.isAcceptableOrUnknown(
+          data['original_amount']!,
+          _originalAmountMeta,
+        ),
+      );
+    }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_statusMeta);
+    }
+    if (data.containsKey('awaiting_id')) {
+      context.handle(
+        _awaitingIdMeta,
+        awaitingId.isAcceptableOrUnknown(data['awaiting_id']!, _awaitingIdMeta),
+      );
+    }
+    if (data.containsKey('round')) {
+      context.handle(
+        _roundMeta,
+        round.isAcceptableOrUnknown(data['round']!, _roundMeta),
+      );
+    }
+    if (data.containsKey('reject_reason')) {
+      context.handle(
+        _rejectReasonMeta,
+        rejectReason.isAcceptableOrUnknown(
+          data['reject_reason']!,
+          _rejectReasonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('other_name')) {
+      context.handle(
+        _otherNameMeta,
+        otherName.isAcceptableOrUnknown(data['other_name']!, _otherNameMeta),
+      );
+    }
+    if (data.containsKey('other_avatar_url')) {
+      context.handle(
+        _otherAvatarUrlMeta,
+        otherAvatarUrl.isAcceptableOrUnknown(
+          data['other_avatar_url']!,
+          _otherAvatarUrlMeta,
+        ),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('resolved_at')) {
+      context.handle(
+        _resolvedAtMeta,
+        resolvedAt.isAcceptableOrUnknown(data['resolved_at']!, _resolvedAtMeta),
+      );
+    }
+    if (data.containsKey('popped_at')) {
+      context.handle(
+        _poppedAtMeta,
+        poppedAt.isAcceptableOrUnknown(data['popped_at']!, _poppedAtMeta),
+      );
+    }
+    if (data.containsKey('dismissed_at')) {
+      context.handle(
+        _dismissedAtMeta,
+        dismissedAt.isAcceptableOrUnknown(
+          data['dismissed_at']!,
+          _dismissedAtMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  DebtProposal map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return DebtProposal(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      proposerId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}proposer_id'],
+      )!,
+      counterpartyId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}counterparty_id'],
+      )!,
+      debtorId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}debtor_id'],
+      )!,
+      title: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}title'],
+      )!,
+      amount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}amount'],
+      ),
+      originalAmount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}original_amount'],
+      ),
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+      awaitingId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}awaiting_id'],
+      ),
+      round: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}round'],
+      )!,
+      rejectReason: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}reject_reason'],
+      ),
+      otherName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}other_name'],
+      ),
+      otherAvatarUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}other_avatar_url'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      resolvedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}resolved_at'],
+      ),
+      poppedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}popped_at'],
+      ),
+      dismissedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}dismissed_at'],
+      ),
+    );
+  }
+
+  @override
+  $DebtProposalsTable createAlias(String alias) {
+    return $DebtProposalsTable(attachedDatabase, alias);
+  }
+}
+
+class DebtProposal extends DataClass implements Insertable<DebtProposal> {
+  final String id;
+  final String proposerId;
+  final String counterpartyId;
+
+  /// Whoever owes the money — always one of the two parties.
+  final String debtorId;
+  final String title;
+
+  /// Null means "left blank on purpose, the other side fills it in".
+  final int? amount;
+
+  /// The previous figure, kept when the other side counters so the card can
+  /// show "was $500".
+  final int? originalAmount;
+  final String status;
+
+  /// Whose turn it is; null on every terminal status.
+  final String? awaitingId;
+  final int round;
+  final String? rejectReason;
+
+  /// The other party's cached name/picture, for the same reason as
+  /// [Friends.avatarUrl]: the list has to render before a network round trip.
+  final String? otherName;
+  final String? otherAvatarUrl;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final DateTime? resolvedAt;
+
+  /// Device-local: the popup has already been shown for this one. Without it,
+  /// every app launch re-pops the same proposal.
+  final DateTime? poppedAt;
+
+  /// Device-local: the user has acknowledged a dead end (rejected / withdrawn /
+  /// voided) and the card can stop taking up space.
+  final DateTime? dismissedAt;
+  const DebtProposal({
+    required this.id,
+    required this.proposerId,
+    required this.counterpartyId,
+    required this.debtorId,
+    required this.title,
+    this.amount,
+    this.originalAmount,
+    required this.status,
+    this.awaitingId,
+    required this.round,
+    this.rejectReason,
+    this.otherName,
+    this.otherAvatarUrl,
+    required this.createdAt,
+    required this.updatedAt,
+    this.resolvedAt,
+    this.poppedAt,
+    this.dismissedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['proposer_id'] = Variable<String>(proposerId);
+    map['counterparty_id'] = Variable<String>(counterpartyId);
+    map['debtor_id'] = Variable<String>(debtorId);
+    map['title'] = Variable<String>(title);
+    if (!nullToAbsent || amount != null) {
+      map['amount'] = Variable<int>(amount);
+    }
+    if (!nullToAbsent || originalAmount != null) {
+      map['original_amount'] = Variable<int>(originalAmount);
+    }
+    map['status'] = Variable<String>(status);
+    if (!nullToAbsent || awaitingId != null) {
+      map['awaiting_id'] = Variable<String>(awaitingId);
+    }
+    map['round'] = Variable<int>(round);
+    if (!nullToAbsent || rejectReason != null) {
+      map['reject_reason'] = Variable<String>(rejectReason);
+    }
+    if (!nullToAbsent || otherName != null) {
+      map['other_name'] = Variable<String>(otherName);
+    }
+    if (!nullToAbsent || otherAvatarUrl != null) {
+      map['other_avatar_url'] = Variable<String>(otherAvatarUrl);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    if (!nullToAbsent || resolvedAt != null) {
+      map['resolved_at'] = Variable<DateTime>(resolvedAt);
+    }
+    if (!nullToAbsent || poppedAt != null) {
+      map['popped_at'] = Variable<DateTime>(poppedAt);
+    }
+    if (!nullToAbsent || dismissedAt != null) {
+      map['dismissed_at'] = Variable<DateTime>(dismissedAt);
+    }
+    return map;
+  }
+
+  DebtProposalsCompanion toCompanion(bool nullToAbsent) {
+    return DebtProposalsCompanion(
+      id: Value(id),
+      proposerId: Value(proposerId),
+      counterpartyId: Value(counterpartyId),
+      debtorId: Value(debtorId),
+      title: Value(title),
+      amount: amount == null && nullToAbsent
+          ? const Value.absent()
+          : Value(amount),
+      originalAmount: originalAmount == null && nullToAbsent
+          ? const Value.absent()
+          : Value(originalAmount),
+      status: Value(status),
+      awaitingId: awaitingId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(awaitingId),
+      round: Value(round),
+      rejectReason: rejectReason == null && nullToAbsent
+          ? const Value.absent()
+          : Value(rejectReason),
+      otherName: otherName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(otherName),
+      otherAvatarUrl: otherAvatarUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(otherAvatarUrl),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+      resolvedAt: resolvedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(resolvedAt),
+      poppedAt: poppedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(poppedAt),
+      dismissedAt: dismissedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(dismissedAt),
+    );
+  }
+
+  factory DebtProposal.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return DebtProposal(
+      id: serializer.fromJson<String>(json['id']),
+      proposerId: serializer.fromJson<String>(json['proposerId']),
+      counterpartyId: serializer.fromJson<String>(json['counterpartyId']),
+      debtorId: serializer.fromJson<String>(json['debtorId']),
+      title: serializer.fromJson<String>(json['title']),
+      amount: serializer.fromJson<int?>(json['amount']),
+      originalAmount: serializer.fromJson<int?>(json['originalAmount']),
+      status: serializer.fromJson<String>(json['status']),
+      awaitingId: serializer.fromJson<String?>(json['awaitingId']),
+      round: serializer.fromJson<int>(json['round']),
+      rejectReason: serializer.fromJson<String?>(json['rejectReason']),
+      otherName: serializer.fromJson<String?>(json['otherName']),
+      otherAvatarUrl: serializer.fromJson<String?>(json['otherAvatarUrl']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      resolvedAt: serializer.fromJson<DateTime?>(json['resolvedAt']),
+      poppedAt: serializer.fromJson<DateTime?>(json['poppedAt']),
+      dismissedAt: serializer.fromJson<DateTime?>(json['dismissedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'proposerId': serializer.toJson<String>(proposerId),
+      'counterpartyId': serializer.toJson<String>(counterpartyId),
+      'debtorId': serializer.toJson<String>(debtorId),
+      'title': serializer.toJson<String>(title),
+      'amount': serializer.toJson<int?>(amount),
+      'originalAmount': serializer.toJson<int?>(originalAmount),
+      'status': serializer.toJson<String>(status),
+      'awaitingId': serializer.toJson<String?>(awaitingId),
+      'round': serializer.toJson<int>(round),
+      'rejectReason': serializer.toJson<String?>(rejectReason),
+      'otherName': serializer.toJson<String?>(otherName),
+      'otherAvatarUrl': serializer.toJson<String?>(otherAvatarUrl),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'resolvedAt': serializer.toJson<DateTime?>(resolvedAt),
+      'poppedAt': serializer.toJson<DateTime?>(poppedAt),
+      'dismissedAt': serializer.toJson<DateTime?>(dismissedAt),
+    };
+  }
+
+  DebtProposal copyWith({
+    String? id,
+    String? proposerId,
+    String? counterpartyId,
+    String? debtorId,
+    String? title,
+    Value<int?> amount = const Value.absent(),
+    Value<int?> originalAmount = const Value.absent(),
+    String? status,
+    Value<String?> awaitingId = const Value.absent(),
+    int? round,
+    Value<String?> rejectReason = const Value.absent(),
+    Value<String?> otherName = const Value.absent(),
+    Value<String?> otherAvatarUrl = const Value.absent(),
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    Value<DateTime?> resolvedAt = const Value.absent(),
+    Value<DateTime?> poppedAt = const Value.absent(),
+    Value<DateTime?> dismissedAt = const Value.absent(),
+  }) => DebtProposal(
+    id: id ?? this.id,
+    proposerId: proposerId ?? this.proposerId,
+    counterpartyId: counterpartyId ?? this.counterpartyId,
+    debtorId: debtorId ?? this.debtorId,
+    title: title ?? this.title,
+    amount: amount.present ? amount.value : this.amount,
+    originalAmount: originalAmount.present
+        ? originalAmount.value
+        : this.originalAmount,
+    status: status ?? this.status,
+    awaitingId: awaitingId.present ? awaitingId.value : this.awaitingId,
+    round: round ?? this.round,
+    rejectReason: rejectReason.present ? rejectReason.value : this.rejectReason,
+    otherName: otherName.present ? otherName.value : this.otherName,
+    otherAvatarUrl: otherAvatarUrl.present
+        ? otherAvatarUrl.value
+        : this.otherAvatarUrl,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    resolvedAt: resolvedAt.present ? resolvedAt.value : this.resolvedAt,
+    poppedAt: poppedAt.present ? poppedAt.value : this.poppedAt,
+    dismissedAt: dismissedAt.present ? dismissedAt.value : this.dismissedAt,
+  );
+  DebtProposal copyWithCompanion(DebtProposalsCompanion data) {
+    return DebtProposal(
+      id: data.id.present ? data.id.value : this.id,
+      proposerId: data.proposerId.present
+          ? data.proposerId.value
+          : this.proposerId,
+      counterpartyId: data.counterpartyId.present
+          ? data.counterpartyId.value
+          : this.counterpartyId,
+      debtorId: data.debtorId.present ? data.debtorId.value : this.debtorId,
+      title: data.title.present ? data.title.value : this.title,
+      amount: data.amount.present ? data.amount.value : this.amount,
+      originalAmount: data.originalAmount.present
+          ? data.originalAmount.value
+          : this.originalAmount,
+      status: data.status.present ? data.status.value : this.status,
+      awaitingId: data.awaitingId.present
+          ? data.awaitingId.value
+          : this.awaitingId,
+      round: data.round.present ? data.round.value : this.round,
+      rejectReason: data.rejectReason.present
+          ? data.rejectReason.value
+          : this.rejectReason,
+      otherName: data.otherName.present ? data.otherName.value : this.otherName,
+      otherAvatarUrl: data.otherAvatarUrl.present
+          ? data.otherAvatarUrl.value
+          : this.otherAvatarUrl,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      resolvedAt: data.resolvedAt.present
+          ? data.resolvedAt.value
+          : this.resolvedAt,
+      poppedAt: data.poppedAt.present ? data.poppedAt.value : this.poppedAt,
+      dismissedAt: data.dismissedAt.present
+          ? data.dismissedAt.value
+          : this.dismissedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DebtProposal(')
+          ..write('id: $id, ')
+          ..write('proposerId: $proposerId, ')
+          ..write('counterpartyId: $counterpartyId, ')
+          ..write('debtorId: $debtorId, ')
+          ..write('title: $title, ')
+          ..write('amount: $amount, ')
+          ..write('originalAmount: $originalAmount, ')
+          ..write('status: $status, ')
+          ..write('awaitingId: $awaitingId, ')
+          ..write('round: $round, ')
+          ..write('rejectReason: $rejectReason, ')
+          ..write('otherName: $otherName, ')
+          ..write('otherAvatarUrl: $otherAvatarUrl, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('resolvedAt: $resolvedAt, ')
+          ..write('poppedAt: $poppedAt, ')
+          ..write('dismissedAt: $dismissedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    proposerId,
+    counterpartyId,
+    debtorId,
+    title,
+    amount,
+    originalAmount,
+    status,
+    awaitingId,
+    round,
+    rejectReason,
+    otherName,
+    otherAvatarUrl,
+    createdAt,
+    updatedAt,
+    resolvedAt,
+    poppedAt,
+    dismissedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is DebtProposal &&
+          other.id == this.id &&
+          other.proposerId == this.proposerId &&
+          other.counterpartyId == this.counterpartyId &&
+          other.debtorId == this.debtorId &&
+          other.title == this.title &&
+          other.amount == this.amount &&
+          other.originalAmount == this.originalAmount &&
+          other.status == this.status &&
+          other.awaitingId == this.awaitingId &&
+          other.round == this.round &&
+          other.rejectReason == this.rejectReason &&
+          other.otherName == this.otherName &&
+          other.otherAvatarUrl == this.otherAvatarUrl &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.resolvedAt == this.resolvedAt &&
+          other.poppedAt == this.poppedAt &&
+          other.dismissedAt == this.dismissedAt);
+}
+
+class DebtProposalsCompanion extends UpdateCompanion<DebtProposal> {
+  final Value<String> id;
+  final Value<String> proposerId;
+  final Value<String> counterpartyId;
+  final Value<String> debtorId;
+  final Value<String> title;
+  final Value<int?> amount;
+  final Value<int?> originalAmount;
+  final Value<String> status;
+  final Value<String?> awaitingId;
+  final Value<int> round;
+  final Value<String?> rejectReason;
+  final Value<String?> otherName;
+  final Value<String?> otherAvatarUrl;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<DateTime?> resolvedAt;
+  final Value<DateTime?> poppedAt;
+  final Value<DateTime?> dismissedAt;
+  final Value<int> rowid;
+  const DebtProposalsCompanion({
+    this.id = const Value.absent(),
+    this.proposerId = const Value.absent(),
+    this.counterpartyId = const Value.absent(),
+    this.debtorId = const Value.absent(),
+    this.title = const Value.absent(),
+    this.amount = const Value.absent(),
+    this.originalAmount = const Value.absent(),
+    this.status = const Value.absent(),
+    this.awaitingId = const Value.absent(),
+    this.round = const Value.absent(),
+    this.rejectReason = const Value.absent(),
+    this.otherName = const Value.absent(),
+    this.otherAvatarUrl = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.resolvedAt = const Value.absent(),
+    this.poppedAt = const Value.absent(),
+    this.dismissedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  DebtProposalsCompanion.insert({
+    required String id,
+    required String proposerId,
+    required String counterpartyId,
+    required String debtorId,
+    required String title,
+    this.amount = const Value.absent(),
+    this.originalAmount = const Value.absent(),
+    required String status,
+    this.awaitingId = const Value.absent(),
+    this.round = const Value.absent(),
+    this.rejectReason = const Value.absent(),
+    this.otherName = const Value.absent(),
+    this.otherAvatarUrl = const Value.absent(),
+    required DateTime createdAt,
+    required DateTime updatedAt,
+    this.resolvedAt = const Value.absent(),
+    this.poppedAt = const Value.absent(),
+    this.dismissedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       proposerId = Value(proposerId),
+       counterpartyId = Value(counterpartyId),
+       debtorId = Value(debtorId),
+       title = Value(title),
+       status = Value(status),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<DebtProposal> custom({
+    Expression<String>? id,
+    Expression<String>? proposerId,
+    Expression<String>? counterpartyId,
+    Expression<String>? debtorId,
+    Expression<String>? title,
+    Expression<int>? amount,
+    Expression<int>? originalAmount,
+    Expression<String>? status,
+    Expression<String>? awaitingId,
+    Expression<int>? round,
+    Expression<String>? rejectReason,
+    Expression<String>? otherName,
+    Expression<String>? otherAvatarUrl,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<DateTime>? resolvedAt,
+    Expression<DateTime>? poppedAt,
+    Expression<DateTime>? dismissedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (proposerId != null) 'proposer_id': proposerId,
+      if (counterpartyId != null) 'counterparty_id': counterpartyId,
+      if (debtorId != null) 'debtor_id': debtorId,
+      if (title != null) 'title': title,
+      if (amount != null) 'amount': amount,
+      if (originalAmount != null) 'original_amount': originalAmount,
+      if (status != null) 'status': status,
+      if (awaitingId != null) 'awaiting_id': awaitingId,
+      if (round != null) 'round': round,
+      if (rejectReason != null) 'reject_reason': rejectReason,
+      if (otherName != null) 'other_name': otherName,
+      if (otherAvatarUrl != null) 'other_avatar_url': otherAvatarUrl,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (resolvedAt != null) 'resolved_at': resolvedAt,
+      if (poppedAt != null) 'popped_at': poppedAt,
+      if (dismissedAt != null) 'dismissed_at': dismissedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  DebtProposalsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? proposerId,
+    Value<String>? counterpartyId,
+    Value<String>? debtorId,
+    Value<String>? title,
+    Value<int?>? amount,
+    Value<int?>? originalAmount,
+    Value<String>? status,
+    Value<String?>? awaitingId,
+    Value<int>? round,
+    Value<String?>? rejectReason,
+    Value<String?>? otherName,
+    Value<String?>? otherAvatarUrl,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+    Value<DateTime?>? resolvedAt,
+    Value<DateTime?>? poppedAt,
+    Value<DateTime?>? dismissedAt,
+    Value<int>? rowid,
+  }) {
+    return DebtProposalsCompanion(
+      id: id ?? this.id,
+      proposerId: proposerId ?? this.proposerId,
+      counterpartyId: counterpartyId ?? this.counterpartyId,
+      debtorId: debtorId ?? this.debtorId,
+      title: title ?? this.title,
+      amount: amount ?? this.amount,
+      originalAmount: originalAmount ?? this.originalAmount,
+      status: status ?? this.status,
+      awaitingId: awaitingId ?? this.awaitingId,
+      round: round ?? this.round,
+      rejectReason: rejectReason ?? this.rejectReason,
+      otherName: otherName ?? this.otherName,
+      otherAvatarUrl: otherAvatarUrl ?? this.otherAvatarUrl,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      resolvedAt: resolvedAt ?? this.resolvedAt,
+      poppedAt: poppedAt ?? this.poppedAt,
+      dismissedAt: dismissedAt ?? this.dismissedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (proposerId.present) {
+      map['proposer_id'] = Variable<String>(proposerId.value);
+    }
+    if (counterpartyId.present) {
+      map['counterparty_id'] = Variable<String>(counterpartyId.value);
+    }
+    if (debtorId.present) {
+      map['debtor_id'] = Variable<String>(debtorId.value);
+    }
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
+    }
+    if (amount.present) {
+      map['amount'] = Variable<int>(amount.value);
+    }
+    if (originalAmount.present) {
+      map['original_amount'] = Variable<int>(originalAmount.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (awaitingId.present) {
+      map['awaiting_id'] = Variable<String>(awaitingId.value);
+    }
+    if (round.present) {
+      map['round'] = Variable<int>(round.value);
+    }
+    if (rejectReason.present) {
+      map['reject_reason'] = Variable<String>(rejectReason.value);
+    }
+    if (otherName.present) {
+      map['other_name'] = Variable<String>(otherName.value);
+    }
+    if (otherAvatarUrl.present) {
+      map['other_avatar_url'] = Variable<String>(otherAvatarUrl.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (resolvedAt.present) {
+      map['resolved_at'] = Variable<DateTime>(resolvedAt.value);
+    }
+    if (poppedAt.present) {
+      map['popped_at'] = Variable<DateTime>(poppedAt.value);
+    }
+    if (dismissedAt.present) {
+      map['dismissed_at'] = Variable<DateTime>(dismissedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DebtProposalsCompanion(')
+          ..write('id: $id, ')
+          ..write('proposerId: $proposerId, ')
+          ..write('counterpartyId: $counterpartyId, ')
+          ..write('debtorId: $debtorId, ')
+          ..write('title: $title, ')
+          ..write('amount: $amount, ')
+          ..write('originalAmount: $originalAmount, ')
+          ..write('status: $status, ')
+          ..write('awaitingId: $awaitingId, ')
+          ..write('round: $round, ')
+          ..write('rejectReason: $rejectReason, ')
+          ..write('otherName: $otherName, ')
+          ..write('otherAvatarUrl: $otherAvatarUrl, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('resolvedAt: $resolvedAt, ')
+          ..write('poppedAt: $poppedAt, ')
+          ..write('dismissedAt: $dismissedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -3010,6 +4054,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   );
   late final $FriendsTable friends = $FriendsTable(this);
   late final $SettlementsTable settlements = $SettlementsTable(this);
+  late final $DebtProposalsTable debtProposals = $DebtProposalsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3022,6 +4067,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     personalEntries,
     friends,
     settlements,
+    debtProposals,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -6069,6 +7115,469 @@ typedef $$SettlementsTableProcessedTableManager =
       Settlement,
       PrefetchHooks Function({bool groupId, bool fromMemberId, bool toMemberId})
     >;
+typedef $$DebtProposalsTableCreateCompanionBuilder =
+    DebtProposalsCompanion Function({
+      required String id,
+      required String proposerId,
+      required String counterpartyId,
+      required String debtorId,
+      required String title,
+      Value<int?> amount,
+      Value<int?> originalAmount,
+      required String status,
+      Value<String?> awaitingId,
+      Value<int> round,
+      Value<String?> rejectReason,
+      Value<String?> otherName,
+      Value<String?> otherAvatarUrl,
+      required DateTime createdAt,
+      required DateTime updatedAt,
+      Value<DateTime?> resolvedAt,
+      Value<DateTime?> poppedAt,
+      Value<DateTime?> dismissedAt,
+      Value<int> rowid,
+    });
+typedef $$DebtProposalsTableUpdateCompanionBuilder =
+    DebtProposalsCompanion Function({
+      Value<String> id,
+      Value<String> proposerId,
+      Value<String> counterpartyId,
+      Value<String> debtorId,
+      Value<String> title,
+      Value<int?> amount,
+      Value<int?> originalAmount,
+      Value<String> status,
+      Value<String?> awaitingId,
+      Value<int> round,
+      Value<String?> rejectReason,
+      Value<String?> otherName,
+      Value<String?> otherAvatarUrl,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+      Value<DateTime?> resolvedAt,
+      Value<DateTime?> poppedAt,
+      Value<DateTime?> dismissedAt,
+      Value<int> rowid,
+    });
+
+class $$DebtProposalsTableFilterComposer
+    extends Composer<_$AppDatabase, $DebtProposalsTable> {
+  $$DebtProposalsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get proposerId => $composableBuilder(
+    column: $table.proposerId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get counterpartyId => $composableBuilder(
+    column: $table.counterpartyId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get debtorId => $composableBuilder(
+    column: $table.debtorId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get amount => $composableBuilder(
+    column: $table.amount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get originalAmount => $composableBuilder(
+    column: $table.originalAmount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get awaitingId => $composableBuilder(
+    column: $table.awaitingId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get round => $composableBuilder(
+    column: $table.round,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get rejectReason => $composableBuilder(
+    column: $table.rejectReason,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get otherName => $composableBuilder(
+    column: $table.otherName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get otherAvatarUrl => $composableBuilder(
+    column: $table.otherAvatarUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get resolvedAt => $composableBuilder(
+    column: $table.resolvedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get poppedAt => $composableBuilder(
+    column: $table.poppedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get dismissedAt => $composableBuilder(
+    column: $table.dismissedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$DebtProposalsTableOrderingComposer
+    extends Composer<_$AppDatabase, $DebtProposalsTable> {
+  $$DebtProposalsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get proposerId => $composableBuilder(
+    column: $table.proposerId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get counterpartyId => $composableBuilder(
+    column: $table.counterpartyId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get debtorId => $composableBuilder(
+    column: $table.debtorId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get amount => $composableBuilder(
+    column: $table.amount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get originalAmount => $composableBuilder(
+    column: $table.originalAmount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get awaitingId => $composableBuilder(
+    column: $table.awaitingId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get round => $composableBuilder(
+    column: $table.round,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get rejectReason => $composableBuilder(
+    column: $table.rejectReason,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get otherName => $composableBuilder(
+    column: $table.otherName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get otherAvatarUrl => $composableBuilder(
+    column: $table.otherAvatarUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get resolvedAt => $composableBuilder(
+    column: $table.resolvedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get poppedAt => $composableBuilder(
+    column: $table.poppedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get dismissedAt => $composableBuilder(
+    column: $table.dismissedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$DebtProposalsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $DebtProposalsTable> {
+  $$DebtProposalsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get proposerId => $composableBuilder(
+    column: $table.proposerId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get counterpartyId => $composableBuilder(
+    column: $table.counterpartyId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get debtorId =>
+      $composableBuilder(column: $table.debtorId, builder: (column) => column);
+
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumn<int> get amount =>
+      $composableBuilder(column: $table.amount, builder: (column) => column);
+
+  GeneratedColumn<int> get originalAmount => $composableBuilder(
+    column: $table.originalAmount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<String> get awaitingId => $composableBuilder(
+    column: $table.awaitingId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get round =>
+      $composableBuilder(column: $table.round, builder: (column) => column);
+
+  GeneratedColumn<String> get rejectReason => $composableBuilder(
+    column: $table.rejectReason,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get otherName =>
+      $composableBuilder(column: $table.otherName, builder: (column) => column);
+
+  GeneratedColumn<String> get otherAvatarUrl => $composableBuilder(
+    column: $table.otherAvatarUrl,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get resolvedAt => $composableBuilder(
+    column: $table.resolvedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get poppedAt =>
+      $composableBuilder(column: $table.poppedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get dismissedAt => $composableBuilder(
+    column: $table.dismissedAt,
+    builder: (column) => column,
+  );
+}
+
+class $$DebtProposalsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $DebtProposalsTable,
+          DebtProposal,
+          $$DebtProposalsTableFilterComposer,
+          $$DebtProposalsTableOrderingComposer,
+          $$DebtProposalsTableAnnotationComposer,
+          $$DebtProposalsTableCreateCompanionBuilder,
+          $$DebtProposalsTableUpdateCompanionBuilder,
+          (
+            DebtProposal,
+            BaseReferences<_$AppDatabase, $DebtProposalsTable, DebtProposal>,
+          ),
+          DebtProposal,
+          PrefetchHooks Function()
+        > {
+  $$DebtProposalsTableTableManager(_$AppDatabase db, $DebtProposalsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$DebtProposalsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$DebtProposalsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$DebtProposalsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> proposerId = const Value.absent(),
+                Value<String> counterpartyId = const Value.absent(),
+                Value<String> debtorId = const Value.absent(),
+                Value<String> title = const Value.absent(),
+                Value<int?> amount = const Value.absent(),
+                Value<int?> originalAmount = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<String?> awaitingId = const Value.absent(),
+                Value<int> round = const Value.absent(),
+                Value<String?> rejectReason = const Value.absent(),
+                Value<String?> otherName = const Value.absent(),
+                Value<String?> otherAvatarUrl = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<DateTime?> resolvedAt = const Value.absent(),
+                Value<DateTime?> poppedAt = const Value.absent(),
+                Value<DateTime?> dismissedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => DebtProposalsCompanion(
+                id: id,
+                proposerId: proposerId,
+                counterpartyId: counterpartyId,
+                debtorId: debtorId,
+                title: title,
+                amount: amount,
+                originalAmount: originalAmount,
+                status: status,
+                awaitingId: awaitingId,
+                round: round,
+                rejectReason: rejectReason,
+                otherName: otherName,
+                otherAvatarUrl: otherAvatarUrl,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                resolvedAt: resolvedAt,
+                poppedAt: poppedAt,
+                dismissedAt: dismissedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String proposerId,
+                required String counterpartyId,
+                required String debtorId,
+                required String title,
+                Value<int?> amount = const Value.absent(),
+                Value<int?> originalAmount = const Value.absent(),
+                required String status,
+                Value<String?> awaitingId = const Value.absent(),
+                Value<int> round = const Value.absent(),
+                Value<String?> rejectReason = const Value.absent(),
+                Value<String?> otherName = const Value.absent(),
+                Value<String?> otherAvatarUrl = const Value.absent(),
+                required DateTime createdAt,
+                required DateTime updatedAt,
+                Value<DateTime?> resolvedAt = const Value.absent(),
+                Value<DateTime?> poppedAt = const Value.absent(),
+                Value<DateTime?> dismissedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => DebtProposalsCompanion.insert(
+                id: id,
+                proposerId: proposerId,
+                counterpartyId: counterpartyId,
+                debtorId: debtorId,
+                title: title,
+                amount: amount,
+                originalAmount: originalAmount,
+                status: status,
+                awaitingId: awaitingId,
+                round: round,
+                rejectReason: rejectReason,
+                otherName: otherName,
+                otherAvatarUrl: otherAvatarUrl,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                resolvedAt: resolvedAt,
+                poppedAt: poppedAt,
+                dismissedAt: dismissedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$DebtProposalsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $DebtProposalsTable,
+      DebtProposal,
+      $$DebtProposalsTableFilterComposer,
+      $$DebtProposalsTableOrderingComposer,
+      $$DebtProposalsTableAnnotationComposer,
+      $$DebtProposalsTableCreateCompanionBuilder,
+      $$DebtProposalsTableUpdateCompanionBuilder,
+      (
+        DebtProposal,
+        BaseReferences<_$AppDatabase, $DebtProposalsTable, DebtProposal>,
+      ),
+      DebtProposal,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -6087,4 +7596,6 @@ class $AppDatabaseManager {
       $$FriendsTableTableManager(_db, _db.friends);
   $$SettlementsTableTableManager get settlements =>
       $$SettlementsTableTableManager(_db, _db.settlements);
+  $$DebtProposalsTableTableManager get debtProposals =>
+      $$DebtProposalsTableTableManager(_db, _db.debtProposals);
 }

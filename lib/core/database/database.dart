@@ -1,6 +1,8 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 
+import 'package:heymybro/shared/debt/debt_projection.dart';
+
 part 'database.g.dart';
 
 // ── Split-the-bill schema ────────────────────────────────────────────────────
@@ -154,6 +156,57 @@ class Settlements extends Table {
   Set<Column<Object>> get primaryKey => {id};
 }
 
+/// A debt still being negotiated. Mirrors `public.debt_proposals`, plus two
+/// columns only this device knows about.
+///
+/// This table holds the negotiation, never the arithmetic. Once [status] is
+/// `confirmed` the proposal is projected into the ordinary
+/// [Groups]/[Expenses]/[ExpenseShares] shape — the only thing `globalNetProvider`
+/// can read — so a pending proposal stays out of every balance and every
+/// credit score without a line of code to exclude it.
+class DebtProposals extends Table {
+  TextColumn get id => text()();
+  TextColumn get proposerId => text()();
+  TextColumn get counterpartyId => text()();
+
+  /// Whoever owes the money — always one of the two parties.
+  TextColumn get debtorId => text()();
+  TextColumn get title => text()();
+
+  /// Null means "left blank on purpose, the other side fills it in".
+  IntColumn get amount => integer().nullable()();
+
+  /// The previous figure, kept when the other side counters so the card can
+  /// show "was $500".
+  IntColumn get originalAmount => integer().nullable()();
+  TextColumn get status => text()();
+
+  /// Whose turn it is; null on every terminal status.
+  TextColumn get awaitingId => text().nullable()();
+  IntColumn get round => integer().withDefault(const Constant(0))();
+  TextColumn get rejectReason => text().nullable()();
+
+  /// The other party's cached name/picture, for the same reason as
+  /// [Friends.avatarUrl]: the list has to render before a network round trip.
+  TextColumn get otherName => text().nullable()();
+  TextColumn get otherAvatarUrl => text().nullable()();
+
+  DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get updatedAt => dateTime()();
+  DateTimeColumn get resolvedAt => dateTime().nullable()();
+
+  /// Device-local: the popup has already been shown for this one. Without it,
+  /// every app launch re-pops the same proposal.
+  DateTimeColumn get poppedAt => dateTime().nullable()();
+
+  /// Device-local: the user has acknowledged a dead end (rejected / withdrawn /
+  /// voided) and the card can stop taking up space.
+  DateTimeColumn get dismissedAt => dateTime().nullable()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
 @DriftDatabase(
   tables: [
     Groups,
@@ -163,6 +216,7 @@ class Settlements extends Table {
     PersonalEntries,
     Friends,
     Settlements,
+    DebtProposals,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -174,14 +228,16 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forExecutor(super.executor);
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   // v1 table-less → v2 split schema → v3 PersonalEntries → v4 Friends +
   // Settlements + Members.friendId → v5 soft-delete (deletedAt) columns →
   // v6 Groups.isDirect (direct-debt marker) → v7 PersonalEntries
   // .sourceSettlementId (links a 結清-booked entry to its settlement) →
-  // v8 Friends.userId/handle/avatarUrl (a bro is a real account now). Bump
-  // BackupService.supportedSchemaVersions alongside any future change here.
+  // v8 Friends.userId/handle/avatarUrl (a bro is a real account now) →
+  // v9 DebtProposals (a logged debt is a proposal until both sides agree).
+  // Bump BackupService.supportedSchemaVersions alongside any future change
+  // here.
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) async => m.createAll(),
@@ -217,6 +273,7 @@ class AppDatabase extends _$AppDatabase {
           await m.addColumn(friends, friends.handle);
           await m.addColumn(friends, friends.avatarUrl);
         }
+        if (from < 9) await m.createTable(debtProposals);
       }
     },
     beforeOpen: (details) async {
@@ -282,6 +339,42 @@ class AppDatabase extends _$AppDatabase {
             ..where((f) => f.deletedAt.isNull())
             ..orderBy([(f) => OrderingTerm.desc(f.createdAt)]))
           .watch();
+
+  // ── Debt proposals (the negotiation, not the ledger) ──────────────────────
+
+  /// Every proposal this device knows about, newest activity first. Terminal
+  /// ones are included — the UI decides what to hide, via `dismissedAt`.
+  Stream<List<DebtProposal>> watchDebtProposals() => (select(
+    debtProposals,
+  )..orderBy([(d) => OrderingTerm.desc(d.updatedAt)])).watch();
+
+  /// The newest `updatedAt` held locally, which the catch-up fetch passes as
+  /// its `p_since`. Null when we hold nothing, meaning "fetch everything".
+  Future<DateTime?> latestDebtProposalUpdatedAt() async {
+    final newest = debtProposals.updatedAt.max();
+    final row = await (selectOnly(
+      debtProposals,
+    )..addColumns([newest])).getSingleOrNull();
+    return row?.read(newest);
+  }
+
+  /// Absorb server rows.
+  ///
+  /// Callers must leave `poppedAt`/`dismissedAt` absent in the companions:
+  /// they are this device's business and the server knows nothing about them,
+  /// so including them would re-arm an already dismissed popup on every sync.
+  Future<void> upsertDebtProposals(List<DebtProposalsCompanion> rows) =>
+      batch((b) => b.insertAllOnConflictUpdate(debtProposals, rows));
+
+  Future<void> markDebtPopped(String id) =>
+      (update(debtProposals)..where((d) => d.id.equals(id))).write(
+        DebtProposalsCompanion(poppedAt: Value(DateTime.now())),
+      );
+
+  Future<void> markDebtDismissed(String id) =>
+      (update(debtProposals)..where((d) => d.id.equals(id))).write(
+        DebtProposalsCompanion(dismissedAt: Value(DateTime.now())),
+      );
 
   // ── Recycle bin (trashed rows) ─────────────────────────────────────────────
   Stream<List<Group>> watchTrashedGroups() =>
@@ -445,6 +538,36 @@ class AppDatabase extends _$AppDatabase {
     return transaction(() async {
       await into(expenses).insert(expense);
       await batch((b) => b.insertAll(expenseShares, shares));
+    });
+  }
+
+  /// Land a confirmed debt proposal in the ledger.
+  ///
+  /// Idempotent by construction: every id comes from the proposal id (see
+  /// [DebtProjection]) and every insert ignores conflicts, so applying the
+  /// same projection any number of times leaves exactly one debt.
+  ///
+  /// Deliberately insertOrIgnore rather than insertOnConflictUpdate: a
+  /// confirmed proposal is immutable, and "ignore" is what makes a replay free
+  /// instead of a rewrite that could clobber a later local edit.
+  Future<void> applyDebtProjection(DebtProjection projection) {
+    return transaction(() async {
+      await into(
+        groups,
+      ).insert(projection.group, mode: InsertMode.insertOrIgnore);
+      for (final member in [projection.creditor, projection.debtor]) {
+        await into(members).insert(member, mode: InsertMode.insertOrIgnore);
+      }
+      await into(
+        expenses,
+      ).insert(projection.expense, mode: InsertMode.insertOrIgnore);
+      await batch(
+        (b) => b.insertAll(
+          expenseShares,
+          projection.shares,
+          mode: InsertMode.insertOrIgnore,
+        ),
+      );
     });
   }
 
