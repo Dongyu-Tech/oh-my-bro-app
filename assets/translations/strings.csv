@@ -152,6 +152,29 @@ debt_friend_no_account,They haven't linked an account — add them again,這位�
 debt_err_not_friends,You're not bros with them,你們還不是好友
 debt_err_amount,That amount doesn't work,金額不對
 debt_err_generic,Couldn't send that,送不出去
+debt_pending_title,Awaiting confirmation,待確認
+debt_pending_note,Not counted until both of you agree,雙方都同意前不算進餘額
+debt_action_accept,Accept,確認
+debt_action_reject,Reject,拒絕
+debt_action_counter,Change,改金額
+debt_action_cancel,Withdraw,撤回
+debt_action_dismiss,Got it,知道了
+debt_waiting_for,Waiting for {name},等 {name} 回應
+debt_amount_blank,They fill in the amount,由對方填金額
+debt_was_amount,was {amount},原本 {amount}
+debt_they_owe,{name} owes you,{name} 欠你
+debt_you_owe_them,You owe {name},你欠 {name}
+debt_state_rejected,"Rejected: {reason}",被拒絕：{reason}
+debt_state_rejected_bare,Rejected,被拒絕
+debt_state_cancelled,You withdrew this,你撤回了
+debt_state_void,Voided — you're no longer bros,因為不再是好友而作廢
+debt_reject_title,Why not?,為什麼不？
+debt_reject_hint,Optional — they'll see this,可不填 對方看得到
+debt_counter_title,The right amount,正確金額
+debt_counter_hint,Amount,金額
+debt_send,Send,送出
+debt_err_stale,That one's already been dealt with,這筆已經處理過了
+debt_err_not_yours,It's not your turn on that one,那筆現在不是輪到你
 circle_start_gather,Start a gathering,發起揪團
 circle_join_code,Enter a room code,輸入房號
 room_code_label,Room code,房號

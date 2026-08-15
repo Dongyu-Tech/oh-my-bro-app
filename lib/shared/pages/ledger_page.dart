@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import 'package:heymybro/core/error/error_logger.dart';
+import 'package:heymybro/shared/pages/debt_pending_section.dart';
 import 'package:heymybro/shared/pages/trash_page.dart';
 import 'package:heymybro/shared/provider/group_provider.dart';
 import 'package:heymybro/shared/widgets/brutalism.dart';
@@ -63,6 +64,9 @@ class LedgerPage extends ConsumerWidget {
                       expense: ref.watch(monthSpendProvider),
                     ),
                     const SizedBox(height: 20),
+                    // Above the records on purpose: these are the only rows
+                    // here that need something from the user.
+                    const DebtPendingSection(),
                     _RecentRecordsCard(
                       entries: entries,
                       money: money,
