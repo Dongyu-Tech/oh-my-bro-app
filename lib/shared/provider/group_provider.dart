@@ -321,6 +321,9 @@ final myDebtsProvider = Provider<List<DebtRecord>>((ref) {
     }
     trace.add(
       '${g.name}: members=${members.length} '
+      'exp=${ref.watch(groupExpensesProvider(g.id)).asData?.value.length} '
+      'shares=${ref.watch(groupSharesProvider(g.id)).asData?.value.length} '
+      'settle=${ref.watch(groupSettlementsProvider(g.id)).asData?.value.length} '
       'transfers=${summary.transfers.length} '
       'net=${summary.net.values.toList()}',
     );

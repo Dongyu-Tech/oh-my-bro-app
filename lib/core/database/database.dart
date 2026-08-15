@@ -113,7 +113,9 @@ class PersonalEntries extends Table {
 class Friends extends Table {
   TextColumn get id => text()();
 
-  /// What *I* call them. Seeded from their profile, then mine to change.
+  /// Their display name, mirrored from `public.users` on every sync. Not a
+  /// nickname: whatever they call themselves is what shows here, so renaming
+  /// their own profile reaches everyone who has them as a bro.
   TextColumn get name => text()();
 
   /// Their `public.users` id. Null only on rows added before bros had to be
@@ -322,6 +324,10 @@ class AppDatabase extends _$AppDatabase {
   /// need to tell "not there" apart from "there but filtered out".
   Future<List<Group>> allGroupsIncludingHidden() => select(groups).get();
 
+  /// Same, for expenses: a soft-deleted expense is invisible to every balance,
+  /// so "missing" and "trashed" have to be told apart.
+  Future<List<Expense>> allExpensesIncludingHidden() => select(expenses).get();
+
   /// Live groups (not trashed), newest first. Active/archived split downstream.
   Stream<List<Group>> watchGroups() =>
       (select(groups)
@@ -525,20 +531,17 @@ class AppDatabase extends _$AppDatabase {
   /// the server is the authority on that.
   Future<void> updateFriendProfile(
     String friendId, {
+    required String name,
     required String? handle,
     required String? avatarUrl,
   }) => (update(friends)..where((f) => f.id.equals(friendId))).write(
     FriendsCompanion(
+      name: Value(name),
       handle: Value(handle),
       avatarUrl: Value(avatarUrl),
       deletedAt: const Value(null),
     ),
   );
-
-  Future<void> renameFriend(String friendId, String name) =>
-      (update(friends)..where((f) => f.id.equals(friendId))).write(
-        FriendsCompanion(name: Value(name)),
-      );
 
   Future<void> deleteFriend(String friendId) =>
       (update(friends)..where((f) => f.id.equals(friendId))).write(

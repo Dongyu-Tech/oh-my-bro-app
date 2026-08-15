@@ -304,6 +304,14 @@ class DebtService {
     // line above, the break is below the sync and not in it.
     final live = await _db.watchGroups().first;
     final all = await _db.allGroupsIncludingHidden();
+    final exp = await _db.allExpensesIncludingHidden();
+    logAppTrace(
+      'debt sync',
+      'expenses: total=${exp.length} '
+          'trashed=${exp.where((e) => e.deletedAt != null).length} '
+          'amounts=${exp.map((e) => "${e.title}:${e.amount}"
+              "${e.deletedAt == null ? "" : " TRASHED"}").toList()}',
+    );
     logAppTrace(
       'debt sync',
       'groups: live=${live.length} total=${all.length} '
