@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 import 'package:uuid/uuid.dart';
 
 import '../../core/database/database.dart';
+import '../../core/error/error_logger.dart';
 import '../../core/error/result.dart';
 import '../debt/debt_projection.dart';
 import '../models/debt_proposal_model.dart';
@@ -216,6 +217,17 @@ class DebtService {
 
   /// Make Drift match the server exactly, then land any confirmed rows.
   Future<void> _absorb(List<DebtProposalModel> rows) async {
+    final me = _ref.read(myUserIdProvider);
+    final confirmedDebts = rows
+        .where((r) => r.isConfirmed && !r.isRepayment)
+        .toList();
+    logAppTrace(
+      'debt sync',
+      'fetched=${rows.length} '
+          'confirmedDebts=${confirmedDebts.length} '
+          'me=${me ?? "NOBODY SIGNED IN"} '
+          'titles=${confirmedDebts.map((r) => r.title).toList()}',
+    );
     await _db.syncDebtProposals([
       for (final r in rows)
         DebtProposalsCompanion.insert(
@@ -247,12 +259,32 @@ class DebtService {
     // Debts first, repayments second. A repayment's settlement points at the
     // group and members the debt projects into, so those rows have to exist —
     // and on a fresh install both arrive in the same batch.
+    // Each row on its own. Projecting inside one unguarded loop meant a
+    // single failure — a constraint, a row that arrived out of order — threw
+    // straight out of the sync, so every debt after it was silently skipped
+    // and no message reached anyone. One bad row must not be able to empty the
+    // ledger.
+    var projected = 0;
     for (final r in rows) {
-      if (r.isConfirmed && !r.isRepayment) await _project(r);
+      if (!r.isConfirmed || r.isRepayment) continue;
+      try {
+        await _project(r);
+        projected++;
+      } on Object catch (e, st) {
+        logAppError('project debt "${r.title}"', e, st);
+      }
     }
+    var settled = 0;
     for (final r in rows) {
-      if (r.isConfirmed && r.isRepayment) await _projectRepayment(r);
+      if (!r.isConfirmed || !r.isRepayment) continue;
+      try {
+        await _projectRepayment(r);
+        settled++;
+      } on Object catch (e, st) {
+        logAppError('project repayment "${r.title}"', e, st);
+      }
     }
+    logAppTrace('debt sync', 'projected=$projected settlements=$settled');
 
     // Then take away what no longer belongs. Projecting is what puts a debt in
     // the ledger; without the matching sweep, a proposal deleted or rejected
@@ -262,12 +294,23 @@ class DebtService {
     // Guarded on being signed in: `me == null` means we cannot have projected
     // anything this session, and clearing the ledger from that state would be
     // destroying data on no evidence at all.
-    if (_ref.read(myUserIdProvider) != null) {
+    if (me != null) {
       await _db.purgeOrphanDirectDebts({
-        for (final r in rows)
-          if (r.isConfirmed && !r.isRepayment) debtGroupId(r.id),
+        for (final r in confirmedDebts) debtGroupId(r.id),
       });
     }
+
+    // What the ledger is actually left holding. If this disagrees with the
+    // line above, the break is below the sync and not in it.
+    final live = await _db.watchGroups().first;
+    final all = await _db.allGroupsIncludingHidden();
+    logAppTrace(
+      'debt sync',
+      'groups: live=${live.length} total=${all.length} '
+          'archived=${all.where((g) => g.isArchived).length} '
+          'trashed=${all.where((g) => g.deletedAt != null).length} '
+          'names=${live.map((g) => g.name).toList()}',
+    );
   }
 
   /// Land a confirmed repayment as a settlement inside the debt it clears.

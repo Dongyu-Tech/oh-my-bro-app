@@ -318,6 +318,10 @@ class AppDatabase extends _$AppDatabase {
 
   // ── Reads (watch = live streams the UI binds to) ──────────────────────────
 
+  /// Every group row, trashed and archived included — for diagnostics that
+  /// need to tell "not there" apart from "there but filtered out".
+  Future<List<Group>> allGroupsIncludingHidden() => select(groups).get();
+
   /// Live groups (not trashed), newest first. Active/archived split downstream.
   Stream<List<Group>> watchGroups() =>
       (select(groups)

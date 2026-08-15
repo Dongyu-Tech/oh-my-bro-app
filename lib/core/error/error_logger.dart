@@ -4,6 +4,15 @@ import 'package:flutter/material.dart';
 
 import '../../app.dart';
 
+/// Console-only trace of what a subsystem actually did. Never reaches the user.
+///
+/// For the cases where the code is right in every test and still wrong on a
+/// device: the only way to find out which step disagrees with expectation is
+/// to have each step say what it saw.
+void logAppTrace(String where, String detail) {
+  if (kDebugMode) debugPrint('[$where] $detail');
+}
+
 /// Console-only detail about a failure. Never reaches the user.
 ///
 /// The snackbar has to say something a person can act on, which usually means
