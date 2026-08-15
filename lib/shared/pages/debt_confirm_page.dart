@@ -8,6 +8,7 @@ import 'package:heymybro/shared/debt/debt_actions.dart';
 import 'package:heymybro/shared/provider/debt_provider.dart';
 import 'package:heymybro/shared/widgets/back_button.dart';
 import 'package:heymybro/shared/widgets/brutalism.dart';
+import 'package:heymybro/shared/widgets/confirm_dialog.dart';
 
 /// The screen a debt proposal opens onto — who is claiming what, and the
 /// answers along the bottom edge.
@@ -40,9 +41,22 @@ class DebtConfirmPage extends ConsumerWidget {
         child: DottedBackdrop(
           child: Column(
             children: [
-              const Padding(
-                padding: EdgeInsets.fromLTRB(20, 12, 20, 0),
-                child: Row(children: [BrutalBackButton()]),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                child: Row(
+                  children: [
+                    const BrutalBackButton(),
+                    const Spacer(),
+                    // Withdrawing lives here, in the same top-right slot every
+                    // other detail screen puts "get rid of this" — rather than
+                    // as a button competing with the answers at the bottom.
+                    // Only the proposer can take one back.
+                    if (proposal != null &&
+                        proposal.status == 'pending' &&
+                        proposal.proposerId == ref.watch(myUserIdProvider))
+                      _WithdrawButton(proposal: proposal),
+                  ],
+                ),
               ),
               Expanded(
                 child: proposal == null
@@ -141,13 +155,12 @@ class _Body extends ConsumerWidget {
         ),
         // Pinned to the bottom edge rather than scrolled with the content: the
         // answer is the point of the screen and must never be below the fold.
+        // Nothing down here when it is not your turn — withdrawing moved to
+        // the top-right, where every other screen keeps "get rid of this".
         if (myTurn)
           _MyTurnActions(proposal: proposal, iOwe: iOwe)
         else
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-            child: _TheirTurnActions(proposal: proposal),
-          ),
+          const SizedBox(height: 16),
       ],
     );
   }
@@ -511,47 +524,39 @@ class _MyTurnActions extends ConsumerWidget {
 
 /// Mine, or already settled. The only thing left is to take it back — and only
 /// while it is still unanswered.
-class _TheirTurnActions extends ConsumerWidget {
-  const _TheirTurnActions({required this.proposal});
+class _WithdrawButton extends ConsumerWidget {
+  const _WithdrawButton({required this.proposal});
 
   final DebtProposal proposal;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (proposal.status != 'pending') return const SizedBox.shrink();
-
     // Same reason as _MyTurnActions: withdrawing rebuilds this away.
     final navigator = Navigator.of(context);
 
     return PressableBrutal(
       onTap: () async {
+        // Confirmed first: this is the one control here that destroys
+        // something, and it now sits where a mis-tap is easy.
+        final ok = await confirmDialog(
+          context,
+          title: 'debt_cancel_title'.tr(),
+          message: 'debt_cancel_message'.tr(),
+          confirmLabel: 'debt_action_cancel'.tr(),
+          danger: true,
+        );
+        if (!ok || !context.mounted) return;
         if (await cancelDebt(context, ref, proposal)) {
           await navigator.maybePop();
         }
       },
       color: BrutalColors.surface,
       radius: BrutalSpec.pillRadius,
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 15),
-      alignment: Alignment.center,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(
-            LucideIcons.undo2,
-            size: 20,
-            color: BrutalColors.secondary,
-          ),
-          const SizedBox(width: 8),
-          Text(
-            'debt_action_cancel'.tr(),
-            style: BrutalText.headlineLgMobile(
-              fontSize: 18,
-              color: BrutalColors.secondary,
-            ),
-          ),
-        ],
+      padding: const EdgeInsets.all(9),
+      child: const Icon(
+        LucideIcons.trash2,
+        size: 20,
+        color: BrutalColors.secondary,
       ),
     );
   }

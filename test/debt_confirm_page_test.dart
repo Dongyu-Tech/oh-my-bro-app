@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import 'package:heymybro/core/database/database.dart';
 import 'package:heymybro/shared/pages/debt_confirm_page.dart';
@@ -13,9 +14,10 @@ DebtProposal _proposal({
   int? amount = 500,
   int? originalAmount,
   String debtorId = 'me',
+  String proposerId = 'them',
 }) => DebtProposal(
   id: id,
-  proposerId: 'them',
+  proposerId: proposerId,
   counterpartyId: 'me',
   debtorId: debtorId,
   title: '晚餐',
@@ -97,12 +99,25 @@ void main() {
     expect(find.textContaining('debt_accept_owing'), findsNothing);
   });
 
-  testWidgets('waiting on them offers only withdraw', (tester) async {
-    await pump(tester, known: [_proposal(awaitingId: 'them')]);
+  testWidgets('waiting on them offers only withdraw, from the top-right', (
+    tester,
+  ) async {
+    // Mine, unanswered — the only thing left is to take it back, and that
+    // lives in the same corner every other detail screen keeps "delete".
+    await pump(
+      tester,
+      known: [_proposal(awaitingId: 'them', proposerId: 'me')],
+    );
 
-    expect(find.text('debt_action_cancel'), findsOneWidget);
-    expect(find.text('debt_action_accept'), findsNothing);
+    expect(find.byIcon(LucideIcons.trash2), findsOneWidget);
+    expect(find.textContaining('debt_accept_'), findsNothing);
     expect(find.textContaining('debt_waiting_for'), findsOneWidget);
+  });
+
+  testWidgets('only the proposer can withdraw', (tester) async {
+    // Theirs, waiting on me: there is nothing here for me to take back.
+    await pump(tester, known: [_proposal(proposerId: 'them')]);
+    expect(find.byIcon(LucideIcons.trash2), findsNothing);
   });
 
   testWidgets('an already-settled proposal offers nothing to press', (
@@ -113,8 +128,8 @@ void main() {
       known: [_proposal(status: 'confirmed', awaitingId: null)],
     );
 
-    expect(find.text('debt_action_accept'), findsNothing);
-    expect(find.text('debt_action_cancel'), findsNothing);
+    expect(find.textContaining('debt_accept_'), findsNothing);
+    expect(find.byIcon(LucideIcons.trash2), findsNothing);
     expect(find.text('debt_confirm_settled'), findsOneWidget);
   });
 

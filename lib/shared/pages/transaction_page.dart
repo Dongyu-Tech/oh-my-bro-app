@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:share_plus/share_plus.dart';
 
-import 'package:heymybro/shared/pages/debt_pending_section.dart';
+import 'package:heymybro/shared/pages/debt_proposal_card.dart';
 import 'package:heymybro/shared/pages/group_detail_page.dart';
 import 'package:heymybro/shared/provider/debt_provider.dart';
 import 'package:heymybro/shared/pages/trash_page.dart';
@@ -31,6 +31,14 @@ class TransactionPage extends ConsumerWidget {
     final iOwe = debts
         .where((d) => !d.owedToMe)
         .fold(0, (s, d) => s + d.amount);
+
+    // Still being agreed: waiting on me first, then waiting on them, then the
+    // dead ends nobody has acknowledged yet.
+    final proposals = [
+      ...ref.watch(pendingForMeProvider),
+      ...ref.watch(pendingForThemProvider),
+      ...ref.watch(unseenDeadEndsProvider),
+    ];
 
     return Scaffold(
       backgroundColor: BrutalColors.background,
@@ -66,9 +74,6 @@ class TransactionPage extends ConsumerWidget {
                 const SizedBox(height: 24),
                 _DebtSummaryCard(money: money, owedToMe: owedToMe, iOwe: iOwe),
                 const SizedBox(height: 20),
-                // Above 誰欠誰 on purpose: these are the only rows on this page
-                // that are waiting on somebody to do something.
-                const DebtPendingSection(),
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
@@ -77,14 +82,24 @@ class TransactionPage extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
-                if (debts.isEmpty)
+                if (debts.isEmpty && proposals.isEmpty)
                   _EmptyLine('tx_no_debts'.tr())
-                else
+                else ...[
+                  // One list, not two. A debt being agreed is still a debt
+                  // between you and them — an answer to "誰欠誰" — and it goes
+                  // first because it is the only kind that might want
+                  // something from you.
+                  for (final p in proposals)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: DebtProposalCard(proposal: p),
+                    ),
                   for (final d in debts)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 12),
                       child: _DebtCard(debt: d, money: money),
                     ),
+                ],
               ],
             ),
           ),
