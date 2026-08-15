@@ -1,6 +1,8 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 
+import 'package:heymybro/shared/debt/debt_projection.dart';
+
 part 'database.g.dart';
 
 // ── Split-the-bill schema ────────────────────────────────────────────────────
@@ -536,6 +538,36 @@ class AppDatabase extends _$AppDatabase {
     return transaction(() async {
       await into(expenses).insert(expense);
       await batch((b) => b.insertAll(expenseShares, shares));
+    });
+  }
+
+  /// Land a confirmed debt proposal in the ledger.
+  ///
+  /// Idempotent by construction: every id comes from the proposal id (see
+  /// [DebtProjection]) and every insert ignores conflicts, so applying the
+  /// same projection any number of times leaves exactly one debt.
+  ///
+  /// Deliberately insertOrIgnore rather than insertOnConflictUpdate: a
+  /// confirmed proposal is immutable, and "ignore" is what makes a replay free
+  /// instead of a rewrite that could clobber a later local edit.
+  Future<void> applyDebtProjection(DebtProjection projection) {
+    return transaction(() async {
+      await into(
+        groups,
+      ).insert(projection.group, mode: InsertMode.insertOrIgnore);
+      for (final member in [projection.creditor, projection.debtor]) {
+        await into(members).insert(member, mode: InsertMode.insertOrIgnore);
+      }
+      await into(
+        expenses,
+      ).insert(projection.expense, mode: InsertMode.insertOrIgnore);
+      await batch(
+        (b) => b.insertAll(
+          expenseShares,
+          projection.shares,
+          mode: InsertMode.insertOrIgnore,
+        ),
+      );
     });
   }
 
