@@ -128,6 +128,139 @@ class _DialogButton extends StatelessWidget {
 const _dismissBg = BrutalColors.surfaceContainerHigh;
 const _dismissFg = BrutalColors.onBackground;
 
+/// Yes/no confirm rendered through the brutalist dialog shell (filled buttons,
+/// hard shadow) so every confirm in the app looks the same. Returns true only
+/// when confirmed. [type] tints the confirm button (yellow primary vs red
+/// delete). This backs the app-wide `confirmDialog`.
+Future<bool> confirmBrutal(
+  BuildContext context, {
+  required String title,
+  String? message,
+  required String confirmLabel,
+  String? cancelLabel,
+  ConfirmType type = ConfirmType.primary,
+}) async {
+  final (confirmBg, confirmFg) = _confirmColors(type);
+  final result = await showDialog<bool>(
+    context: context,
+    barrierColor: Colors.black54,
+    builder: (dialogContext) => _BrutalDialog(
+      title: title,
+      content: message == null ? null : Text(message),
+      actions: [
+        _DialogButton(
+          label: cancelLabel ?? 'cancel'.tr(),
+          color: _dismissBg,
+          textColor: _dismissFg,
+          onTap: () => Navigator.of(dialogContext).pop(false),
+        ),
+        _DialogButton(
+          label: confirmLabel,
+          color: confirmBg,
+          textColor: confirmFg,
+          onTap: () => Navigator.of(dialogContext).pop(true),
+        ),
+      ],
+    ),
+  );
+  return result ?? false;
+}
+
+/// Single-line text prompt rendered through the brutalist dialog shell. Returns
+/// the entered text on confirm, or null on cancel.
+Future<String?> showTextInputDialog(
+  BuildContext context, {
+  required String title,
+  String? initialValue,
+  String? hintText,
+  String? confirmLabel,
+}) {
+  return showDialog<String>(
+    context: context,
+    barrierColor: Colors.black54,
+    builder: (_) => _TextInputDialog(
+      title: title,
+      initialValue: initialValue,
+      hintText: hintText,
+      confirmLabel: confirmLabel ?? 'common_save'.tr(),
+    ),
+  );
+}
+
+class _TextInputDialog extends StatefulWidget {
+  const _TextInputDialog({
+    required this.title,
+    this.initialValue,
+    this.hintText,
+    required this.confirmLabel,
+  });
+
+  final String title;
+  final String? initialValue;
+  final String? hintText;
+  final String confirmLabel;
+
+  @override
+  State<_TextInputDialog> createState() => _TextInputDialogState();
+}
+
+class _TextInputDialogState extends State<_TextInputDialog> {
+  late final _ctrl = TextEditingController(text: widget.initialValue);
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _BrutalDialog(
+      title: widget.title,
+      content: Container(
+        decoration: brutalDecoration(
+          color: BrutalColors.surface,
+          radius: BrutalSpec.pillRadius,
+          offset: 3,
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        child: TextField(
+          controller: _ctrl,
+          autofocus: true,
+          textAlign: TextAlign.start,
+          cursorColor: BrutalColors.onBackground,
+          style: BrutalText.body(fontSize: 16),
+          decoration: InputDecoration(
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(vertical: 14),
+            border: InputBorder.none,
+            hintText: widget.hintText,
+            hintStyle: BrutalText.body(
+              fontSize: 16,
+              color: BrutalColors.onSurfaceVariant,
+            ),
+          ),
+          onSubmitted: (v) => Navigator.of(context).pop(v),
+        ),
+      ),
+      actions: [
+        _DialogButton(
+          label: 'cancel'.tr(),
+          color: _dismissBg,
+          textColor: _dismissFg,
+          onTap: () => Navigator.of(context).pop(),
+        ),
+        _DialogButton(
+          label: widget.confirmLabel,
+          color: BrutalColors.primaryContainer,
+          textColor: BrutalColors.onBackground,
+          onTap: () => Navigator.of(context).pop(_ctrl.text),
+        ),
+      ],
+    );
+  }
+}
+
 Future<void> showBasicDialog(
   BuildContext context, {
   required String title,
@@ -293,4 +426,51 @@ Future<void> showOptionsDialog(
 
   if (result == null || result == selectedKey) return;
   onChanged(result);
+}
+
+/// Centered brutalist picker: a title over a wrap of tappable option chips.
+/// Returns the chosen value, or null if dismissed. Use this instead of a bottom
+/// sheet for a short "pick one" triggered from mid-screen, so the choices appear
+/// where the user is looking rather than as a strip at the bottom.
+Future<T?> showChipPickerDialog<T>(
+  BuildContext context, {
+  required String title,
+  required List<({T value, String label, bool highlight})> options,
+}) {
+  return showDialog<T>(
+    context: context,
+    barrierColor: Colors.black54,
+    builder: (dialogContext) => _BrutalDialog(
+      title: title,
+      content: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        alignment: WrapAlignment.center,
+        children: [
+          for (final o in options)
+            GestureDetector(
+              onTap: () => Navigator.of(dialogContext).pop(o.value),
+              child: BrutalPill(
+                color: o.highlight
+                    ? BrutalColors.primaryContainer
+                    : BrutalColors.surfaceContainerHigh,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
+                child: Text(o.label, style: BrutalText.labelBold(fontSize: 15)),
+              ),
+            ),
+        ],
+      ),
+      actions: [
+        _DialogButton(
+          label: 'cancel'.tr(),
+          color: _dismissBg,
+          textColor: _dismissFg,
+          onTap: () => Navigator.of(dialogContext).pop(),
+        ),
+      ],
+    ),
+  );
 }

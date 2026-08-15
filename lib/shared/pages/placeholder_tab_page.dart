@@ -30,7 +30,11 @@ class PlaceholderTabPage extends StatelessWidget {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(icon, size: 48, color: BrutalColors.onBackground),
+                          Icon(
+                            icon,
+                            size: 48,
+                            color: BrutalColors.onBackground,
+                          ),
                           const SizedBox(height: 12),
                           Text(
                             title,

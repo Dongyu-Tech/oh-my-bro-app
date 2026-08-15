@@ -2,6 +2,7 @@ key,en,zh_TW
 app_title,Oh My Bro,Oh My Bro
 confirm,Confirm,確認
 cancel,Cancel,取消
+back_label,Back,返回
 coming_soon,Coming Soon,敬請期待
 login_failed,Sign-in failed. Please try again.,登入失敗，請再試一次
 logout_confirm_title,Log out?,要登出嗎？
@@ -21,14 +22,15 @@ ledger_owes,owes,欠
 ledger_quick_hint,e.g. Lunch 120,例：午餐120
 ledger_budget_kept,Budget held this month!,本月預算！我守住！
 ledger_budget_remaining,Remaining budget,剩餘預算
-ledger_title,My Ledger,我的帳本
+ledger_title,My spending,個人記帳
 ledger_recent,Recent entries,近期紀錄
 ledger_view_all,View all,查看全部
 ledger_today,Today,今天
 ledger_yesterday,Yesterday,昨天
-nav_ledger,Ledger,帳本
-nav_transaction,Transaction,交易
+nav_ledger,Personal,個人
+nav_transaction,Ledger,帳本
 nav_add,Add,新增
+nav_home,Home,首頁
 nav_circle,Circle,夥伴
 nav_account,Account,帳號
 circle_title,Chasing a friend's debt?,找朋友討債？
@@ -47,9 +49,17 @@ sample_salary,Salary,薪水
 sample_transit,Transit,交通
 sample_donate,Donate,捐血
 sample_fuel,Fuel,加油
-transaction_title,Transactions,交易紀錄
-tx_tab_external,External debt,對外債務
-tx_tab_personal,Personal,個人私帳
+transaction_title,Ledger,往來帳本
+tx_tab_external,Debt records,債務紀錄
+tx_tab_personal,Personal,個人記帳
+tx_badge_personal,Personal,個人
+tx_owes_you,{name} owes you,{name} 欠你
+tx_you_owe,You owe {name},你欠 {name}
+tx_no_debts,No debts — all clear!,沒有債務 都清了！
+tx_no_personal,No personal entries yet,還沒有個人記帳
+tx_summary_owed,Owed to you,別人欠你
+tx_summary_owe,You owe,你欠別人
+tx_debts_title,Who owes who,誰欠誰
 tx_summary_title,Monthly summary,本月收支統計
 tx_list_title,Private records,私帳清單
 tx_list_title_external,Debt records,債務清單
@@ -104,3 +114,146 @@ new_tx_friend2,Hua,阿華
 new_tx_friend3,Leo,大雄
 new_tx_me,Me,我
 new_tx_add,Add,添加
+add_choose_title,How do you want to log this?,這筆要怎麼記？
+add_choose_group,Split with a circle,揪團分帳
+add_choose_group_hint,Split a bill among a group,跟一群人分一筆帳
+add_choose_personal,Personal entry,記個人帳
+add_choose_personal_hint,Just my own spend,只有自己花的
+add_pick_group_title,Which circle?,要記到哪個聚會？
+add_pick_new,New circle,開新團
+add_pick_empty,No active circles yet,還沒有進行中的聚會
+record_with_who,Who's it with?,跟誰分？
+record_me,Just me,我自己
+record_personal_todo,Personal ledger coming soon,個人帳之後接帳本
+record_saved,Recorded!,記好囉！
+home_greeting,Who's grabbing lunch today?,欸 今天要揪誰吃飯？
+home_gather_sub,A gathering + room code,約一攤・開房號
+home_join_sub,Got a code? tap here,朋友給碼就按
+home_active,Active gatherings,進行中的攤
+home_empty,No active gathering yet — start one!,還沒有進行中的攤 發起一攤吧！
+home_month,This month,這個月
+home_spent,spent {amount},花了 {amount}
+home_record,Log a personal entry,記一筆個人帳
+home_quick_hint,Log it… e.g. Lunch 120,記一筆…例：午餐 120
+home_quick_need_amount,Add an amount — e.g. Lunch 120,後面加個金額 例：午餐 120
+debt_composer_title,Log a debt,記一筆欠款
+debt_pick,Pick,選人
+debt_pick_person,Who?,選誰？
+debt_item_hint,Item,項目
+debt_record,Log,記下
+debt_need_people,Pick who's on each side,兩邊的人選好
+debt_same_person,Can't be the same person,不能是同一個人
+circle_start_gather,Start a gathering,發起揪團
+circle_join_code,Enter a room code,輸入房號
+room_code_label,Room code,房號
+room_share,Share invite,分享邀請
+room_participants,Who's in,參加者
+room_start,Start splitting,開始記帳分帳
+room_demo_note,Demo only — real join needs the backend,本地示範：真的讓朋友加入要之後接後端
+join_title,Join by room code,輸入房號加入
+join_hint,Enter the 6-digit code,輸入 6 位房號
+join_button,Join,加入
+join_not_found,No room with that code on this device,這台找不到這個房號（跨手機加入之後接後端）
+group_title,My Circles,我的聚會
+group_new,New,開團
+group_empty_title,No circles yet,還沒有聚會
+group_empty_hint,Start a circle and split with your bros,開一個團 揪大家一起分帳
+group_section_active,Active,進行中
+group_section_archived,Archived,已封存
+group_you_get_back,gets back,該收回
+group_you_owe,you owe,你要付
+group_settled,settled,已結清
+group_members_count,{count} members,{count} 人
+group_name_label,Circle name,聚會名稱
+group_name_hint,e.g. Friday dinner,例如 週五聚餐
+group_color_label,Cover colour,封面顏色
+group_members_label,Members,成員
+group_add_member_hint,Type a name,輸入名字
+group_add_member,Add,加入
+group_me,Me,我
+group_pick_friends,Pick from friends,從好友勾選
+group_create,Create circle,建立聚會
+group_name_required,Give your circle a name first,先幫聚會取個名字
+group_total,Total spent,總花費
+group_invite,Invite bros,邀請夥伴
+group_settle_title,Settle up,結算建議
+group_all_settled,All settled — nobody owes,全部結清 沒有人欠錢
+group_expenses,Expenses,花費
+group_no_expenses,No expenses yet,還沒有任何花費
+group_add_expense,Add expense,記一筆
+group_split_among,split among {count},分給 {count} 人
+group_pays_back,{from} pays {to},{from} 還 {to}
+group_mark_paid,Paid,還了
+group_edit,Edit circle,編輯聚會
+common_save,Save,儲存
+common_delete,Delete,刪除
+settle_title,Record a repayment,記一筆還款
+settle_amount,Amount repaid,還多少
+settle_confirm,Confirm,確認還款
+settled_records,Repaid,已還款
+settle_undo,Undo this repayment?,取消這筆還款？
+confirm_delete_expense,Delete this expense?,刪掉這筆？
+confirm_delete_friend,Remove this bro?,刪掉這個好友？
+confirm_delete_friend_msg,Their credit history goes too.,他的信用紀錄會一起消失。
+confirm_delete_entry,Delete this entry?,刪掉這筆帳？
+expense_edit_title,Edit expense,編輯花費
+friend_rename,Rename bro,幫他改名
+entry_edit_title,Edit entry,編輯這筆
+trash_title,Recycle bin,回收桶
+trash_empty,The bin is empty,回收桶是空的
+trash_restore,Restore,還原
+trash_purge,Delete forever,永久刪除
+trash_confirm_purge,Delete forever? This can't be undone.,永久刪除？無法復原。
+trash_open,Recycle bin,回收桶
+trash_section_groups,Gatherings,攤 / 群組
+trash_section_expenses,Expenses,花費
+trash_section_personal,Personal,個人帳
+trash_section_friends,Friends,好友
+trash_purge_all,Empty the bin,全部清空
+trash_purge_all_confirm,Empty the entire bin? This can't be undone.,清空整個回收桶？無法復原。
+friends_title,My bros,我的好友
+friend_add,Add a bro,加好友
+friend_add_hint,Bro's name,好友名字
+friend_empty,No bros yet — add one!,還沒有好友 加一個吧！
+friend_delete,Remove bro,刪好友
+credit_score,Credit score,信用評分
+credit_elite,Elite bro,人上人
+credit_good,Solid bro,好兄弟
+credit_watch,On watch,再觀察
+credit_hopeless,Hopeless… bro gives up,沒救了..粗哥放棄
+credit_outstanding,Currently owes,目前欠
+credit_repaid,repaid {count}x,還過 {count} 次
+credit_repaid_label,Times repaid,還款次數
+friend_ledger_title,Your running total,跟你的總帳
+friend_net_owes_you,{name} owes you (net),{name} 淨欠你
+friend_net_you_owe,You owe {name} (net),你淨欠 {name}
+friend_settle_all,Settle all,一鍵結清
+friend_settle_all_confirm,Clear everything with {name}?,結清跟 {name} 的所有帳？
+friend_settle_all_done,All squared up!,都結清囉！
+log_share_title,Log your {amount} share as a personal expense?,把你的份 {amount} 記進個人記帳？
+log_share_count,{count} entries,共 {count} 筆
+log_share_confirm,Log it,記一筆
+credit_gatherings,{count} gatherings,{count} 攤
+friend_report_title,Bro credit report,粗哥信用報告
+group_archive,Archive circle,封存聚會
+group_unarchive,Reopen,重新開啟
+group_delete,Delete,刪除
+invite_title,Invite bros to join,邀請夥伴加入
+invite_subtitle,Share the link or let them scan the QR,分享連結 或 給團碼 讓大家掃 QR 加入
+invite_link_label,Invite link,邀請連結
+invite_code_label,Circle code,團碼
+invite_share,Share link,分享連結
+invite_scan,Scan to join,掃我加入
+invite_copied,Copied,已複製
+expense_title_label,What was it,這筆花什麼
+expense_title_hint,e.g. Dinner,例如 晚餐
+expense_amount_label,Amount,金額
+expense_payer_label,Who paid,誰付的
+expense_split_label,How to split,怎麼分
+expense_split_equal,Equally,均分
+expense_split_custom,Custom,自訂
+expense_save,Save,記下來
+expense_title_required,What did you spend on,這筆是花什麼
+expense_amount_required,Enter an amount,填一下金額
+expense_custom_mismatch,Shares must add up to the total,每人金額加起來要等於總額
+expense_each,each,每人
