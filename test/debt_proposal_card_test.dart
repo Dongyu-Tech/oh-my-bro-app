@@ -6,6 +6,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:heymybro/core/database/database.dart';
 import 'package:heymybro/shared/pages/debt_proposal_card.dart';
 import 'package:heymybro/shared/provider/debt_provider.dart';
+import 'package:heymybro/shared/widgets/brutalism.dart';
 
 DebtProposal _proposal({
   String status = 'pending',
@@ -69,6 +70,17 @@ void main() {
     expect(find.text('阿華'), findsOneWidget);
     // The item is the headline now; the person is the corner.
     expect(find.text('晚餐'), findsOneWidget);
+  });
+
+  testWidgets('the head starts on the same edge as the title', (tester) async {
+    await pump(tester, _proposal());
+
+    // Geometry, not presence: right-aligned it still renders, it just reads as
+    // a stray label floating off the card's own left edge.
+    expect(
+      tester.getTopLeft(find.byType(BrutalAvatar)).dx,
+      tester.getTopLeft(find.text('晚餐')).dx,
+    );
   });
 
   testWidgets('the chip beside the name carries the direction', (tester) async {

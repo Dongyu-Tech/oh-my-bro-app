@@ -143,7 +143,11 @@ class DebtProposalCard extends ConsumerWidget {
   }
 }
 
-/// The top-right corner of a debt card: who it is with, and what kind it is.
+/// The top line of a debt card: who it is with, and what kind it is.
+///
+/// Left-aligned, so it starts on the same edge as the item title and the rest
+/// of the card. A right-aligned head reads as a stray label rather than the
+/// first line of the card it belongs to.
 ///
 /// Shared by both card types so a debt looks the same whether it has been
 /// agreed yet or not — the only thing that should differ between them is the
@@ -167,7 +171,6 @@ class DebtPartyLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
       children: [
         BrutalAvatar(
           name: name,
