@@ -110,7 +110,23 @@ class PersonalEntries extends Table {
 /// repayment history — and comic credit score — accrues across gatherings.
 class Friends extends Table {
   TextColumn get id => text()();
+
+  /// What *I* call them. Seeded from their profile, then mine to change.
   TextColumn get name => text()();
+
+  /// Their `public.users` id. Null only on rows added before bros had to be
+  /// real accounts — those keep working but can never show a picture.
+  TextColumn get userId => text().nullable()();
+
+  /// Their handle at the time they were added, so the row can be re-resolved
+  /// against the server later.
+  TextColumn get handle => text().nullable()();
+
+  /// Cached avatar URL. Kept locally on purpose: the list has to render before
+  /// (and without) a network round trip, and `users` RLS only lets us re-read
+  /// their row once the friendship also exists server-side.
+  TextColumn get avatarUrl => text().nullable()();
+
   DateTimeColumn get createdAt => dateTime()();
 
   /// Non-null once moved to the recycle bin (soft delete).
@@ -152,13 +168,19 @@ class Settlements extends Table {
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(driftDatabase(name: 'heymybro'));
 
+  /// Seam for tests: drives the same schema and migrations against a supplied
+  /// executor (an in-memory database) instead of the on-device file, which
+  /// needs path_provider and so cannot open under `flutter test`.
+  AppDatabase.forExecutor(super.executor);
+
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   // v1 table-less → v2 split schema → v3 PersonalEntries → v4 Friends +
   // Settlements + Members.friendId → v5 soft-delete (deletedAt) columns →
   // v6 Groups.isDirect (direct-debt marker) → v7 PersonalEntries
-  // .sourceSettlementId (links a 結清-booked entry to its settlement). Bump
+  // .sourceSettlementId (links a 結清-booked entry to its settlement) →
+  // v8 Friends.userId/handle/avatarUrl (a bro is a real account now). Bump
   // BackupService.supportedSchemaVersions alongside any future change here.
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -186,6 +208,14 @@ class AppDatabase extends _$AppDatabase {
             personalEntries,
             personalEntries.sourceSettlementId,
           );
+        }
+        if (from < 8) {
+          // Nullable on purpose: friends added before this are plain names
+          // with no account behind them. They stay usable and simply never
+          // get a picture.
+          await m.addColumn(friends, friends.userId);
+          await m.addColumn(friends, friends.handle);
+          await m.addColumn(friends, friends.avatarUrl);
         }
       }
     },
@@ -284,6 +314,52 @@ class AppDatabase extends _$AppDatabase {
 
   Future<void> insertFriend(FriendsCompanion friend) =>
       into(friends).insert(friend);
+
+  /// The friend row already pointing at [userId], if any — so adding the same
+  /// bro twice updates them instead of stacking duplicates.
+  ///
+  /// Trashed rows count. If the server says you are bros, a local row sitting
+  /// in the bin is stale state to be corrected, not a reason to create a second
+  /// row for the same person.
+  Future<Friend?> findFriendByUserId(String userId) =>
+      (select(friends)
+            ..where((f) => f.userId.equals(userId))
+            ..limit(1))
+          .getSingleOrNull();
+
+  /// Trash every account-backed friend whose id is NOT in [liveUserIds] —
+  /// the other side removed us, or a request was withdrawn.
+  ///
+  /// Scoped to rows that have a `userId`, so friends added before bros were
+  /// accounts are never swept up by a server list that could not know about
+  /// them. Only ever call this with a list that actually came back from the
+  /// server: an empty list from a failed fetch would clear everyone.
+  Future<void> pruneUnlinkedFriends(Set<String> liveUserIds) {
+    return (update(friends)..where((f) {
+          final linked = f.userId.isNotNull() & f.deletedAt.isNull();
+          // `NOT IN ()` is a syntax error, so an empty set means "prune every
+          // linked friend" and needs no exclusion clause at all.
+          return liveUserIds.isEmpty
+              ? linked
+              : linked & f.userId.isNotIn(liveUserIds.toList());
+        }))
+        .write(FriendsCompanion(deletedAt: Value(DateTime.now())));
+  }
+
+  /// Refresh the cached profile bits of a friend after a lookup, and un-trash
+  /// them: this only runs for someone the server currently lists as a bro, and
+  /// the server is the authority on that.
+  Future<void> updateFriendProfile(
+    String friendId, {
+    required String? handle,
+    required String? avatarUrl,
+  }) => (update(friends)..where((f) => f.id.equals(friendId))).write(
+    FriendsCompanion(
+      handle: Value(handle),
+      avatarUrl: Value(avatarUrl),
+      deletedAt: const Value(null),
+    ),
+  );
 
   Future<void> renameFriend(String friendId, String name) =>
       (update(friends)..where((f) => f.id.equals(friendId))).write(
