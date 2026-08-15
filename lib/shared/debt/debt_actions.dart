@@ -106,14 +106,28 @@ bool reportDebtOutcome(Result<DebtOutcome> result) {
       return true;
     case Ok(value: final outcome) when outcome.isSuccess:
       return true;
+
     case Ok(value: DebtOutcome.notYours):
-      showErrorSnakeBar('debt_err_not_yours'.tr());
+      showErrorSnakeBar('debt_err_not_yours'.tr(), cause: DebtOutcome.notYours);
+    case Ok(value: DebtOutcome.notFriends):
+      showErrorSnakeBar(
+        'debt_err_not_friends'.tr(),
+        cause: DebtOutcome.notFriends,
+      );
+    case Ok(value: DebtOutcome.notFound):
+      showErrorSnakeBar('debt_confirm_gone'.tr(), cause: DebtOutcome.notFound);
     case Ok(value: DebtOutcome.badInput):
+      showErrorSnakeBar('debt_err_amount'.tr(), cause: DebtOutcome.badInput);
     case Ok(value: DebtOutcome.noAmount):
-      showErrorSnakeBar('debt_err_amount'.tr());
-    case Ok():
-    case Error():
-      showErrorSnakeBar('debt_err_generic'.tr());
+      showErrorSnakeBar('debt_err_amount'.tr(), cause: DebtOutcome.noAmount);
+
+    // Everything left over shares one sentence, because there is nothing
+    // useful to tell the user — but the console gets the actual reason, or
+    // debugging this is guesswork over an identical message every time.
+    case Ok(value: final outcome):
+      showErrorSnakeBar('debt_err_generic'.tr(), cause: 'outcome=$outcome');
+    case Error(error: final e):
+      showErrorSnakeBar('debt_err_generic'.tr(), cause: e);
   }
   return false;
 }

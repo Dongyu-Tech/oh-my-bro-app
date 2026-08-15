@@ -1,11 +1,14 @@
 import 'dart:async';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import 'package:heymybro/core/database/database.dart';
 import 'package:heymybro/core/routing/router.dart';
 import 'package:heymybro/shared/provider/debt_provider.dart';
+import 'package:heymybro/shared/widgets/brutalism.dart';
 
 /// Sits above the router and owns two things no screen can.
 ///
@@ -103,6 +106,86 @@ class _DebtPopupHostState extends ConsumerState<DebtPopupHost>
       WidgetsBinding.instance.addPostFrameCallback((_) => _maybeShow());
     }
 
-    return widget.child;
+    final announcements = ref.watch(unseenConfirmationsProvider);
+
+    // A layer over the app, not a row inserted into it. MaterialBanner takes
+    // space from the page and pushes everything down, which for news that
+    // arrives unannounced means the screen jumps under whatever the user was
+    // reading. This floats instead: nothing below it moves.
+    return Stack(
+      children: [
+        widget.child,
+        if (announcements.isNotEmpty)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: SafeArea(
+              bottom: false,
+              child: _ConfirmedAlert(
+                proposal: announcements.first,
+                onDismiss: () => ref
+                    .read(debtServiceProvider)
+                    .markConfirmAlertSeen(announcements.first.id),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// "They agreed" — floating over whatever screen you happen to be on.
+///
+/// It stays until acknowledged rather than sliding away on a timer: this is
+/// news that money is now on your ledger, and a snackbar that expires while
+/// the phone is in a pocket would simply never be seen.
+class _ConfirmedAlert extends StatelessWidget {
+  const _ConfirmedAlert({required this.proposal, required this.onDismiss});
+
+  final DebtProposal proposal;
+  final VoidCallback onDismiss;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+      child: Material(
+        // Transparent: the brutal decoration below draws every pixel. Material
+        // is here only so the text has a canvas to paint on outside a Scaffold.
+        color: Colors.transparent,
+        child: Container(
+          decoration: brutalDecoration(
+            color: BrutalColors.primaryContainer,
+            radius: BrutalSpec.cardRadius,
+            offset: BrutalSpec.shadowOffsetMobile,
+          ),
+          padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
+          child: Row(
+            children: [
+              const Icon(LucideIcons.circleCheck, size: 22),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'debt_alert_confirmed'.tr(
+                    namedArgs: {'name': proposal.otherName ?? '?'},
+                  ),
+                  style: BrutalText.labelBold(fontSize: 14),
+                ),
+              ),
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: onDismiss,
+                behavior: HitTestBehavior.opaque,
+                child: const Padding(
+                  padding: EdgeInsets.all(6),
+                  child: Icon(LucideIcons.x, size: 20),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

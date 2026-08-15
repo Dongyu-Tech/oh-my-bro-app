@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/error/error_logger.dart';
 import '../../core/error/result.dart';
 import '../models/debt_proposal_model.dart';
 import 'user_repository.dart' show BackendNotWiredException;
@@ -127,6 +128,21 @@ class SupabaseDebtRepository implements DebtRepository {
 
   final SupabaseClient _client;
 
+  /// Parse a reply, and shout about one we do not recognise.
+  ///
+  /// [DebtOutcome.unknown] is deliberately not an exception — an older build
+  /// must keep working against a newer server. But it collapses to the same
+  /// "couldn't send that" as everything else, so without this the one piece of
+  /// evidence that would explain it (what the server actually said) is thrown
+  /// away at the only point it exists.
+  DebtOutcome _outcome(String rpc, String? wire) {
+    final outcome = DebtOutcome.parse(wire);
+    if (outcome == DebtOutcome.unknown) {
+      logAppError(rpc, 'unrecognised reply "$wire"');
+    }
+    return outcome;
+  }
+
   @override
   Future<Result<List<DebtProposalModel>>> list({DateTime? since}) async {
     try {
@@ -138,7 +154,8 @@ class SupabaseDebtRepository implements DebtRepository {
         for (final row in rows)
           DebtProposalModel.fromJson(row as Map<String, dynamic>),
       ]);
-    } on Exception catch (e) {
+    } on Exception catch (e, st) {
+      logAppError('my_debt_proposals', e, st);
       return Result.error(e);
     }
   }
@@ -162,8 +179,9 @@ class SupabaseDebtRepository implements DebtRepository {
           'p_amount': amount,
         },
       );
-      return Result.ok(DebtOutcome.parse(wire));
-    } on Exception catch (e) {
+      return Result.ok(_outcome('propose_debt', wire));
+    } on Exception catch (e, st) {
+      logAppError('propose_debt', e, st);
       return Result.error(e);
     }
   }
@@ -189,8 +207,9 @@ class SupabaseDebtRepository implements DebtRepository {
           'p_reason': reason,
         },
       );
-      return Result.ok(DebtOutcome.parse(wire));
-    } on Exception catch (e) {
+      return Result.ok(_outcome('respond_debt', wire));
+    } on Exception catch (e, st) {
+      logAppError('respond_debt', e, st);
       return Result.error(e);
     }
   }
@@ -202,8 +221,9 @@ class SupabaseDebtRepository implements DebtRepository {
         'cancel_debt',
         params: {'p_id': id},
       );
-      return Result.ok(DebtOutcome.parse(wire));
-    } on Exception catch (e) {
+      return Result.ok(_outcome('cancel_debt', wire));
+    } on Exception catch (e, st) {
+      logAppError('cancel_debt', e, st);
       return Result.error(e);
     }
   }
