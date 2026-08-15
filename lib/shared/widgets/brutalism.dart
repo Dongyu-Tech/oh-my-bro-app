@@ -425,6 +425,162 @@ class MarkerHighlight extends StatelessWidget {
   }
 }
 
+/// Speech bubble with a hard tail — the design system's `<blockquote>`, for
+/// when 粗哥 (or anyone) is talking rather than the page narrating.
+///
+/// Border and tail are one path unioned before stroking, so the join is a
+/// continuous outline. The usual trick — a rotated square glued onto a
+/// bordered box — leaves a seam at 4px border widths that no amount of
+/// nudging hides.
+class BrutalSpeechBubble extends StatelessWidget {
+  const BrutalSpeechBubble({
+    super.key,
+    required this.child,
+    this.color = BrutalColors.surfaceContainerLow,
+    this.radius = BrutalSpec.cardRadius,
+    this.offset = BrutalSpec.shadowOffsetMobile,
+    this.borderWidth = BrutalSpec.borderWidth,
+    this.padding = const EdgeInsets.fromLTRB(14, 9, 14, 11),
+    this.tailSize = 14,
+    this.tailAlign = 0.5,
+    this.tailOnRight = true,
+  });
+
+  final Widget child;
+  final Color color;
+  final double radius;
+  final double offset;
+  final double borderWidth;
+
+  /// Space between the border and [child]. The tail and hard shadow claim
+  /// their own room on top of this, so the text never sits under either.
+  final EdgeInsets padding;
+
+  /// How far the tail juts out past the bubble body.
+  final double tailSize;
+
+  /// Where the tail sits along the bubble's height, 0 (top) to 1 (bottom).
+  final double tailAlign;
+
+  /// Which side the tail points from — right by default, i.e. the speaker
+  /// stands to the right of the bubble.
+  final bool tailOnRight;
+
+  @override
+  Widget build(BuildContext context) {
+    // The stroke straddles the path, so half of it lives outside the body.
+    final half = borderWidth / 2;
+    final tailPad = tailSize + half;
+    return CustomPaint(
+      painter: _SpeechBubblePainter(
+        color: color,
+        radius: radius,
+        offset: offset,
+        borderWidth: borderWidth,
+        tailSize: tailSize,
+        tailAlign: tailAlign,
+        tailOnRight: tailOnRight,
+      ),
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: padding.left + (tailOnRight ? half : tailPad),
+          right: padding.right + offset + (tailOnRight ? tailPad : half),
+          top: padding.top + half,
+          bottom: padding.bottom + offset + half,
+        ),
+        child: child,
+      ),
+    );
+  }
+}
+
+class _SpeechBubblePainter extends CustomPainter {
+  _SpeechBubblePainter({
+    required this.color,
+    required this.radius,
+    required this.offset,
+    required this.borderWidth,
+    required this.tailSize,
+    required this.tailAlign,
+    required this.tailOnRight,
+    this.borderColor = BrutalColors.onBackground,
+    this.shadowColor = BrutalColors.onBackground,
+  });
+
+  final Color color;
+  final double radius;
+  final double offset;
+  final double borderWidth;
+  final double tailSize;
+  final double tailAlign;
+  final bool tailOnRight;
+  final Color borderColor;
+  final Color shadowColor;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final half = borderWidth / 2;
+    final body = Rect.fromLTRB(
+      half + (tailOnRight ? 0 : tailSize),
+      half,
+      size.width - offset - half - (tailOnRight ? tailSize : 0),
+      size.height - offset - half,
+    );
+    if (body.isEmpty) return;
+
+    final path = _bubblePath(body);
+    final stroke = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = borderWidth
+      ..strokeJoin = StrokeJoin.round;
+
+    if (offset > 0) {
+      // Shadow is the whole silhouette, border included — fill plus stroke,
+      // so it lines up with what brutalDecoration casts on the flat cards.
+      final shadow = path.shift(Offset(offset, offset));
+      canvas.drawPath(shadow, Paint()..color = shadowColor);
+      canvas.drawPath(shadow, stroke..color = shadowColor);
+    }
+    canvas.drawPath(path, Paint()..color = color);
+    canvas.drawPath(path, stroke..color = borderColor);
+  }
+
+  Path _bubblePath(Rect body) {
+    final rrect = Path()
+      ..addRRect(RRect.fromRectAndRadius(body, Radius.circular(radius)));
+    // Clamped away from the corners so the tail always meets a straight edge —
+    // on an arc the union would bite a notch out of the rounding.
+    final cy =
+        body.top +
+        (radius + tailSize).clamp(0.0, body.height / 2) +
+        (body.height - 2 * (radius + tailSize).clamp(0.0, body.height / 2)) *
+            tailAlign.clamp(0.0, 1.0);
+    final spread = tailSize * 0.62;
+    // Overlaps the body by 2px: two shapes merely touching leave a hairline
+    // the union does not close.
+    final baseX = tailOnRight ? body.right - 2 : body.left + 2;
+    final tipX = tailOnRight ? body.right + tailSize : body.left - tailSize;
+    final tail = Path()
+      ..moveTo(baseX, cy - spread)
+      ..lineTo(tipX, cy)
+      ..lineTo(baseX, cy + spread)
+      ..close();
+    return Path.combine(PathOperation.union, rrect, tail);
+  }
+
+  @override
+  bool shouldRepaint(_SpeechBubblePainter old) =>
+      old.color != color ||
+      old.radius != radius ||
+      old.offset != offset ||
+      old.borderWidth != borderWidth ||
+      old.tailSize != tailSize ||
+      old.tailAlign != tailAlign ||
+      old.tailOnRight != tailOnRight ||
+      old.borderColor != borderColor ||
+      old.shadowColor != shadowColor;
+}
+
 /// Thick brutal horizontal rule — the design system's `<hr>`. A hard black
 /// bar for separating sections; reuse anywhere a divider is needed.
 class BrutalDivider extends StatelessWidget {

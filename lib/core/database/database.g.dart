@@ -3013,6 +3013,38 @@ class $DebtProposalsTable extends DebtProposals
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
+  @override
+  late final GeneratedColumn<String> kind = GeneratedColumn<String>(
+    'kind',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('debt'),
+  );
+  static const VerificationMeta _repaysIdMeta = const VerificationMeta(
+    'repaysId',
+  );
+  @override
+  late final GeneratedColumn<String> repaysId = GeneratedColumn<String>(
+    'repays_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _outstandingMeta = const VerificationMeta(
+    'outstanding',
+  );
+  @override
+  late final GeneratedColumn<int> outstanding = GeneratedColumn<int>(
+    'outstanding',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _proposerIdMeta = const VerificationMeta(
     'proposerId',
   );
@@ -3208,6 +3240,9 @@ class $DebtProposalsTable extends DebtProposals
   @override
   List<GeneratedColumn> get $columns => [
     id,
+    kind,
+    repaysId,
+    outstanding,
     proposerId,
     counterpartyId,
     debtorId,
@@ -3243,6 +3278,27 @@ class $DebtProposalsTable extends DebtProposals
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
     } else if (isInserting) {
       context.missing(_idMeta);
+    }
+    if (data.containsKey('kind')) {
+      context.handle(
+        _kindMeta,
+        kind.isAcceptableOrUnknown(data['kind']!, _kindMeta),
+      );
+    }
+    if (data.containsKey('repays_id')) {
+      context.handle(
+        _repaysIdMeta,
+        repaysId.isAcceptableOrUnknown(data['repays_id']!, _repaysIdMeta),
+      );
+    }
+    if (data.containsKey('outstanding')) {
+      context.handle(
+        _outstandingMeta,
+        outstanding.isAcceptableOrUnknown(
+          data['outstanding']!,
+          _outstandingMeta,
+        ),
+      );
     }
     if (data.containsKey('proposer_id')) {
       context.handle(
@@ -3397,6 +3453,18 @@ class $DebtProposalsTable extends DebtProposals
         DriftSqlType.string,
         data['${effectivePrefix}id'],
       )!,
+      kind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}kind'],
+      )!,
+      repaysId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}repays_id'],
+      ),
+      outstanding: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}outstanding'],
+      ),
       proposerId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}proposer_id'],
@@ -3480,6 +3548,19 @@ class $DebtProposalsTable extends DebtProposals
 
 class DebtProposal extends DataClass implements Insertable<DebtProposal> {
   final String id;
+
+  /// `debt` or `repayment`. A repayment needs the same agreement a debt does,
+  /// so it rides the same table and the same flow; it differs only in what a
+  /// confirmed one becomes locally, which answers it allows, and what the
+  /// screen shows.
+  final String kind;
+
+  /// The debt this repayment clears. Null on a debt.
+  final String? repaysId;
+
+  /// What is still owed on this debt after every agreed repayment. Server-
+  /// computed, and only ever set on a confirmed debt.
+  final int? outstanding;
   final String proposerId;
   final String counterpartyId;
 
@@ -3525,6 +3606,9 @@ class DebtProposal extends DataClass implements Insertable<DebtProposal> {
   final DateTime? confirmAlertAt;
   const DebtProposal({
     required this.id,
+    required this.kind,
+    this.repaysId,
+    this.outstanding,
     required this.proposerId,
     required this.counterpartyId,
     required this.debtorId,
@@ -3548,6 +3632,13 @@ class DebtProposal extends DataClass implements Insertable<DebtProposal> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<String>(id);
+    map['kind'] = Variable<String>(kind);
+    if (!nullToAbsent || repaysId != null) {
+      map['repays_id'] = Variable<String>(repaysId);
+    }
+    if (!nullToAbsent || outstanding != null) {
+      map['outstanding'] = Variable<int>(outstanding);
+    }
     map['proposer_id'] = Variable<String>(proposerId);
     map['counterparty_id'] = Variable<String>(counterpartyId);
     map['debtor_id'] = Variable<String>(debtorId);
@@ -3592,6 +3683,13 @@ class DebtProposal extends DataClass implements Insertable<DebtProposal> {
   DebtProposalsCompanion toCompanion(bool nullToAbsent) {
     return DebtProposalsCompanion(
       id: Value(id),
+      kind: Value(kind),
+      repaysId: repaysId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(repaysId),
+      outstanding: outstanding == null && nullToAbsent
+          ? const Value.absent()
+          : Value(outstanding),
       proposerId: Value(proposerId),
       counterpartyId: Value(counterpartyId),
       debtorId: Value(debtorId),
@@ -3640,6 +3738,9 @@ class DebtProposal extends DataClass implements Insertable<DebtProposal> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return DebtProposal(
       id: serializer.fromJson<String>(json['id']),
+      kind: serializer.fromJson<String>(json['kind']),
+      repaysId: serializer.fromJson<String?>(json['repaysId']),
+      outstanding: serializer.fromJson<int?>(json['outstanding']),
       proposerId: serializer.fromJson<String>(json['proposerId']),
       counterpartyId: serializer.fromJson<String>(json['counterpartyId']),
       debtorId: serializer.fromJson<String>(json['debtorId']),
@@ -3665,6 +3766,9 @@ class DebtProposal extends DataClass implements Insertable<DebtProposal> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<String>(id),
+      'kind': serializer.toJson<String>(kind),
+      'repaysId': serializer.toJson<String?>(repaysId),
+      'outstanding': serializer.toJson<int?>(outstanding),
       'proposerId': serializer.toJson<String>(proposerId),
       'counterpartyId': serializer.toJson<String>(counterpartyId),
       'debtorId': serializer.toJson<String>(debtorId),
@@ -3688,6 +3792,9 @@ class DebtProposal extends DataClass implements Insertable<DebtProposal> {
 
   DebtProposal copyWith({
     String? id,
+    String? kind,
+    Value<String?> repaysId = const Value.absent(),
+    Value<int?> outstanding = const Value.absent(),
     String? proposerId,
     String? counterpartyId,
     String? debtorId,
@@ -3708,6 +3815,9 @@ class DebtProposal extends DataClass implements Insertable<DebtProposal> {
     Value<DateTime?> confirmAlertAt = const Value.absent(),
   }) => DebtProposal(
     id: id ?? this.id,
+    kind: kind ?? this.kind,
+    repaysId: repaysId.present ? repaysId.value : this.repaysId,
+    outstanding: outstanding.present ? outstanding.value : this.outstanding,
     proposerId: proposerId ?? this.proposerId,
     counterpartyId: counterpartyId ?? this.counterpartyId,
     debtorId: debtorId ?? this.debtorId,
@@ -3736,6 +3846,11 @@ class DebtProposal extends DataClass implements Insertable<DebtProposal> {
   DebtProposal copyWithCompanion(DebtProposalsCompanion data) {
     return DebtProposal(
       id: data.id.present ? data.id.value : this.id,
+      kind: data.kind.present ? data.kind.value : this.kind,
+      repaysId: data.repaysId.present ? data.repaysId.value : this.repaysId,
+      outstanding: data.outstanding.present
+          ? data.outstanding.value
+          : this.outstanding,
       proposerId: data.proposerId.present
           ? data.proposerId.value
           : this.proposerId,
@@ -3779,6 +3894,9 @@ class DebtProposal extends DataClass implements Insertable<DebtProposal> {
   String toString() {
     return (StringBuffer('DebtProposal(')
           ..write('id: $id, ')
+          ..write('kind: $kind, ')
+          ..write('repaysId: $repaysId, ')
+          ..write('outstanding: $outstanding, ')
           ..write('proposerId: $proposerId, ')
           ..write('counterpartyId: $counterpartyId, ')
           ..write('debtorId: $debtorId, ')
@@ -3802,8 +3920,11 @@ class DebtProposal extends DataClass implements Insertable<DebtProposal> {
   }
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     id,
+    kind,
+    repaysId,
+    outstanding,
     proposerId,
     counterpartyId,
     debtorId,
@@ -3822,12 +3943,15 @@ class DebtProposal extends DataClass implements Insertable<DebtProposal> {
     poppedAt,
     dismissedAt,
     confirmAlertAt,
-  );
+  ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is DebtProposal &&
           other.id == this.id &&
+          other.kind == this.kind &&
+          other.repaysId == this.repaysId &&
+          other.outstanding == this.outstanding &&
           other.proposerId == this.proposerId &&
           other.counterpartyId == this.counterpartyId &&
           other.debtorId == this.debtorId &&
@@ -3850,6 +3974,9 @@ class DebtProposal extends DataClass implements Insertable<DebtProposal> {
 
 class DebtProposalsCompanion extends UpdateCompanion<DebtProposal> {
   final Value<String> id;
+  final Value<String> kind;
+  final Value<String?> repaysId;
+  final Value<int?> outstanding;
   final Value<String> proposerId;
   final Value<String> counterpartyId;
   final Value<String> debtorId;
@@ -3871,6 +3998,9 @@ class DebtProposalsCompanion extends UpdateCompanion<DebtProposal> {
   final Value<int> rowid;
   const DebtProposalsCompanion({
     this.id = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.repaysId = const Value.absent(),
+    this.outstanding = const Value.absent(),
     this.proposerId = const Value.absent(),
     this.counterpartyId = const Value.absent(),
     this.debtorId = const Value.absent(),
@@ -3893,6 +4023,9 @@ class DebtProposalsCompanion extends UpdateCompanion<DebtProposal> {
   });
   DebtProposalsCompanion.insert({
     required String id,
+    this.kind = const Value.absent(),
+    this.repaysId = const Value.absent(),
+    this.outstanding = const Value.absent(),
     required String proposerId,
     required String counterpartyId,
     required String debtorId,
@@ -3922,6 +4055,9 @@ class DebtProposalsCompanion extends UpdateCompanion<DebtProposal> {
        updatedAt = Value(updatedAt);
   static Insertable<DebtProposal> custom({
     Expression<String>? id,
+    Expression<String>? kind,
+    Expression<String>? repaysId,
+    Expression<int>? outstanding,
     Expression<String>? proposerId,
     Expression<String>? counterpartyId,
     Expression<String>? debtorId,
@@ -3944,6 +4080,9 @@ class DebtProposalsCompanion extends UpdateCompanion<DebtProposal> {
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
+      if (kind != null) 'kind': kind,
+      if (repaysId != null) 'repays_id': repaysId,
+      if (outstanding != null) 'outstanding': outstanding,
       if (proposerId != null) 'proposer_id': proposerId,
       if (counterpartyId != null) 'counterparty_id': counterpartyId,
       if (debtorId != null) 'debtor_id': debtorId,
@@ -3968,6 +4107,9 @@ class DebtProposalsCompanion extends UpdateCompanion<DebtProposal> {
 
   DebtProposalsCompanion copyWith({
     Value<String>? id,
+    Value<String>? kind,
+    Value<String?>? repaysId,
+    Value<int?>? outstanding,
     Value<String>? proposerId,
     Value<String>? counterpartyId,
     Value<String>? debtorId,
@@ -3990,6 +4132,9 @@ class DebtProposalsCompanion extends UpdateCompanion<DebtProposal> {
   }) {
     return DebtProposalsCompanion(
       id: id ?? this.id,
+      kind: kind ?? this.kind,
+      repaysId: repaysId ?? this.repaysId,
+      outstanding: outstanding ?? this.outstanding,
       proposerId: proposerId ?? this.proposerId,
       counterpartyId: counterpartyId ?? this.counterpartyId,
       debtorId: debtorId ?? this.debtorId,
@@ -4017,6 +4162,15 @@ class DebtProposalsCompanion extends UpdateCompanion<DebtProposal> {
     final map = <String, Expression>{};
     if (id.present) {
       map['id'] = Variable<String>(id.value);
+    }
+    if (kind.present) {
+      map['kind'] = Variable<String>(kind.value);
+    }
+    if (repaysId.present) {
+      map['repays_id'] = Variable<String>(repaysId.value);
+    }
+    if (outstanding.present) {
+      map['outstanding'] = Variable<int>(outstanding.value);
     }
     if (proposerId.present) {
       map['proposer_id'] = Variable<String>(proposerId.value);
@@ -4082,6 +4236,9 @@ class DebtProposalsCompanion extends UpdateCompanion<DebtProposal> {
   String toString() {
     return (StringBuffer('DebtProposalsCompanion(')
           ..write('id: $id, ')
+          ..write('kind: $kind, ')
+          ..write('repaysId: $repaysId, ')
+          ..write('outstanding: $outstanding, ')
           ..write('proposerId: $proposerId, ')
           ..write('counterpartyId: $counterpartyId, ')
           ..write('debtorId: $debtorId, ')
@@ -7182,6 +7339,9 @@ typedef $$SettlementsTableProcessedTableManager =
 typedef $$DebtProposalsTableCreateCompanionBuilder =
     DebtProposalsCompanion Function({
       required String id,
+      Value<String> kind,
+      Value<String?> repaysId,
+      Value<int?> outstanding,
       required String proposerId,
       required String counterpartyId,
       required String debtorId,
@@ -7205,6 +7365,9 @@ typedef $$DebtProposalsTableCreateCompanionBuilder =
 typedef $$DebtProposalsTableUpdateCompanionBuilder =
     DebtProposalsCompanion Function({
       Value<String> id,
+      Value<String> kind,
+      Value<String?> repaysId,
+      Value<int?> outstanding,
       Value<String> proposerId,
       Value<String> counterpartyId,
       Value<String> debtorId,
@@ -7237,6 +7400,21 @@ class $$DebtProposalsTableFilterComposer
   });
   ColumnFilters<String> get id => $composableBuilder(
     column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get repaysId => $composableBuilder(
+    column: $table.repaysId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get outstanding => $composableBuilder(
+    column: $table.outstanding,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -7345,6 +7523,21 @@ class $$DebtProposalsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get repaysId => $composableBuilder(
+    column: $table.repaysId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get outstanding => $composableBuilder(
+    column: $table.outstanding,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get proposerId => $composableBuilder(
     column: $table.proposerId,
     builder: (column) => ColumnOrderings(column),
@@ -7447,6 +7640,17 @@ class $$DebtProposalsTableAnnotationComposer
   });
   GeneratedColumn<String> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  GeneratedColumn<String> get repaysId =>
+      $composableBuilder(column: $table.repaysId, builder: (column) => column);
+
+  GeneratedColumn<int> get outstanding => $composableBuilder(
+    column: $table.outstanding,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get proposerId => $composableBuilder(
     column: $table.proposerId,
@@ -7553,6 +7757,9 @@ class $$DebtProposalsTableTableManager
           updateCompanionCallback:
               ({
                 Value<String> id = const Value.absent(),
+                Value<String> kind = const Value.absent(),
+                Value<String?> repaysId = const Value.absent(),
+                Value<int?> outstanding = const Value.absent(),
                 Value<String> proposerId = const Value.absent(),
                 Value<String> counterpartyId = const Value.absent(),
                 Value<String> debtorId = const Value.absent(),
@@ -7574,6 +7781,9 @@ class $$DebtProposalsTableTableManager
                 Value<int> rowid = const Value.absent(),
               }) => DebtProposalsCompanion(
                 id: id,
+                kind: kind,
+                repaysId: repaysId,
+                outstanding: outstanding,
                 proposerId: proposerId,
                 counterpartyId: counterpartyId,
                 debtorId: debtorId,
@@ -7597,6 +7807,9 @@ class $$DebtProposalsTableTableManager
           createCompanionCallback:
               ({
                 required String id,
+                Value<String> kind = const Value.absent(),
+                Value<String?> repaysId = const Value.absent(),
+                Value<int?> outstanding = const Value.absent(),
                 required String proposerId,
                 required String counterpartyId,
                 required String debtorId,
@@ -7618,6 +7831,9 @@ class $$DebtProposalsTableTableManager
                 Value<int> rowid = const Value.absent(),
               }) => DebtProposalsCompanion.insert(
                 id: id,
+                kind: kind,
+                repaysId: repaysId,
+                outstanding: outstanding,
                 proposerId: proposerId,
                 counterpartyId: counterpartyId,
                 debtorId: debtorId,

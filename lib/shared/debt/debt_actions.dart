@@ -81,6 +81,51 @@ Future<bool> counterDebt(
   return reportDebtOutcome(result);
 }
 
+/// Claim to have paid part or all of a debt.
+///
+/// Capped at what is still owed: overpaying is a new debt the other way round,
+/// not a repayment, and it should be logged as one so the other side can see
+/// what they are agreeing to. The server enforces the same cap — this is only
+/// so the field can say the limit rather than letting someone type a number
+/// that will be refused.
+Future<bool> proposeRepayment(
+  BuildContext context,
+  WidgetRef ref,
+  DebtProposal debt,
+) async {
+  final outstanding = debt.outstanding ?? debt.amount ?? 0;
+  if (outstanding <= 0) return false;
+
+  final raw = await promptDebtField(
+    context,
+    title: 'debt_repay_sheet_title'.tr(),
+    hint: 'debt_repay_sheet_hint'.tr(namedArgs: {'amount': '\$$outstanding'}),
+    number: true,
+    initial: '$outstanding',
+  );
+  if (raw == null || !context.mounted) return false;
+
+  final amount = int.tryParse(raw.trim()) ?? 0;
+  if (amount <= 0) {
+    showErrorSnakeBar('debt_err_amount'.tr());
+    return false;
+  }
+  if (amount > outstanding) {
+    showErrorSnakeBar('debt_err_too_much'.tr());
+    return false;
+  }
+
+  final result = await ref
+      .read(debtServiceProvider)
+      .proposeRepayment(debtId: debt.id, amount: amount);
+  if (!context.mounted) return false;
+  if (reportDebtOutcome(result)) {
+    showMessage('debt_repay_sent'.tr());
+    return true;
+  }
+  return false;
+}
+
 /// Take back a proposal of my own that has not been answered yet.
 Future<bool> cancelDebt(
   BuildContext context,
@@ -120,6 +165,8 @@ bool reportDebtOutcome(Result<DebtOutcome> result) {
       showErrorSnakeBar('debt_err_amount'.tr(), cause: DebtOutcome.badInput);
     case Ok(value: DebtOutcome.noAmount):
       showErrorSnakeBar('debt_err_amount'.tr(), cause: DebtOutcome.noAmount);
+    case Ok(value: DebtOutcome.tooMuch):
+      showErrorSnakeBar('debt_err_too_much'.tr(), cause: DebtOutcome.tooMuch);
 
     // Everything left over shares one sentence, because there is nothing
     // useful to tell the user — but the console gets the actual reason, or

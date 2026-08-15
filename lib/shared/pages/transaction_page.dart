@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:share_plus/share_plus.dart';
 
+import 'package:heymybro/core/database/database.dart';
+import 'package:heymybro/shared/debt/debt_actions.dart';
 import 'package:heymybro/shared/pages/debt_proposal_card.dart';
 import 'package:heymybro/shared/pages/group_detail_page.dart';
 import 'package:heymybro/shared/provider/debt_provider.dart';
@@ -227,6 +229,8 @@ class _DebtCard extends ConsumerWidget {
     final relation = (owed ? 'tx_owes_you' : 'tx_you_owe').tr(
       namedArgs: {'name': debt.otherName},
     );
+    // The shared proposal this debt was projected from, if any.
+    final backing = ref.watch(debtProposalByGroupProvider)[debt.groupId];
 
     // Tap the card body to open the underlying gathering (for a direct debt,
     // that's the only place to edit/delete it — it's hidden from the 攤 lists).
@@ -241,37 +245,30 @@ class _DebtCard extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                _TypeBadge(
-                  label: owed
-                      ? 'circle_card_owes_you'.tr()
-                      : 'group_you_owe'.tr(),
-                  color: owed
-                      ? BrutalColors.secondary
-                      : BrutalColors.surfaceContainerHigh,
-                  textColor: owed ? BrutalColors.onError : null,
-                ),
-                const Spacer(),
-                Text(
-                  debt.groupName,
-                  style: BrutalText.labelBold(
-                    fontSize: 12,
-                    color: BrutalColors.onSurfaceVariant,
-                  ),
-                ),
-              ],
+            DebtPartyLine(
+              name: debt.otherName,
+              avatarUrl: debt.otherAvatarUrl,
+              badge: owed ? 'circle_card_owes_you'.tr() : 'group_you_owe'.tr(),
+              badgeColor: owed
+                  ? BrutalColors.secondary
+                  : BrutalColors.surfaceContainerHigh,
+              badgeInk: owed ? BrutalColors.onError : null,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Expanded(
                   child: Text(
-                    relation,
-                    style: BrutalText.headlineLgMobile(fontSize: 19),
+                    // What the debt is for — the group name is the item, since
+                    // a direct debt's group is minted from its title.
+                    debt.groupName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: BrutalText.headlineLgMobile(fontSize: 20),
                   ),
                 ),
+                const SizedBox(width: 8),
                 Text(
                   '${owed ? '+' : '-'}\$${money.format(debt.amount)}',
                   style: BrutalText.display(fontSize: 26, color: amountColor),
@@ -291,17 +288,40 @@ class _DebtCard extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  _CardAction(
-                    icon: LucideIcons.checkCircle,
-                    color: BrutalColors.primary,
-                    onTap: () => showSettleSheet(
-                      context,
-                      groupId: debt.groupId,
-                      transfer: debt.transfer,
-                      fromName: owed ? debt.otherName : 'group_me'.tr(),
-                      toName: owed ? 'group_me'.tr() : debt.otherName,
-                    ),
-                  ),
+                  // A debt that came from a shared proposal cannot be settled
+                  // unilaterally: the other side has a copy, and clearing it
+                  // here alone would leave the two ledgers disagreeing. So it
+                  // goes through the repayment flow instead — and only the
+                  // person who owes can start one.
+                  if (backing == null)
+                    _CardAction(
+                      icon: LucideIcons.checkCircle,
+                      color: BrutalColors.primary,
+                      onTap: () => showSettleSheet(
+                        context,
+                        groupId: debt.groupId,
+                        transfer: debt.transfer,
+                        fromName: owed ? debt.otherName : 'group_me'.tr(),
+                        toName: owed ? 'group_me'.tr() : debt.otherName,
+                      ),
+                    )
+                  else if (owed)
+                    // They owe me — nothing for me to do but wait.
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 8,
+                      ),
+                      child: Text(
+                        'debt_repay_wait'.tr(),
+                        style: BrutalText.labelBold(
+                          fontSize: 12,
+                          color: BrutalColors.onSurfaceVariant,
+                        ),
+                      ),
+                    )
+                  else
+                    _RepayAction(debt: backing),
                 ],
               ),
             ),
@@ -312,24 +332,33 @@ class _DebtCard extends ConsumerWidget {
   }
 }
 
-class _TypeBadge extends StatelessWidget {
-  const _TypeBadge({required this.label, required this.color, this.textColor});
-  final String label;
-  final Color color;
-  final Color? textColor;
+/// "還款" on a debt that came from a shared proposal — a claim the other side
+/// has to confirm, not a number this device gets to decide on its own.
+class _RepayAction extends ConsumerWidget {
+  const _RepayAction({required this.debt});
+
+  final DebtProposal debt;
+
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: brutalDecoration(
-        color: color,
-        radius: BrutalSpec.pillRadius,
-        offset: 0,
-        borderWidth: BrutalSpec.borderWidthThin,
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-      child: Text(
-        label,
-        style: BrutalText.labelBold(fontSize: 12, color: textColor),
+  Widget build(BuildContext context, WidgetRef ref) {
+    return PressableBrutal(
+      onTap: () => proposeRepayment(context, ref, debt),
+      color: BrutalColors.primaryContainer,
+      radius: BrutalSpec.pillRadius,
+      borderWidth: BrutalSpec.borderWidthThin,
+      restOffset: 2,
+      pressedOffset: 0,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(LucideIcons.handCoins, size: 16),
+          const SizedBox(width: 6),
+          Text(
+            'debt_action_repay'.tr(),
+            style: BrutalText.labelBold(fontSize: 13),
+          ),
+        ],
       ),
     );
   }

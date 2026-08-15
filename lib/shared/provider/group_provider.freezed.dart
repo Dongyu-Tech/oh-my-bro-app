@@ -311,7 +311,9 @@ as int,
 /// @nodoc
 mixin _$DebtRecord {
 
- String get groupId; String get groupName; String get otherName;/// true = they owe me, false = I owe them.
+ String get groupId; String get groupName; String get otherName;/// Their picture, via the member's linked [Friend]. Null for a member who
+/// was never linked to one, or who simply has no photo.
+ String? get otherAvatarUrl;/// true = they owe me, false = I owe them.
  bool get owedToMe;/// The underlying settle-up transfer (for the 結清 action).
  Transfer get transfer;
 /// Create a copy of DebtRecord
@@ -324,16 +326,16 @@ $DebtRecordCopyWith<DebtRecord> get copyWith => _$DebtRecordCopyWithImpl<DebtRec
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DebtRecord&&(identical(other.groupId, groupId) || other.groupId == groupId)&&(identical(other.groupName, groupName) || other.groupName == groupName)&&(identical(other.otherName, otherName) || other.otherName == otherName)&&(identical(other.owedToMe, owedToMe) || other.owedToMe == owedToMe)&&(identical(other.transfer, transfer) || other.transfer == transfer));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DebtRecord&&(identical(other.groupId, groupId) || other.groupId == groupId)&&(identical(other.groupName, groupName) || other.groupName == groupName)&&(identical(other.otherName, otherName) || other.otherName == otherName)&&(identical(other.otherAvatarUrl, otherAvatarUrl) || other.otherAvatarUrl == otherAvatarUrl)&&(identical(other.owedToMe, owedToMe) || other.owedToMe == owedToMe)&&(identical(other.transfer, transfer) || other.transfer == transfer));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,groupId,groupName,otherName,owedToMe,transfer);
+int get hashCode => Object.hash(runtimeType,groupId,groupName,otherName,otherAvatarUrl,owedToMe,transfer);
 
 @override
 String toString() {
-  return 'DebtRecord(groupId: $groupId, groupName: $groupName, otherName: $otherName, owedToMe: $owedToMe, transfer: $transfer)';
+  return 'DebtRecord(groupId: $groupId, groupName: $groupName, otherName: $otherName, otherAvatarUrl: $otherAvatarUrl, owedToMe: $owedToMe, transfer: $transfer)';
 }
 
 
@@ -344,7 +346,7 @@ abstract mixin class $DebtRecordCopyWith<$Res>  {
   factory $DebtRecordCopyWith(DebtRecord value, $Res Function(DebtRecord) _then) = _$DebtRecordCopyWithImpl;
 @useResult
 $Res call({
- String groupId, String groupName, String otherName, bool owedToMe, Transfer transfer
+ String groupId, String groupName, String otherName, String? otherAvatarUrl, bool owedToMe, Transfer transfer
 });
 
 
@@ -361,12 +363,13 @@ class _$DebtRecordCopyWithImpl<$Res>
 
 /// Create a copy of DebtRecord
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? groupId = null,Object? groupName = null,Object? otherName = null,Object? owedToMe = null,Object? transfer = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? groupId = null,Object? groupName = null,Object? otherName = null,Object? otherAvatarUrl = freezed,Object? owedToMe = null,Object? transfer = null,}) {
   return _then(_self.copyWith(
 groupId: null == groupId ? _self.groupId : groupId // ignore: cast_nullable_to_non_nullable
 as String,groupName: null == groupName ? _self.groupName : groupName // ignore: cast_nullable_to_non_nullable
 as String,otherName: null == otherName ? _self.otherName : otherName // ignore: cast_nullable_to_non_nullable
-as String,owedToMe: null == owedToMe ? _self.owedToMe : owedToMe // ignore: cast_nullable_to_non_nullable
+as String,otherAvatarUrl: freezed == otherAvatarUrl ? _self.otherAvatarUrl : otherAvatarUrl // ignore: cast_nullable_to_non_nullable
+as String?,owedToMe: null == owedToMe ? _self.owedToMe : owedToMe // ignore: cast_nullable_to_non_nullable
 as bool,transfer: null == transfer ? _self.transfer : transfer // ignore: cast_nullable_to_non_nullable
 as Transfer,
   ));
@@ -462,10 +465,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String groupId,  String groupName,  String otherName,  bool owedToMe,  Transfer transfer)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String groupId,  String groupName,  String otherName,  String? otherAvatarUrl,  bool owedToMe,  Transfer transfer)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _DebtRecord() when $default != null:
-return $default(_that.groupId,_that.groupName,_that.otherName,_that.owedToMe,_that.transfer);case _:
+return $default(_that.groupId,_that.groupName,_that.otherName,_that.otherAvatarUrl,_that.owedToMe,_that.transfer);case _:
   return orElse();
 
 }
@@ -483,10 +486,10 @@ return $default(_that.groupId,_that.groupName,_that.otherName,_that.owedToMe,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String groupId,  String groupName,  String otherName,  bool owedToMe,  Transfer transfer)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String groupId,  String groupName,  String otherName,  String? otherAvatarUrl,  bool owedToMe,  Transfer transfer)  $default,) {final _that = this;
 switch (_that) {
 case _DebtRecord():
-return $default(_that.groupId,_that.groupName,_that.otherName,_that.owedToMe,_that.transfer);case _:
+return $default(_that.groupId,_that.groupName,_that.otherName,_that.otherAvatarUrl,_that.owedToMe,_that.transfer);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -503,10 +506,10 @@ return $default(_that.groupId,_that.groupName,_that.otherName,_that.owedToMe,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String groupId,  String groupName,  String otherName,  bool owedToMe,  Transfer transfer)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String groupId,  String groupName,  String otherName,  String? otherAvatarUrl,  bool owedToMe,  Transfer transfer)?  $default,) {final _that = this;
 switch (_that) {
 case _DebtRecord() when $default != null:
-return $default(_that.groupId,_that.groupName,_that.otherName,_that.owedToMe,_that.transfer);case _:
+return $default(_that.groupId,_that.groupName,_that.otherName,_that.otherAvatarUrl,_that.owedToMe,_that.transfer);case _:
   return null;
 
 }
@@ -518,12 +521,15 @@ return $default(_that.groupId,_that.groupName,_that.otherName,_that.owedToMe,_th
 
 
 class _DebtRecord extends DebtRecord {
-  const _DebtRecord({required this.groupId, required this.groupName, required this.otherName, required this.owedToMe, required this.transfer}): super._();
+  const _DebtRecord({required this.groupId, required this.groupName, required this.otherName, this.otherAvatarUrl, required this.owedToMe, required this.transfer}): super._();
   
 
 @override final  String groupId;
 @override final  String groupName;
 @override final  String otherName;
+/// Their picture, via the member's linked [Friend]. Null for a member who
+/// was never linked to one, or who simply has no photo.
+@override final  String? otherAvatarUrl;
 /// true = they owe me, false = I owe them.
 @override final  bool owedToMe;
 /// The underlying settle-up transfer (for the 結清 action).
@@ -539,16 +545,16 @@ _$DebtRecordCopyWith<_DebtRecord> get copyWith => __$DebtRecordCopyWithImpl<_Deb
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DebtRecord&&(identical(other.groupId, groupId) || other.groupId == groupId)&&(identical(other.groupName, groupName) || other.groupName == groupName)&&(identical(other.otherName, otherName) || other.otherName == otherName)&&(identical(other.owedToMe, owedToMe) || other.owedToMe == owedToMe)&&(identical(other.transfer, transfer) || other.transfer == transfer));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DebtRecord&&(identical(other.groupId, groupId) || other.groupId == groupId)&&(identical(other.groupName, groupName) || other.groupName == groupName)&&(identical(other.otherName, otherName) || other.otherName == otherName)&&(identical(other.otherAvatarUrl, otherAvatarUrl) || other.otherAvatarUrl == otherAvatarUrl)&&(identical(other.owedToMe, owedToMe) || other.owedToMe == owedToMe)&&(identical(other.transfer, transfer) || other.transfer == transfer));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,groupId,groupName,otherName,owedToMe,transfer);
+int get hashCode => Object.hash(runtimeType,groupId,groupName,otherName,otherAvatarUrl,owedToMe,transfer);
 
 @override
 String toString() {
-  return 'DebtRecord(groupId: $groupId, groupName: $groupName, otherName: $otherName, owedToMe: $owedToMe, transfer: $transfer)';
+  return 'DebtRecord(groupId: $groupId, groupName: $groupName, otherName: $otherName, otherAvatarUrl: $otherAvatarUrl, owedToMe: $owedToMe, transfer: $transfer)';
 }
 
 
@@ -559,7 +565,7 @@ abstract mixin class _$DebtRecordCopyWith<$Res> implements $DebtRecordCopyWith<$
   factory _$DebtRecordCopyWith(_DebtRecord value, $Res Function(_DebtRecord) _then) = __$DebtRecordCopyWithImpl;
 @override @useResult
 $Res call({
- String groupId, String groupName, String otherName, bool owedToMe, Transfer transfer
+ String groupId, String groupName, String otherName, String? otherAvatarUrl, bool owedToMe, Transfer transfer
 });
 
 
@@ -576,12 +582,13 @@ class __$DebtRecordCopyWithImpl<$Res>
 
 /// Create a copy of DebtRecord
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? groupId = null,Object? groupName = null,Object? otherName = null,Object? owedToMe = null,Object? transfer = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? groupId = null,Object? groupName = null,Object? otherName = null,Object? otherAvatarUrl = freezed,Object? owedToMe = null,Object? transfer = null,}) {
   return _then(_DebtRecord(
 groupId: null == groupId ? _self.groupId : groupId // ignore: cast_nullable_to_non_nullable
 as String,groupName: null == groupName ? _self.groupName : groupName // ignore: cast_nullable_to_non_nullable
 as String,otherName: null == otherName ? _self.otherName : otherName // ignore: cast_nullable_to_non_nullable
-as String,owedToMe: null == owedToMe ? _self.owedToMe : owedToMe // ignore: cast_nullable_to_non_nullable
+as String,otherAvatarUrl: freezed == otherAvatarUrl ? _self.otherAvatarUrl : otherAvatarUrl // ignore: cast_nullable_to_non_nullable
+as String?,owedToMe: null == owedToMe ? _self.owedToMe : owedToMe // ignore: cast_nullable_to_non_nullable
 as bool,transfer: null == transfer ? _self.transfer : transfer // ignore: cast_nullable_to_non_nullable
 as Transfer,
   ));

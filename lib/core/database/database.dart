@@ -166,6 +166,20 @@ class Settlements extends Table {
 /// credit score without a line of code to exclude it.
 class DebtProposals extends Table {
   TextColumn get id => text()();
+
+  /// `debt` or `repayment`. A repayment needs the same agreement a debt does,
+  /// so it rides the same table and the same flow; it differs only in what a
+  /// confirmed one becomes locally, which answers it allows, and what the
+  /// screen shows.
+  TextColumn get kind => text().withDefault(const Constant('debt'))();
+
+  /// The debt this repayment clears. Null on a debt.
+  TextColumn get repaysId => text().nullable()();
+
+  /// What is still owed on this debt after every agreed repayment. Server-
+  /// computed, and only ever set on a confirmed debt.
+  IntColumn get outstanding => integer().nullable()();
+
   TextColumn get proposerId => text()();
   TextColumn get counterpartyId => text()();
 
@@ -236,7 +250,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forExecutor(super.executor);
 
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 11;
 
   // v1 table-less → v2 split schema → v3 PersonalEntries → v4 Friends +
   // Settlements + Members.friendId → v5 soft-delete (deletedAt) columns →
@@ -245,7 +259,8 @@ class AppDatabase extends _$AppDatabase {
   // v8 Friends.userId/handle/avatarUrl (a bro is a real account now) →
   // v9 DebtProposals (a logged debt is a proposal until both sides agree) →
   // v10 DebtProposals.confirmAlertAt (announce "they agreed" once, to the
-  // side that did not press accept). Bump
+  // side that did not press accept) → v11 DebtProposals.kind/repaysId/
+  // outstanding (a repayment needs agreeing to as well). Bump
   // BackupService.supportedSchemaVersions alongside any future change here.
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -287,6 +302,11 @@ class AppDatabase extends _$AppDatabase {
           // Only when the table already existed; a from<9 upgrade just
           // created it with this column present.
           await m.addColumn(debtProposals, debtProposals.confirmAlertAt);
+        }
+        if (from < 11 && from >= 9) {
+          await m.addColumn(debtProposals, debtProposals.kind);
+          await m.addColumn(debtProposals, debtProposals.repaysId);
+          await m.addColumn(debtProposals, debtProposals.outstanding);
         }
       }
     },
@@ -362,23 +382,33 @@ class AppDatabase extends _$AppDatabase {
     debtProposals,
   )..orderBy([(d) => OrderingTerm.desc(d.updatedAt)])).watch();
 
-  /// The newest `updatedAt` held locally, which the catch-up fetch passes as
-  /// its `p_since`. Null when we hold nothing, meaning "fetch everything".
-  Future<DateTime?> latestDebtProposalUpdatedAt() async {
-    final newest = debtProposals.updatedAt.max();
-    final row = await (selectOnly(
-      debtProposals,
-    )..addColumns([newest])).getSingleOrNull();
-    return row?.read(newest);
-  }
-
-  /// Absorb server rows.
+  /// Replace the local mirror with exactly what the server returned.
   ///
-  /// Callers must leave `poppedAt`/`dismissedAt` absent in the companions:
-  /// they are this device's business and the server knows nothing about them,
-  /// so including them would re-arm an already dismissed popup on every sync.
-  Future<void> upsertDebtProposals(List<DebtProposalsCompanion> rows) =>
-      batch((b) => b.insertAllOnConflictUpdate(debtProposals, rows));
+  /// Upsert alone is not enough. It can only ever add and update, so anything
+  /// deleted server-side stays on the device forever — a debt that no longer
+  /// exists, still listed, opening onto "this one is no longer here". The
+  /// server is the authority on which proposals exist, so rows it did not
+  /// return are removed.
+  ///
+  /// Only ever call this with a list that actually came back from a successful
+  /// fetch: an empty list from a failed one would wipe the mirror.
+  ///
+  /// Callers must leave `poppedAt`/`dismissedAt`/`confirmAlertAt` absent in the
+  /// companions: they are this device's business and the server knows nothing
+  /// about them, so including them would re-arm popups and banners the user has
+  /// already dealt with on every single sync.
+  Future<void> syncDebtProposals(List<DebtProposalsCompanion> rows) {
+    return transaction(() async {
+      if (rows.isEmpty) {
+        // `NOT IN ()` is a syntax error, so "keep nothing" needs no clause.
+        await delete(debtProposals).go();
+        return;
+      }
+      final keep = [for (final r in rows) r.id.value];
+      await (delete(debtProposals)..where((d) => d.id.isNotIn(keep))).go();
+      await batch((b) => b.insertAllOnConflictUpdate(debtProposals, rows));
+    });
+  }
 
   Future<void> markDebtPopped(String id) =>
       (update(debtProposals)..where((d) => d.id.equals(id))).write(
@@ -589,6 +619,12 @@ class AppDatabase extends _$AppDatabase {
       );
     });
   }
+
+  /// Land a confirmed repayment. Idempotent for the same reason the debt
+  /// projection is: the id comes from the repayment's own proposal, so a
+  /// replay writes nothing.
+  Future<void> applyRepaymentSettlement(SettlementsCompanion settlement) =>
+      into(settlements).insert(settlement, mode: InsertMode.insertOrIgnore);
 
   Future<void> deleteExpense(String expenseId) =>
       (update(expenses)..where((e) => e.id.equals(expenseId))).write(

@@ -9,15 +9,15 @@ import 'package:heymybro/shared/provider/debt_provider.dart';
 import 'package:heymybro/shared/widgets/back_button.dart';
 import 'package:heymybro/shared/widgets/brutalism.dart';
 import 'package:heymybro/shared/widgets/confirm_dialog.dart';
+import 'package:heymybro/shared/widgets/debt_slip.dart';
 
-/// The screen a debt proposal opens onto — who is claiming what, and the
-/// answers along the bottom edge.
+/// The screen a proposal opens onto — a debt or a repayment, since both are
+/// somebody asserting something about money and waiting for you to agree.
 ///
-/// Laid out as a claim slip: a headline stating the direction, then a card
-/// whose yellow band names the claimant and whose body carries the two facts
-/// that matter, 項目 and 金額, with the amount by far the largest thing on the
-/// screen. Somebody is asserting money changed hands; the number is the
-/// decision, so the number gets the space.
+/// The two share their chrome ([DebtSlipCard]) and differ only where they
+/// should: what the body states, and what answers the bottom offers. A debt
+/// can be haggled over; a repayment cannot, because either the money arrived
+/// or it did not.
 ///
 /// It reads the proposal live rather than taking a copy, so if the other side
 /// withdraws it while you are looking, the page says so instead of letting you
@@ -109,8 +109,10 @@ class _Body extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final me = ref.watch(myUserIdProvider);
+    final repayment = proposal.kind == 'repayment';
     final iOwe = proposal.debtorId == me;
     final myTurn = proposal.status == 'pending' && proposal.awaitingId == me;
+    final name = proposal.otherName ?? '?';
 
     return Column(
       children: [
@@ -120,27 +122,26 @@ class _Body extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  iOwe ? 'debt_claim_you_owe'.tr() : 'debt_claim_owes_you'.tr(),
-                  style: BrutalText.headlineLgMobile(fontSize: 40),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'debt_confirm_subtitle'.tr(),
-                  style: BrutalText.body(
-                    fontSize: 15,
-                    color: BrutalColors.onSurfaceVariant,
-                  ),
+                DebtScreenTitle(
+                  title: repayment
+                      ? 'debt_repay_title'.tr()
+                      : (iOwe
+                            ? 'debt_claim_you_owe'.tr()
+                            : 'debt_claim_owes_you'.tr()),
+                  subtitle: repayment
+                      ? 'debt_repay_subtitle'.tr()
+                      : 'debt_confirm_subtitle'.tr(),
                 ),
                 const SizedBox(height: 18),
-                _ClaimSlip(proposal: proposal, iOwe: iOwe),
+                if (repayment)
+                  _RepaymentSlip(proposal: proposal, name: name, iPaid: iOwe)
+                else
+                  _DebtSlip(proposal: proposal, name: name, iOwe: iOwe),
                 if (!myTurn) ...[
                   const SizedBox(height: 18),
                   Text(
                     proposal.status == 'pending'
-                        ? 'debt_waiting_for'.tr(
-                            namedArgs: {'name': proposal.otherName ?? '?'},
-                          )
+                        ? 'debt_waiting_for'.tr(namedArgs: {'name': name})
                         : 'debt_confirm_settled'.tr(),
                     textAlign: TextAlign.center,
                     style: BrutalText.labelBold(
@@ -158,7 +159,7 @@ class _Body extends ConsumerWidget {
         // Nothing down here when it is not your turn — withdrawing moved to
         // the top-right, where every other screen keeps "get rid of this".
         if (myTurn)
-          _MyTurnActions(proposal: proposal, iOwe: iOwe)
+          _Answers(proposal: proposal, iOwe: iOwe, repayment: repayment)
         else
           const SizedBox(height: 16),
       ],
@@ -166,364 +167,190 @@ class _Body extends ConsumerWidget {
   }
 }
 
-/// The claim: a yellow band naming who is asking, then the two facts.
-class _ClaimSlip extends StatelessWidget {
-  const _ClaimSlip({required this.proposal, required this.iOwe});
+/// A debt: the item, then the figure being claimed.
+class _DebtSlip extends StatelessWidget {
+  const _DebtSlip({
+    required this.proposal,
+    required this.name,
+    required this.iOwe,
+  });
 
   final DebtProposal proposal;
+  final String name;
   final bool iOwe;
 
   @override
   Widget build(BuildContext context) {
-    final money = NumberFormat.decimalPattern();
     final blank = proposal.amount == null;
-
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Padding(
-          // Room for 粗哥 to lean over the top edge.
-          padding: const EdgeInsets.only(top: 30),
-          child: Container(
-            decoration: brutalDecoration(
-              color: BrutalColors.surface,
-              radius: 20,
-              offset: BrutalSpec.shadowOffset,
-            ),
-            // Clipped to the INSIDE of the border. Clipping on the Container
-            // clips to the outer rounded rect instead, which let the yellow
-            // band's square corners paint straight over the top of the border.
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(brutalInnerRadius(20)),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _Claimant(proposal: proposal, iOwe: iOwe),
-                  const BrutalDivider(margin: EdgeInsets.zero),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _FieldLabel('debt_field_item'.tr()),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            const Icon(LucideIcons.receipt, size: 28),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                proposal.title,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: BrutalText.headlineLgMobile(
-                                  fontSize: 34,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const BrutalDivider(
-                          thickness: BrutalSpec.borderWidthThin,
-                          margin: EdgeInsets.symmetric(vertical: 16),
-                        ),
-                        _FieldLabel('debt_field_amount'.tr()),
-                        const SizedBox(height: 6),
-                        if (blank)
-                          Text(
-                            'debt_amount_blank'.tr(),
-                            style: BrutalText.headlineLgMobile(
-                              fontSize: 22,
-                              color: BrutalColors.onSurfaceVariant,
-                            ),
-                          )
-                        else
-                          MarkerHighlight(
-                            // A low band reads as a marker stroke UNDER the
-                            // digits rather than a highlight across them.
-                            heightFactor: 0.18,
-                            padding: const EdgeInsets.only(
-                              right: 12,
-                              bottom: 2,
-                            ),
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                '\$${money.format(proposal.amount)}',
-                                maxLines: 1,
-                                style: BrutalText.headlineLgMobile(
-                                  fontSize: 76,
-                                ),
-                              ),
-                            ),
-                          ),
-                        if (proposal.originalAmount != null) ...[
-                          const SizedBox(height: 8),
-                          Text(
-                            'debt_was_amount'.tr(
-                              namedArgs: {
-                                'amount':
-                                    '\$${money.format(proposal.originalAmount)}',
-                              },
-                            ),
-                            // Struck through so "they changed it" reads without
-                            // spending a sentence saying so.
-                            style:
-                                BrutalText.body(
-                                  fontSize: 13,
-                                  color: BrutalColors.onSurfaceVariant,
-                                ).copyWith(
-                                  decoration: TextDecoration.lineThrough,
-                                  decorationColor:
-                                      BrutalColors.onSurfaceVariant,
-                                ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        Positioned(
-          top: 0,
-          right: 0,
-          child: Image.asset(
-            iOwe
-                ? 'assets/mascot/stickers/07_weird-bill.png'
-                : 'assets/mascot/stickers/01_main-pointing.png',
-            height: 104,
-            fit: BoxFit.contain,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// Yellow header band: their face, their name, and a badge for the direction.
-class _Claimant extends StatelessWidget {
-  const _Claimant({required this.proposal, required this.iOwe});
-
-  final DebtProposal proposal;
-  final bool iOwe;
-
-  @override
-  Widget build(BuildContext context) {
-    final name = proposal.otherName ?? '?';
-
-    return Container(
-      color: BrutalColors.primaryContainer,
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
-      child: Row(
+    return DebtSlipCard(
+      name: name,
+      avatarUrl: proposal.otherAvatarUrl,
+      // The short form, not the headline's sentence — the page title already
+      // says "說你欠他" at 40px, and repeating it under the avatar is the same
+      // claim twice on one screen.
+      claim: iOwe ? 'debt_badge_you_owe'.tr() : 'debt_badge_owes_you'.tr(),
+      sticker: iOwe
+          ? 'assets/mascot/stickers/07_weird-bill.png'
+          : 'assets/mascot/stickers/01_main-pointing.png',
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          BrutalAvatar(
-            name: name,
-            photoUrl: proposal.otherAvatarUrl,
-            size: 58,
-            fontSize: 26,
-            color: BrutalColors.onBackground,
-            radius: 14,
-            borderWidth: BrutalSpec.borderWidth,
+          DebtSlipField(
+            label: 'debt_field_item'.tr(),
+            value: proposal.title,
+            icon: LucideIcons.receipt,
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: BrutalText.headlineLgMobile(fontSize: 22),
-                ),
-                const SizedBox(height: 6),
-                BrutalPill(
-                  color: BrutalColors.secondary,
-                  borderWidth: BrutalSpec.borderWidthThin,
-                  radius: 6,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 5,
-                  ),
-                  child: Text(
-                    iOwe
-                        ? 'debt_badge_you_owe'.tr()
-                        : 'debt_badge_owes_you'.tr(),
-                    style: BrutalText.labelBold(
-                      fontSize: 13,
-                      color: BrutalColors.onError,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+          const BrutalDivider(
+            thickness: BrutalSpec.borderWidthThin,
+            margin: EdgeInsets.symmetric(vertical: 16),
           ),
-          // Keeps the name clear of 粗哥, who overlaps this corner.
-          const SizedBox(width: 76),
+          DebtSlipField(
+            label: 'debt_field_amount'.tr(),
+            value: blank
+                ? 'debt_amount_blank'.tr()
+                : debtMoney(proposal.amount!),
+            valueSize: blank ? 22 : 76,
+            valueColor: blank ? BrutalColors.onSurfaceVariant : null,
+            underline: !blank,
+            note: proposal.originalAmount == null
+                ? null
+                : 'debt_was_amount'.tr(
+                    namedArgs: {'amount': debtMoney(proposal.originalAmount!)},
+                  ),
+          ),
         ],
       ),
     );
   }
 }
 
-class _FieldLabel extends StatelessWidget {
-  const _FieldLabel(this.text);
+/// A repayment: how much was paid, and what that leaves.
+///
+/// The extra line is the point of this screen. "阿華 還你 300" alone is not
+/// enough to agree to — whether that clears the debt or leaves 200 behind is
+/// exactly what the person confirming needs to know.
+class _RepaymentSlip extends StatelessWidget {
+  const _RepaymentSlip({
+    required this.proposal,
+    required this.name,
+    required this.iPaid,
+  });
 
-  final String text;
+  final DebtProposal proposal;
+  final String name;
+  final bool iPaid;
 
   @override
-  Widget build(BuildContext context) => Align(
-    alignment: Alignment.centerLeft,
-    child: Text(text, style: BrutalText.labelBold(fontSize: 14)),
-  );
+  Widget build(BuildContext context) {
+    final paid = proposal.amount ?? 0;
+    // The debt's remaining balance, as it stood when this was proposed.
+    final before = proposal.outstanding;
+    final after = before == null ? null : before - paid;
+
+    return DebtSlipCard(
+      name: name,
+      avatarUrl: proposal.otherAvatarUrl,
+      claim: iPaid ? 'debt_repay_claim_mine'.tr() : 'debt_repay_claim'.tr(),
+      badge: 'debt_repay_badge'.tr(),
+      badgeColor: BrutalColors.primaryFixedDim,
+      sticker: 'assets/mascot/stickers/03_success.png',
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          DebtSlipField(
+            label: 'debt_field_item'.tr(),
+            value: proposal.title,
+            icon: LucideIcons.receipt,
+          ),
+          const BrutalDivider(
+            thickness: BrutalSpec.borderWidthThin,
+            margin: EdgeInsets.symmetric(vertical: 16),
+          ),
+          DebtSlipField(
+            label: 'debt_field_repaid'.tr(),
+            value: debtMoney(paid),
+            valueSize: 76,
+            valueColor: BrutalColors.incomeInk,
+            underline: true,
+            note: after == null
+                ? null
+                : (after <= 0
+                      ? 'debt_repay_clears'.tr()
+                      : 'debt_repay_leaves'.tr(
+                          namedArgs: {'amount': debtMoney(after)},
+                        )),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
-/// Waiting on me. The confirmation is a full sentence naming the person and
-/// the sum, so nobody taps it without having read what they are agreeing to;
-/// the two ways out sit below it as plain text, deliberately quieter.
-class _MyTurnActions extends ConsumerWidget {
-  const _MyTurnActions({required this.proposal, required this.iOwe});
+/// A debt offers three answers, a repayment two: there is nothing to haggle
+/// over about whether money arrived.
+class _Answers extends ConsumerWidget {
+  const _Answers({
+    required this.proposal,
+    required this.iOwe,
+    required this.repayment,
+  });
 
   final DebtProposal proposal;
   final bool iOwe;
+  final bool repayment;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final money = NumberFormat.decimalPattern();
-    final amount = proposal.amount;
-    final name = proposal.otherName ?? '?';
-
-    final String label;
-    if (amount == null) {
-      label = 'debt_accept_blank'.tr();
-    } else {
-      final args = {'name': name, 'amount': '\$${money.format(amount)}'};
-      label = iOwe
-          ? 'debt_accept_owing'.tr(namedArgs: args)
-          : 'debt_accept_owed'.tr(namedArgs: args);
-    }
-
     // Grabbed BEFORE the await. Answering flips whose turn it is, which swaps
-    // this widget out for _TheirTurnActions, so `context` can be unmounted by
-    // the time the action returns — and a `context.mounted` guard would then
-    // silently skip the close. Not the cause of any bug seen so far; it is
-    // just the only ordering that cannot produce one.
+    // this widget out, so `context` can be unmounted by the time the action
+    // returns — and a `context.mounted` guard would then silently skip the
+    // close.
     final navigator = Navigator.of(context);
     Future<void> run(Future<bool> Function() action) async {
       if (await action()) await navigator.maybePop();
     }
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-          child: BrutalCard(
-            color: BrutalColors.surfaceContainerLow,
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  children: [
-                    const Expanded(
-                      child: BrutalDivider(
-                        thickness: BrutalSpec.borderWidthThin,
-                        margin: EdgeInsets.only(right: 10),
-                      ),
-                    ),
-                    const Icon(LucideIcons.megaphone, size: 15),
-                    const SizedBox(width: 6),
-                    Text(
-                      'debt_notify_note'.tr(),
-                      style: BrutalText.labelBold(fontSize: 13),
-                    ),
-                    const Expanded(
-                      child: BrutalDivider(
-                        thickness: BrutalSpec.borderWidthThin,
-                        margin: EdgeInsets.only(left: 10),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                PressableBrutal(
-                  onTap: () => run(() => acceptDebt(context, ref, proposal)),
-                  color: BrutalColors.primaryContainer,
-                  radius: BrutalSpec.pillRadius,
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 15,
-                  ),
-                  alignment: Alignment.center,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(LucideIcons.check, size: 22),
-                      const SizedBox(width: 10),
-                      Flexible(
-                        child: Text(
-                          label,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: BrutalText.headlineLgMobile(fontSize: 18),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+    final amount = proposal.amount;
+    final name = proposal.otherName ?? '?';
+
+    final String label;
+    if (repayment) {
+      label = 'debt_repay_accept'.tr(
+        namedArgs: {'amount': debtMoney(amount ?? 0)},
+      );
+    } else if (amount == null) {
+      label = 'debt_accept_blank'.tr();
+    } else {
+      final args = {'name': name, 'amount': debtMoney(amount)};
+      label = iOwe
+          ? 'debt_accept_owing'.tr(namedArgs: args)
+          : 'debt_accept_owed'.tr(namedArgs: args);
+    }
+
+    return DebtActionBar(
+      primaryLabel: label,
+      note: 'debt_notify_note'.tr(),
+      onPrimary: () => run(() => acceptDebt(context, ref, proposal)),
+      secondaries: [
+        if (!repayment)
+          DebtTextAction(
+            label: 'debt_action_counter'.tr(),
+            icon: LucideIcons.pencil,
+            onTap: () => run(() => counterDebt(context, ref, proposal)),
           ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 10, 20, 12),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Flexible so a longer localisation ("Change amount") shrinks
-              // instead of shoving the pair off the edge of a narrow screen.
-              Flexible(
-                child: _TextAction(
-                  label: 'debt_action_counter'.tr(),
-                  icon: LucideIcons.pencil,
-                  onTap: () => run(() => counterDebt(context, ref, proposal)),
-                ),
-              ),
-              Container(
-                width: BrutalSpec.borderWidthThin,
-                height: 22,
-                margin: const EdgeInsets.symmetric(horizontal: 16),
-                color: BrutalColors.outline,
-              ),
-              Flexible(
-                child: _TextAction(
-                  label: 'debt_action_reject'.tr(),
-                  icon: LucideIcons.x,
-                  // Red marks the destructive one (DESIGN.md) so it cannot be
-                  // mistaken for the neutral "change the number" beside it.
-                  ink: BrutalColors.secondary,
-                  onTap: () => run(() => rejectDebt(context, ref, proposal)),
-                ),
-              ),
-            ],
-          ),
+        DebtTextAction(
+          label: 'debt_action_reject'.tr(),
+          icon: LucideIcons.x,
+          // Red marks the destructive one (DESIGN.md) so it cannot be
+          // mistaken for the neutral option beside it.
+          ink: BrutalColors.secondary,
+          onTap: () => run(() => rejectDebt(context, ref, proposal)),
         ),
       ],
     );
   }
 }
 
-/// Mine, or already settled. The only thing left is to take it back — and only
-/// while it is still unanswered.
 class _WithdrawButton extends ConsumerWidget {
   const _WithdrawButton({required this.proposal});
 
@@ -531,7 +358,7 @@ class _WithdrawButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Same reason as _MyTurnActions: withdrawing rebuilds this away.
+    // Same reason as _Answers: withdrawing rebuilds this away.
     final navigator = Navigator.of(context);
 
     return PressableBrutal(
@@ -557,52 +384,6 @@ class _WithdrawButton extends ConsumerWidget {
         LucideIcons.trash2,
         size: 20,
         color: BrutalColors.secondary,
-      ),
-    );
-  }
-}
-
-/// A quiet, borderless action — used for the two ways out, so they read as
-/// available without competing with the confirmation above them.
-class _TextAction extends StatelessWidget {
-  const _TextAction({
-    required this.label,
-    required this.icon,
-    required this.onTap,
-    this.ink,
-  });
-
-  final String label;
-  final IconData icon;
-  final VoidCallback onTap;
-  final Color? ink;
-
-  @override
-  Widget build(BuildContext context) {
-    final foreground = ink ?? BrutalColors.onBackground;
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 6),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 18, color: foreground),
-            const SizedBox(width: 8),
-            Flexible(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: BrutalText.headlineLgMobile(
-                  fontSize: 17,
-                  color: foreground,
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

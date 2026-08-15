@@ -40,6 +40,13 @@ class _FakeDebtRepository implements DebtRepository {
   }) async => const Result.ok(DebtOutcome.ok);
 
   @override
+  Future<Result<DebtOutcome>> proposeRepayment({
+    required String id,
+    required String repaysId,
+    required int amount,
+  }) async => const Result.ok(DebtOutcome.ok);
+
+  @override
   Future<Result<DebtOutcome>> cancel(String id) async =>
       const Result.ok(DebtOutcome.ok);
 }
@@ -272,7 +279,32 @@ void main() {
     );
   });
 
-  test('the catch-up fetch asks only for what it does not hold', () async {
+  test('a proposal deleted server-side stops being shown', () async {
+    final container = containerWith([
+      _model(id: 'gone', status: 'pending', awaitingId: 'me'),
+      _model(id: 'stays', status: 'pending', awaitingId: 'me'),
+    ]);
+    final service = container.read(debtServiceProvider);
+    await service.refresh();
+    await waitUntil(
+      () => container.read(pendingForMeProvider).length == 2,
+      reason: 'both to land first',
+    );
+
+    // The server no longer returns 'gone'. An append-only sync would leave it
+    // on the device for good — listed, tappable, and opening onto
+    // "this one is no longer here".
+    repo.rows = [_model(id: 'stays', status: 'pending', awaitingId: 'me')];
+    await service.refresh();
+    await waitUntil(
+      () => container.read(pendingForMeProvider).length == 1,
+      reason: 'the deleted one to disappear',
+    );
+
+    expect(container.read(pendingForMeProvider).single.id, 'stays');
+  });
+
+  test('the fetch always asks for everything', () async {
     final container = containerWith([
       _model(id: 'p1', status: 'pending', awaitingId: 'them'),
     ]);
@@ -282,11 +314,10 @@ void main() {
     await service.refresh();
 
     expect(
-      repo.sinceArgs.first,
-      isNull,
-      reason: 'an empty device must fetch everything',
+      repo.sinceArgs,
+      everyElement(isNull),
+      reason: 'an incremental fetch cannot express a deletion',
     );
-    expect(repo.sinceArgs.last, DateTime(2026, 8, 15));
   });
 
   test('a debt I owe lands with the direction the other way round', () async {

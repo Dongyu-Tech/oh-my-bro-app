@@ -15,6 +15,16 @@ abstract class DebtProposalModel with _$DebtProposalModel {
 
   const factory DebtProposalModel({
     required String id,
+
+    /// `debt` or `repayment`.
+    @Default('debt') String kind,
+
+    /// The debt this repayment clears; null on a debt.
+    @JsonKey(name: 'repays_id') String? repaysId,
+
+    /// What is still owed after every agreed repayment. Server-computed, and
+    /// only ever present on a confirmed debt.
+    int? outstanding,
     @JsonKey(name: 'proposer_id') required String proposerId,
     @JsonKey(name: 'counterparty_id') required String counterpartyId,
 
@@ -47,6 +57,11 @@ abstract class DebtProposalModel with _$DebtProposalModel {
 
   bool get isPending => status == 'pending';
   bool get isConfirmed => status == 'confirmed';
+  bool get isRepayment => kind == 'repayment';
+
+  /// A debt that is agreed and not yet fully paid off — the only thing a
+  /// repayment can be proposed against.
+  bool get isRepayable => !isRepayment && isConfirmed && (outstanding ?? 0) > 0;
 
   /// Terminal and worth telling the user about — as opposed to confirmed,
   /// which announces itself by appearing in the ledger.

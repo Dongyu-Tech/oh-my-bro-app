@@ -27,6 +27,7 @@ class BackupService {
     8,
     9,
     10,
+    11,
   };
 
   /// Serialize the database to a JSON envelope. Add table dumps as you add
