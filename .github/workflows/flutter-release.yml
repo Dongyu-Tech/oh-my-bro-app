@@ -1,0 +1,226 @@
+name: Flutter Release
+
+# Cutting a release is one action: push a tag.
+#
+#   git tag v1.0.0 && git push origin v1.0.0
+#
+# Everything else — version numbers, signing, notes — is derived, so there is
+# no second place to remember to update and no way for the two to disagree.
+
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Fail here rather than three steps into a build, and fail with the list
+      # of what is actually missing. A release built without the Supabase
+      # defines is worse than no release at all: `_resolveBackend()` silently
+      # falls back to NoopAuthService, so the app ships looking fine and
+      # permanently signed out.
+      - name: Verify every required secret is set
+        env:
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+          WEB_CLIENT_ID: ${{ secrets.WEB_CLIENT_ID }}
+          IOS_CLIENT_ID: ${{ secrets.IOS_CLIENT_ID }}
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          missing=""
+          for name in SECRET_KEY SUPABASE_URL SUPABASE_PUBLISHABLE_KEY \
+                      WEB_CLIENT_ID IOS_CLIENT_ID \
+                      ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD \
+                      ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
+            eval "value=\${$name}"
+            [ -z "$value" ] && missing="$missing $name"
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::Missing repository secrets:$missing"
+            echo "Add them under Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+
+      # The tag decides the version of anything this workflow publishes.
+      # pubspec.yaml keeps a version for local builds, but --build-name and
+      # --build-number below override it, so the two can never disagree in a
+      # released artifact.
+      #
+      # versionCode is computed from the tag, NOT from the run number: a run
+      # counter resets if the workflow file is ever renamed or recreated, and
+      # Play permanently rejects an app whose versionCode went backwards.
+      # v1.2.3 -> 10203. Minor and patch must stay under 100.
+      - name: Derive version from the tag
+        run: |
+          name="${GITHUB_REF_NAME#v}"
+          case "$name" in
+            *-*) echo "::error::Pre-release tags are not supported: $GITHUB_REF_NAME"; exit 1 ;;
+          esac
+          IFS=. read -r major minor patch <<EOF
+          $name
+          EOF
+          for part in "$major" "$minor" "$patch"; do
+            case "$part" in
+              ''|*[!0-9]*) echo "::error::Tag is not vMAJOR.MINOR.PATCH: $GITHUB_REF_NAME"; exit 1 ;;
+            esac
+          done
+          if [ "$minor" -gt 99 ] || [ "$patch" -gt 99 ]; then
+            echo "::error::minor/patch must stay under 100 for the versionCode scheme"
+            exit 1
+          fi
+          echo "VERSION_NAME=$name" >> "$GITHUB_ENV"
+          echo "VERSION_CODE=$(( major * 10000 + minor * 100 + patch ))" >> "$GITHUB_ENV"
+
+      - name: Pull the notes for this version out of the CHANGELOG
+        run: |
+          notes=$(awk -v heading="## $GITHUB_REF_NAME" '
+            $0 == heading { found = 1; next }
+            found && /^## v/ { exit }
+            found { print }
+          ' CHANGELOG.md)
+          # An empty release body is a silent failure — it looks like a release
+          # nobody wrote notes for, rather than a heading that does not match.
+          if [ -z "$(printf '%s' "$notes" | tr -d '[:space:]')" ]; then
+            echo "::error::CHANGELOG.md has no '## $GITHUB_REF_NAME' section (or it is empty)."
+            exit 1
+          fi
+          {
+            echo "NOTES<<CHANGELOG_EOF"
+            printf '%s\n' "$notes"
+            echo "CHANGELOG_EOF"
+          } >> "$GITHUB_ENV"
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      # Pinned for the same reason flutter-ci.yml is: pubspec.lock only means
+      # something against the SDK it was resolved on. Bump both together.
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.35.1
+          cache: true
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      # The keystore lives in the repo secrets as base64 — a .jks is binary and
+      # a secret is a string. Produce it with:
+      #   base64 -i ~/upload-keystore.jks | pbcopy
+      - name: Decode the upload keystore
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > "$RUNNER_TEMP/upload-keystore.jks"
+
+      # android/app/build.gradle.kts switches to release signing purely on this
+      # file existing, so it has to be written before any release build.
+      - name: Write android/key.properties
+        run: |
+          cat > android/key.properties <<EOF
+          storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
+          storeFile=$RUNNER_TEMP/upload-keystore.jks
+          EOF
+
+      # dotenv treats `.env` as optional, but an empty one keeps the boot path
+      # identical to a developer machine. The real config arrives as
+      # --dart-define below; a mobile app cannot read the host's .env anyway.
+      - name: Create empty .env
+        run: touch .env
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # Generated sources are committed, so this normally rewrites them
+      # identically — which is the point. If codegen has drifted from its
+      # source, the release should not be the place we find out.
+      - name: Run build_runner
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      # Before the build, not after. A tag that fails its tests should not
+      # produce an artifact at all.
+      - name: Analyze
+        run: flutter analyze --no-fatal-warnings --no-fatal-infos
+
+      - name: Test
+        run: flutter test
+
+      - name: Build signed App Bundle and APK
+        run: |
+          defines="--dart-define=SECRET_KEY=${{ secrets.SECRET_KEY }} \
+            --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
+            --dart-define=SUPABASE_PUBLISHABLE_KEY=${{ secrets.SUPABASE_PUBLISHABLE_KEY }} \
+            --dart-define=WEB_CLIENT_ID=${{ secrets.WEB_CLIENT_ID }} \
+            --dart-define=IOS_CLIENT_ID=${{ secrets.IOS_CLIENT_ID }}"
+          version="--build-name=$VERSION_NAME --build-number=$VERSION_CODE"
+
+          # The .aab is what Google Play takes; the .apk is what a human can
+          # sideload from the release page. Same code, two envelopes.
+          flutter build appbundle --release $version $defines
+          flutter build apk --release --split-per-abi $version $defines
+
+          mkdir -p dist
+          cp build/app/outputs/bundle/release/app-release.aab \
+             "dist/ohmybro_${VERSION_NAME}.aab"
+          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk \
+             "dist/ohmybro_${VERSION_NAME}_arm64-v8a.apk"
+
+      # Guards against the failure this repo already lived through once: a
+      # release build silently falling back to the debug keystore. A debug-signed
+      # artifact can never be updated by a Play-signed one.
+      # apksigner, not `keytool -printcert -jarfile`: modern minSdk levels turn
+      # off v1 JAR signing, and keytool can only read v1. It would report "not a
+      # signed jar" on a perfectly signed APK, find no debug DN, and wave a
+      # debug-signed build through — a check that cannot fail is worse than none.
+      - name: Confirm it is signed with the upload key, not the debug key
+        run: |
+          apksigner=$(ls -1 "$ANDROID_HOME"/build-tools/*/apksigner 2>/dev/null | sort -V | tail -1)
+          if [ -z "$apksigner" ]; then
+            echo "::error::apksigner not found; refusing to publish an unverified artifact."
+            exit 1
+          fi
+          certs=$("$apksigner" verify --print-certs "dist/ohmybro_${VERSION_NAME}_arm64-v8a.apk")
+          echo "$certs"
+          if ! echo "$certs" | grep -q "certificate DN:"; then
+            echo "::error::apksigner reported no signer for the APK."
+            exit 1
+          fi
+          if echo "$certs" | grep -q "CN=Android Debug"; then
+            echo "::error::APK is debug-signed — android/key.properties did not take effect."
+            exit 1
+          fi
+
+      - name: Create the GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --title "$GITHUB_REF_NAME" \
+            --notes "$NOTES" \
+            "dist/ohmybro_${VERSION_NAME}.aab" \
+            "dist/ohmybro_${VERSION_NAME}_arm64-v8a.apk"
