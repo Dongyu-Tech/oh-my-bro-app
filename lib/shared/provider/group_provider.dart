@@ -5,6 +5,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../core/database/database.dart';
+import '../../core/error/error_logger.dart';
 import '../split/settlement.dart';
 import 'database_provider.dart';
 import 'friend_provider.dart';
@@ -302,12 +303,27 @@ final myDebtsProvider = Provider<List<DebtRecord>>((ref) {
       f.id: f.avatarUrl,
   };
   final out = <DebtRecord>[];
+  final trace = <String>[];
   for (final g in groups) {
     final summary = ref.watch(groupSummaryProvider(g.id)).asData?.value;
     final members = ref.watch(groupMembersProvider(g.id)).asData?.value;
-    if (summary == null || members == null) continue;
+    if (summary == null || members == null) {
+      trace.add(
+        '${g.name}: NOT READY '
+        '(summary=${summary != null} members=${members != null})',
+      );
+      continue;
+    }
     final me = members.where((m) => m.isMe).map((m) => m.id).firstOrNull;
-    if (me == null) continue;
+    if (me == null) {
+      trace.add('${g.name}: NO "me" MEMBER (of ${members.length})');
+      continue;
+    }
+    trace.add(
+      '${g.name}: members=${members.length} '
+      'transfers=${summary.transfers.length} '
+      'net=${summary.net.values.toList()}',
+    );
     final nameOf = {for (final m in members) m.id: m.name};
     // Members carry a friendId, and the picture lives on the friend.
     final avatarOf = {
@@ -339,6 +355,10 @@ final myDebtsProvider = Provider<List<DebtRecord>>((ref) {
         );
       }
     }
+  }
+  logAppTrace('ledger', 'groups=${groups.length} debts=${out.length}');
+  for (final line in trace) {
+    logAppTrace('ledger', '  $line');
   }
   return out;
 });
