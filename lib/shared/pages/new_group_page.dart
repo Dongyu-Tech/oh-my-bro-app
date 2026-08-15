@@ -6,6 +6,8 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import 'package:heymybro/core/database/database.dart';
 import 'package:heymybro/core/error/error_logger.dart';
+import 'package:heymybro/shared/pages/paywall_sheet.dart';
+import 'package:heymybro/shared/provider/entitlement_provider.dart';
 import 'package:heymybro/shared/provider/friend_provider.dart';
 import 'package:heymybro/shared/provider/group_provider.dart';
 import 'package:heymybro/shared/widgets/back_button.dart';
@@ -70,6 +72,11 @@ class _NewGroupPageState extends ConsumerState<NewGroupPage> {
     if (name.isEmpty) {
       showErrorSnakeBar('group_name_required'.tr());
       return;
+    }
+    // Free-tier gate: a 3rd concurrent gathering needs PRO. PRO users pass.
+    if (ref.read(atGatheringLimitProvider)) {
+      final upgraded = await showPaywall(context);
+      if (!upgraded || !mounted) return;
     }
     setState(() => _creating = true);
     final id = await ref

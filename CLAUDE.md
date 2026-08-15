@@ -37,6 +37,11 @@ CI (`.github/workflows/flutter-ci.yml`) runs, in order: `pub get` → `build_run
 build` → `flutter analyze --no-fatal-warnings --no-fatal-infos` → `flutter test` →
 `flutter build apk --debug`. Match this locally before pushing.
 
+## Git workflow
+
+Always pull with rebase, never a plain merge-pull: use `git pull --rebase` (not
+`git pull`) so local commits replay on top of origin and history stays linear.
+
 ## Codegen is mandatory
 
 Drift, freezed, and json_serializable all generate `*.g.dart` / `*.freezed.dart`

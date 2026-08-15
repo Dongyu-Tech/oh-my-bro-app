@@ -73,6 +73,28 @@ void main() {
         reason: 'the gathering group must not affect the net',
       );
     });
+
+    test('ignores a direct group I am not a member of (friend↔friend)', () {
+      // A debt the composer recorded between two OTHER friends — no "me".
+      final withOther = [...groups, _group('g4')];
+      final ms = [
+        ...members,
+        _member('fa', 'g4', friendId: _friendId),
+        _member('fb', 'g4', friendId: 'friend-2'),
+      ];
+      final n = {...net, 'fa': -500, 'fb': 500};
+      final result = friendDirectNet(
+        groups: withOther,
+        members: ms,
+        net: n,
+        friendId: _friendId,
+      );
+      expect(
+        result,
+        -50,
+        reason: 'a friend↔friend debt with no "me" must not count as mine',
+      );
+    });
   });
 
   group('friendDirectSettleActions', () {
@@ -107,6 +129,22 @@ void main() {
         friendId: _friendId,
       );
       expect(actions.map((a) => a.groupId), ['g2']);
+    });
+
+    test('emits nothing for a direct group without me (friend↔friend)', () {
+      final other = [_group('g4')];
+      final ms = [
+        _member('fa', 'g4', friendId: _friendId),
+        _member('fb', 'g4', friendId: 'friend-2'),
+      ];
+      final n = {'fa': -500, 'fb': 500};
+      final actions = friendDirectSettleActions(
+        groups: other,
+        members: ms,
+        net: n,
+        friendId: _friendId,
+      );
+      expect(actions, isEmpty);
     });
   });
 }

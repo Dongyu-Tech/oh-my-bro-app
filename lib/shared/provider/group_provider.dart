@@ -171,6 +171,7 @@ final groupSummaryProvider = Provider.family<AsyncValue<GroupSummary>, String>((
 int? shareToBookAfterSettle({
   required int myNet,
   required int myShare,
+  required int alreadyBooked,
   required String? myMemberId,
   required Transfer transfer,
   required int settledAmount,
@@ -185,8 +186,33 @@ int? shareToBookAfterSettle({
   } else {
     return null; // this repayment isn't between me and someone
   }
-  if (postNet != 0 || myShare <= 0) return null;
-  return myShare;
+  if (postNet != 0) return null;
+  // Book only the share I haven't booked from earlier settlements in this group;
+  // otherwise settling the same circle twice re-books my whole share each time.
+  final unbooked = myShare - alreadyBooked;
+  return unbooked > 0 ? unbooked : null;
+}
+
+/// Sum of personal-entry amounts already booked from [groupId]'s settlements —
+/// so a re-settle books only the still-unbooked remainder of my share (guards
+/// against double-booking when a circle is settled to zero more than once).
+int alreadyBookedShare({
+  required String groupId,
+  required List<Settlement> settlements,
+  required List<PersonalEntry> personalEntries,
+}) {
+  final ids = {
+    for (final s in settlements)
+      if (s.groupId == groupId) s.id,
+  };
+  if (ids.isEmpty) return 0;
+  return personalEntries
+      .where(
+        (e) =>
+            e.sourceSettlementId != null &&
+            ids.contains(e.sourceSettlementId),
+      )
+      .fold(0, (sum, e) => sum + e.amount);
 }
 
 /// My total consumption in one group — the sum of my expense shares over its

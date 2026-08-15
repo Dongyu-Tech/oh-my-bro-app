@@ -1,4 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../app.dart';
@@ -6,7 +7,7 @@ import '../../app.dart';
 /// Red-tinted snackbar for errors. Uses the global ScaffoldMessenger key so it
 /// works without a BuildContext and is safe across async gaps.
 void showErrorSnakeBar(String message) {
-  debugPrint('[App Error] $message');
+  if (kDebugMode) debugPrint('[App Error] $message');
   App.scaffoldMessengerKey.currentState?.showSnackBar(
     SnackBar(
       content: Text(

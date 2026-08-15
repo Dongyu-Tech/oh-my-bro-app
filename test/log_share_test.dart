@@ -28,6 +28,23 @@ ExpenseShare _s(String expenseId, String memberId, int amount) => ExpenseShare(
   amount: amount,
 );
 
+Settlement _st(String id, String groupId) => Settlement(
+  id: id,
+  groupId: groupId,
+  fromMemberId: 'me',
+  toMemberId: 'bob',
+  amount: 0,
+  createdAt: DateTime(2026, 1, 1),
+);
+
+PersonalEntry _pe(String id, int amount, {String? source}) => PersonalEntry(
+  id: id,
+  title: id,
+  amount: amount,
+  sourceSettlementId: source,
+  createdAt: DateTime(2026, 1, 1),
+);
+
 void main() {
   group('shareToBookAfterSettle', () {
     test('books my share when a full repayment clears my credit', () {
@@ -35,6 +52,7 @@ void main() {
       final r = shareToBookAfterSettle(
         myNet: 250,
         myShare: 250,
+        alreadyBooked: 0,
         myMemberId: 'me',
         transfer: const Transfer(from: 'friend', to: 'me', amount: 250),
         settledAmount: 250,
@@ -47,6 +65,7 @@ void main() {
       final r = shareToBookAfterSettle(
         myNet: -130,
         myShare: 130,
+        alreadyBooked: 0,
         myMemberId: 'me',
         transfer: const Transfer(from: 'me', to: 'friend', amount: 130),
         settledAmount: 130,
@@ -59,6 +78,7 @@ void main() {
       final r = shareToBookAfterSettle(
         myNet: 150,
         myShare: 0,
+        alreadyBooked: 0,
         myMemberId: 'me',
         transfer: const Transfer(from: 'friend', to: 'me', amount: 150),
         settledAmount: 150,
@@ -70,6 +90,7 @@ void main() {
       final r = shareToBookAfterSettle(
         myNet: 250,
         myShare: 250,
+        alreadyBooked: 0,
         myMemberId: 'me',
         transfer: const Transfer(from: 'friend', to: 'me', amount: 250),
         settledAmount: 100,
@@ -82,6 +103,7 @@ void main() {
       final r = shareToBookAfterSettle(
         myNet: 400,
         myShare: 200,
+        alreadyBooked: 0,
         myMemberId: 'me',
         transfer: const Transfer(from: 'a', to: 'me', amount: 200),
         settledAmount: 200,
@@ -93,6 +115,7 @@ void main() {
       final r = shareToBookAfterSettle(
         myNet: 0,
         myShare: 200,
+        alreadyBooked: 0,
         myMemberId: 'me',
         transfer: const Transfer(from: 'a', to: 'b', amount: 100),
         settledAmount: 100,
@@ -104,9 +127,36 @@ void main() {
       final r = shareToBookAfterSettle(
         myNet: 250,
         myShare: 250,
+        alreadyBooked: 0,
         myMemberId: null,
         transfer: const Transfer(from: 'friend', to: 'me', amount: 250),
         settledAmount: 250,
+      );
+      expect(r, isNull);
+    });
+
+    test('books only the unbooked remainder on a second settle-to-zero', () {
+      // Circle re-settled: cumulative share 200, but 100 was already booked by
+      // an earlier settlement → only the new $100 should be booked (bug #2).
+      final r = shareToBookAfterSettle(
+        myNet: -100,
+        myShare: 200,
+        alreadyBooked: 100,
+        myMemberId: 'me',
+        transfer: const Transfer(from: 'me', to: 'bob', amount: 100),
+        settledAmount: 100,
+      );
+      expect(r, 100);
+    });
+
+    test('books nothing when my whole share is already booked', () {
+      final r = shareToBookAfterSettle(
+        myNet: -100,
+        myShare: 100,
+        alreadyBooked: 100,
+        myMemberId: 'me',
+        transfer: const Transfer(from: 'me', to: 'bob', amount: 100),
+        settledAmount: 100,
       );
       expect(r, isNull);
     });
@@ -171,6 +221,37 @@ void main() {
           members: [_m('bob', 'g1')],
           expenses: [_e('e1', 'g1')],
           shares: [_s('e1', 'bob', 50)],
+        ),
+        0,
+      );
+    });
+  });
+
+  group('alreadyBookedShare', () {
+    test('sums entries sourced from this group\'s settlements only', () {
+      final settlements = [_st('s1', 'g1'), _st('s2', 'g1'), _st('s3', 'g2')];
+      final entries = [
+        _pe('p1', 40, source: 's1'), // g1
+        _pe('p2', 60, source: 's2'), // g1
+        _pe('p3', 99, source: 's3'), // g2 — a different group
+        _pe('p4', 12), // manual entry, no settlement source
+      ];
+      expect(
+        alreadyBookedShare(
+          groupId: 'g1',
+          settlements: settlements,
+          personalEntries: entries,
+        ),
+        100,
+      );
+    });
+
+    test('is 0 when nothing has been booked for the group yet', () {
+      expect(
+        alreadyBookedShare(
+          groupId: 'g1',
+          settlements: [_st('s1', 'g1')],
+          personalEntries: [_pe('p1', 40)],
         ),
         0,
       );

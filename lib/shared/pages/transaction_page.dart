@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:share_plus/share_plus.dart';
 
-import 'package:heymybro/core/error/error_logger.dart';
 import 'package:heymybro/shared/pages/group_detail_page.dart';
 import 'package:heymybro/shared/pages/trash_page.dart';
 import 'package:heymybro/shared/provider/group_provider.dart';
@@ -248,7 +248,14 @@ class _DebtCard extends ConsumerWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  _CardAction(icon: LucideIcons.share2, onTap: comingSoon),
+                  _CardAction(
+                    icon: LucideIcons.share2,
+                    onTap: () => SharePlus.instance.share(
+                      ShareParams(
+                        text: '$relation \$${money.format(debt.amount)}',
+                      ),
+                    ),
+                  ),
                   _CardAction(
                     icon: LucideIcons.checkCircle,
                     color: BrutalColors.primary,
