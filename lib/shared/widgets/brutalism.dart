@@ -503,8 +503,6 @@ class _SpeechBubblePainter extends CustomPainter {
     required this.tailSize,
     required this.tailAlign,
     required this.tailOnRight,
-    this.borderColor = BrutalColors.onBackground,
-    this.shadowColor = BrutalColors.onBackground,
   });
 
   final Color color;
@@ -514,8 +512,6 @@ class _SpeechBubblePainter extends CustomPainter {
   final double tailSize;
   final double tailAlign;
   final bool tailOnRight;
-  final Color borderColor;
-  final Color shadowColor;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -538,23 +534,21 @@ class _SpeechBubblePainter extends CustomPainter {
       // Shadow is the whole silhouette, border included — fill plus stroke,
       // so it lines up with what brutalDecoration casts on the flat cards.
       final shadow = path.shift(Offset(offset, offset));
-      canvas.drawPath(shadow, Paint()..color = shadowColor);
-      canvas.drawPath(shadow, stroke..color = shadowColor);
+      canvas.drawPath(shadow, Paint()..color = BrutalColors.onBackground);
+      canvas.drawPath(shadow, stroke..color = BrutalColors.onBackground);
     }
     canvas.drawPath(path, Paint()..color = color);
-    canvas.drawPath(path, stroke..color = borderColor);
+    canvas.drawPath(path, stroke..color = BrutalColors.onBackground);
   }
 
   Path _bubblePath(Rect body) {
     final rrect = Path()
       ..addRRect(RRect.fromRectAndRadius(body, Radius.circular(radius)));
-    // Clamped away from the corners so the tail always meets a straight edge —
-    // on an arc the union would bite a notch out of the rounding.
-    final cy =
-        body.top +
-        (radius + tailSize).clamp(0.0, body.height / 2) +
-        (body.height - 2 * (radius + tailSize).clamp(0.0, body.height / 2)) *
-            tailAlign.clamp(0.0, 1.0);
+    // Kept clear of the corners so the tail always meets a straight edge — on
+    // an arc the union would bite a notch out of the rounding.
+    final corner = (radius + tailSize).clamp(0.0, body.height / 2);
+    final travel = body.height - 2 * corner;
+    final cy = body.top + corner + travel * tailAlign.clamp(0.0, 1.0);
     final spread = tailSize * 0.62;
     // Overlaps the body by 2px: two shapes merely touching leave a hairline
     // the union does not close.
@@ -576,9 +570,7 @@ class _SpeechBubblePainter extends CustomPainter {
       old.borderWidth != borderWidth ||
       old.tailSize != tailSize ||
       old.tailAlign != tailAlign ||
-      old.tailOnRight != tailOnRight ||
-      old.borderColor != borderColor ||
-      old.shadowColor != shadowColor;
+      old.tailOnRight != tailOnRight;
 }
 
 /// Thick brutal horizontal rule — the design system's `<hr>`. A hard black
