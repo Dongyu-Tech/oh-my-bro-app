@@ -30,8 +30,9 @@ class _FakeAssetBundle extends CachingAssetBundle {
 }
 
 void main() {
-  testWidgets('record tab shows the frameless 誰欠誰 owe-selector above the '
-      'free-text input', (tester) async {
+  testWidgets('record tab shows the 誰欠誰 word bank above the free-text input', (
+    tester,
+  ) async {
     await tester.binding.setSurfaceSize(const Size(600, 1400));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -43,8 +44,14 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Two yellow dropdown stubs ([你 ▾] / [對方 ▾]) prove the owe strip rendered.
-    expect(find.byIcon(LucideIcons.chevronDown), findsNWidgets(2));
+    // The selector is a word bank now — tap 「欠」and a friend to build the
+    // sentence — not the pair of dropdown stubs it started life as. This
+    // asserted those stubs long after they were replaced, so it failed on
+    // main while the page itself was fine.
+    expect(find.text('new_tx_field_who'), findsOneWidget);
+    expect(find.text('ledger_owes'), findsOneWidget);
+    // Nothing picked yet, so the sentence slot is the dashed 「添加」chip.
+    expect(find.text('new_tx_add'), findsOneWidget);
     // The free-text entry (mic affordance) still sits below it.
     expect(find.byIcon(LucideIcons.mic), findsOneWidget);
   });
