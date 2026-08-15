@@ -5,7 +5,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:heymybro/core/database/database.dart';
 import 'package:heymybro/shared/pages/debt_confirm_page.dart';
 import 'package:heymybro/shared/provider/debt_provider.dart';
-import 'package:heymybro/shared/widgets/brutalism.dart';
 
 DebtProposal _proposal({
   String id = 'p1',
@@ -59,12 +58,12 @@ void main() {
   ) async {
     await pump(tester, known: [_proposal()]);
 
-    expect(find.text('-\$500'), findsOneWidget);
+    expect(find.text('\$500'), findsOneWidget);
     expect(find.text('晚餐'), findsOneWidget);
-    // The claim is the caption; the claimant is named under it in corner
-    // brackets, so the sentence never repeats the name.
+    // The claimant's name sits directly above the claim, so the sentence does
+    // not repeat it.
+    expect(find.text('阿華'), findsOneWidget);
     expect(find.text('debt_claim_you_owe'), findsOneWidget);
-    expect(find.text('「阿華」'), findsOneWidget);
   });
 
   testWidgets('direction follows who the debtor is', (tester) async {
@@ -76,10 +75,26 @@ void main() {
   testWidgets('my turn gets all three answers', (tester) async {
     await pump(tester, known: [_proposal()]);
 
-    expect(find.text('debt_action_accept'), findsOneWidget);
+    // The confirmation spells out who and how much, so it cannot be tapped
+    // without having read what is being agreed to.
+    expect(find.textContaining('debt_accept_owing'), findsOneWidget);
     expect(find.text('debt_action_counter'), findsOneWidget);
     expect(find.text('debt_action_reject'), findsOneWidget);
     expect(find.text('debt_action_cancel'), findsNothing);
+  });
+
+  testWidgets('the confirm sentence follows the direction', (tester) async {
+    await pump(tester, known: [_proposal(debtorId: 'them')]);
+    expect(find.textContaining('debt_accept_owed'), findsOneWidget);
+    expect(find.textContaining('debt_accept_owing'), findsNothing);
+  });
+
+  testWidgets('a blank amount asks for the number instead', (tester) async {
+    await pump(tester, known: [_proposal(amount: null)]);
+
+    // Nothing to agree to yet, so the button says what it actually does.
+    expect(find.text('debt_accept_blank'), findsOneWidget);
+    expect(find.textContaining('debt_accept_owing'), findsNothing);
   });
 
   testWidgets('waiting on them offers only withdraw', (tester) async {
@@ -115,33 +130,8 @@ void main() {
   testWidgets('a countered proposal shows what it used to say', (tester) async {
     await pump(tester, known: [_proposal(amount: 400, originalAmount: 500)]);
 
-    expect(find.text('-\$400'), findsOneWidget);
+    expect(find.text('\$400'), findsOneWidget);
     expect(find.textContaining('debt_was_amount'), findsOneWidget);
-  });
-
-  testWidgets('what I owe is a signed red number', (tester) async {
-    await pump(tester, known: [_proposal(debtorId: 'me')]);
-
-    final amount = tester.widget<Text>(find.text('-\$500'));
-    expect(
-      amount.style?.color,
-      BrutalColors.secondary,
-      reason: 'red carries a liability (DESIGN.md)',
-    );
-  });
-
-  testWidgets('what I am owed is an unsigned green number', (tester) async {
-    await pump(tester, known: [_proposal(debtorId: 'them')]);
-
-    final amount = tester.widget<Text>(find.text('\$500'));
-    expect(amount.style?.color, BrutalColors.incomeGreen);
-    expect(
-      find.text('-\$500'),
-      findsNothing,
-      reason:
-          'the minus is what survives greyscale, so it must mean expense '
-          'and only expense',
-    );
   });
 
   testWidgets('it survives a small screen and a long item name', (
@@ -162,7 +152,7 @@ void main() {
     );
 
     expect(find.byType(DebtConfirmPage), findsOneWidget);
-    expect(find.text('debt_action_accept'), findsOneWidget);
+    expect(find.text('debt_action_counter'), findsOneWidget);
   });
 
   testWidgets('a proposal this device does not have says so', (tester) async {

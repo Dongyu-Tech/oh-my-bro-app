@@ -156,7 +156,7 @@ debt_pending_title,Awaiting confirmation,待確認
 debt_pending_note,Not counted until both of you agree,雙方都同意前不算進餘額
 debt_action_accept,Accept,確認
 debt_action_reject,Reject,拒絕
-debt_action_counter,Change,改金額
+debt_action_counter,Change amount,修改金額
 debt_action_cancel,Withdraw,撤回
 debt_action_dismiss,Got it,知道了
 debt_waiting_for,Waiting for {name},等 {name} 回應
@@ -178,6 +178,15 @@ debt_err_not_yours,It's not your turn on that one,那筆現在不是輪到你
 debt_confirm_title,Confirm this?,要確認嗎？
 debt_claim_you_owe,says you owe them,說你欠他
 debt_claim_owes_you,says they owe you,說他欠你
+debt_confirm_subtitle,Check these details are right,確認這筆欠款資訊是否正確
+debt_field_item,Item,欠款項目
+debt_field_amount,Amount,欠款金額
+debt_badge_owes_you,owes you,他欠你
+debt_badge_you_owe,you owe,你欠他
+debt_notify_note,They'll be told once you confirm,確認後會通知對方
+debt_accept_owed,"Confirm {name} owes me {amount}",確認 {name} 欠我 {amount}
+debt_accept_owing,"Confirm I owe {name} {amount}",確認我欠 {name} {amount}
+debt_accept_blank,Fill in the amount,填上金額
 debt_confirm_gone,That one's no longer here,這筆已經不在了
 debt_confirm_settled,Already dealt with,已經處理過了
 circle_start_gather,Start a gathering,發起揪團

@@ -148,8 +148,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(page, findsOneWidget);
-    // The three answers, on the page rather than in a sheet.
-    expect(find.text('debt_action_accept'), findsOneWidget);
+    // The three answers, on the page rather than in a sheet. The confirmation
+    // spells out who and how much rather than just saying "accept".
+    expect(find.textContaining('debt_accept_'), findsOneWidget);
     expect(find.text('debt_action_counter'), findsOneWidget);
     expect(find.text('debt_action_reject'), findsOneWidget);
   });
