@@ -203,6 +203,14 @@ class DebtProposals extends Table {
   /// voided) and the card can stop taking up space.
   DateTimeColumn get dismissedAt => dateTime().nullable()();
 
+  /// Device-local: "they agreed" has already been announced on this device.
+  ///
+  /// Set the moment *this* device does the accepting, so the person who
+  /// pressed the button is never told what they just did — leaving the banner
+  /// for the other side, whichever side that turned out to be after the
+  /// haggling.
+  DateTimeColumn get confirmAlertAt => dateTime().nullable()();
+
   @override
   Set<Column<Object>> get primaryKey => {id};
 }
@@ -228,16 +236,17 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forExecutor(super.executor);
 
   @override
-  int get schemaVersion => 9;
+  int get schemaVersion => 10;
 
   // v1 table-less → v2 split schema → v3 PersonalEntries → v4 Friends +
   // Settlements + Members.friendId → v5 soft-delete (deletedAt) columns →
   // v6 Groups.isDirect (direct-debt marker) → v7 PersonalEntries
   // .sourceSettlementId (links a 結清-booked entry to its settlement) →
   // v8 Friends.userId/handle/avatarUrl (a bro is a real account now) →
-  // v9 DebtProposals (a logged debt is a proposal until both sides agree).
-  // Bump BackupService.supportedSchemaVersions alongside any future change
-  // here.
+  // v9 DebtProposals (a logged debt is a proposal until both sides agree) →
+  // v10 DebtProposals.confirmAlertAt (announce "they agreed" once, to the
+  // side that did not press accept). Bump
+  // BackupService.supportedSchemaVersions alongside any future change here.
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) async => m.createAll(),
@@ -274,6 +283,11 @@ class AppDatabase extends _$AppDatabase {
           await m.addColumn(friends, friends.avatarUrl);
         }
         if (from < 9) await m.createTable(debtProposals);
+        if (from < 10 && from >= 9) {
+          // Only when the table already existed; a from<9 upgrade just
+          // created it with this column present.
+          await m.addColumn(debtProposals, debtProposals.confirmAlertAt);
+        }
       }
     },
     beforeOpen: (details) async {
@@ -369,6 +383,11 @@ class AppDatabase extends _$AppDatabase {
   Future<void> markDebtPopped(String id) =>
       (update(debtProposals)..where((d) => d.id.equals(id))).write(
         DebtProposalsCompanion(poppedAt: Value(DateTime.now())),
+      );
+
+  Future<void> markDebtConfirmAlertSeen(String id) =>
+      (update(debtProposals)..where((d) => d.id.equals(id))).write(
+        DebtProposalsCompanion(confirmAlertAt: Value(DateTime.now())),
       );
 
   Future<void> markDebtDismissed(String id) =>

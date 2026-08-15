@@ -69,6 +69,19 @@ final unseenDeadEndsProvider = Provider<List<DebtProposal>>((ref) {
       .toList();
 });
 
+/// Confirmed, and this device has not yet said so.
+///
+/// Only ever non-empty for the side that did NOT press accept — accepting
+/// marks its own row seen straight away, because telling somebody what they
+/// just did is noise. Which side that is flips with the haggling: whoever
+/// answers last is the one who agreed, and the other one gets told.
+final unseenConfirmationsProvider = Provider<List<DebtProposal>>((ref) {
+  final all = ref.watch(debtProposalsProvider).asData?.value ?? const [];
+  return all
+      .where((d) => d.status == 'confirmed' && d.confirmAlertAt == null)
+      .toList();
+});
+
 /// The one proposal to pop up next: waiting on me, and never popped before.
 /// One at a time on purpose — three popups in a row is not a notification.
 final nextPopupProvider = Provider<DebtProposal?>((ref) {
@@ -244,8 +257,21 @@ class DebtService {
     return result;
   }
 
-  Future<Result<DebtOutcome>> accept(String id) =>
-      _respond(id, DebtReply.accept);
+  /// Accepting does not go through [_respond], because the order matters here.
+  ///
+  /// The refresh is what brings the row back as `confirmed`, and "confirmed and
+  /// not yet announced" is exactly what raises the banner. Marking afterwards
+  /// is a race the banner wins — so this device's copy is marked *first*, and
+  /// only then does the row land. I am the one who agreed; being told so is
+  /// noise. The other side's copy still has it unset and will announce it.
+  Future<Result<DebtOutcome>> accept(String id) async {
+    final result = await _repo.respond(id: id, reply: DebtReply.accept);
+    if (result case Ok(value: final outcome) when outcome.isSuccess) {
+      await _db.markDebtConfirmAlertSeen(id);
+      await refresh();
+    }
+    return result;
+  }
 
   Future<Result<DebtOutcome>> reject(String id, String reason) =>
       _respond(id, DebtReply.reject, reason: reason);
@@ -285,4 +311,7 @@ class DebtService {
   Future<void> markPopped(String id) => _db.markDebtPopped(id);
 
   Future<void> markDismissed(String id) => _db.markDebtDismissed(id);
+
+  Future<void> markConfirmAlertSeen(String id) =>
+      _db.markDebtConfirmAlertSeen(id);
 }

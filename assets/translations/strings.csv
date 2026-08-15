@@ -187,6 +187,11 @@ debt_notify_note,They'll be told once you confirm,確認後會通知對方
 debt_accept_owed,"Confirm {name} owes me {amount}",確認 {name} 欠我 {amount}
 debt_accept_owing,"Confirm I owe {name} {amount}",確認我欠 {name} {amount}
 debt_accept_blank,Fill in the amount,填上金額
+debt_alert_confirmed,"{name} agreed to this debt",{name} 同意了這筆欠款
+debt_status_waiting,Awaiting confirmation,等待確認
+debt_action_goto,Confirm now,前往確認
+debt_cancel_title,Withdraw this?,要撤回嗎？
+debt_cancel_message,They'll stop seeing it,對方就看不到這筆了
 debt_confirm_gone,That one's no longer here,這筆已經不在了
 debt_confirm_settled,Already dealt with,已經處理過了
 circle_start_gather,Start a gathering,發起揪團

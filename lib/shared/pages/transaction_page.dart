@@ -5,8 +5,9 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:share_plus/share_plus.dart';
 
-import 'package:heymybro/shared/pages/debt_pending_section.dart';
+import 'package:heymybro/shared/pages/debt_proposal_card.dart';
 import 'package:heymybro/shared/pages/group_detail_page.dart';
+import 'package:heymybro/shared/provider/debt_provider.dart';
 import 'package:heymybro/shared/pages/trash_page.dart';
 import 'package:heymybro/shared/provider/group_provider.dart';
 import 'package:heymybro/shared/widgets/brutalism.dart';
@@ -31,49 +32,76 @@ class TransactionPage extends ConsumerWidget {
         .where((d) => !d.owedToMe)
         .fold(0, (s, d) => s + d.amount);
 
+    // Still being agreed: waiting on me first, then waiting on them, then the
+    // dead ends nobody has acknowledged yet.
+    final proposals = [
+      ...ref.watch(pendingForMeProvider),
+      ...ref.watch(pendingForThemProvider),
+      ...ref.watch(unseenDeadEndsProvider),
+    ];
+
     return Scaffold(
       backgroundColor: BrutalColors.background,
       body: SafeArea(
         bottom: false,
         child: DottedBackdrop(
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-            children: [
-              Row(
-                children: [
-                  MarkerHighlight(
-                    child: Text(
-                      'transaction_title'.tr(),
-                      style: BrutalText.headlineLgMobile(fontSize: 30),
+          child: RefreshIndicator(
+            // Realtime and the resume fetch already keep this current; the pull
+            // is for the moment you are staring at the screen wondering whether
+            // they have answered yet, which is exactly when waiting feels worst.
+            onRefresh: () => ref.read(debtServiceProvider).refresh(),
+            color: BrutalColors.onBackground,
+            backgroundColor: BrutalColors.primaryContainer,
+            child: ListView(
+              // Without this a short list cannot be dragged at all, and the
+              // refresh would be unreachable exactly when there is least on
+              // screen to explain the wait.
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+              children: [
+                Row(
+                  children: [
+                    MarkerHighlight(
+                      child: Text(
+                        'transaction_title'.tr(),
+                        style: BrutalText.headlineLgMobile(fontSize: 30),
+                      ),
                     ),
-                  ),
-                  const Spacer(),
-                  TrashButton(onTap: () => showTrashModal(context)),
-                ],
-              ),
-              const SizedBox(height: 24),
-              _DebtSummaryCard(money: money, owedToMe: owedToMe, iOwe: iOwe),
-              const SizedBox(height: 20),
-              // Above 誰欠誰 on purpose: these are the only rows on this page
-              // that are waiting on somebody to do something.
-              const DebtPendingSection(),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'tx_debts_title'.tr(),
-                  style: BrutalText.headlineLgMobile(fontSize: 22),
+                    const Spacer(),
+                    TrashButton(onTap: () => showTrashModal(context)),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 12),
-              if (debts.isEmpty)
-                _EmptyLine('tx_no_debts'.tr())
-              else
-                for (final d in debts)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: _DebtCard(debt: d, money: money),
+                const SizedBox(height: 24),
+                _DebtSummaryCard(money: money, owedToMe: owedToMe, iOwe: iOwe),
+                const SizedBox(height: 20),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'tx_debts_title'.tr(),
+                    style: BrutalText.headlineLgMobile(fontSize: 22),
                   ),
-            ],
+                ),
+                const SizedBox(height: 12),
+                if (debts.isEmpty && proposals.isEmpty)
+                  _EmptyLine('tx_no_debts'.tr())
+                else ...[
+                  // One list, not two. A debt being agreed is still a debt
+                  // between you and them — an answer to "誰欠誰" — and it goes
+                  // first because it is the only kind that might want
+                  // something from you.
+                  for (final p in proposals)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: DebtProposalCard(proposal: p),
+                    ),
+                  for (final d in debts)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _DebtCard(debt: d, money: money),
+                    ),
+                ],
+              ],
+            ),
           ),
         ),
       ),

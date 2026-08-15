@@ -210,6 +210,50 @@ void main() {
     expect(container.read(pendingForMeProvider).single.amount, 400);
   });
 
+  test('the side that agreed is not told about its own agreement', () async {
+    final container = containerWith([
+      _model(id: 'p1', status: 'pending', awaitingId: 'me'),
+    ]);
+    final service = container.read(debtServiceProvider);
+    await service.refresh();
+
+    // I accept. The fake server confirms; the next sync brings it back.
+    await service.accept('p1');
+    repo.rows = [_model(id: 'p1', status: 'confirmed')];
+    await service.refresh();
+    await waitUntil(
+      () => (container.read(debtProposalsProvider).asData?.value ?? []).any(
+        (d) => d.status == 'confirmed',
+      ),
+      reason: 'the confirmation to land',
+    );
+
+    expect(
+      container.read(unseenConfirmationsProvider),
+      isEmpty,
+      reason: 'being told what you just did yourself is noise',
+    );
+  });
+
+  test('the other side is told once the debt is agreed', () async {
+    // Same row, but this device never pressed accept.
+    final container = containerWith([_model(id: 'p1', status: 'confirmed')]);
+    final service = container.read(debtServiceProvider);
+    await service.refresh();
+    await waitUntil(
+      () => container.read(unseenConfirmationsProvider).isNotEmpty,
+      reason: 'the announcement to queue',
+    );
+
+    expect(container.read(unseenConfirmationsProvider).single.id, 'p1');
+
+    await service.markConfirmAlertSeen('p1');
+    await waitUntil(
+      () => container.read(unseenConfirmationsProvider).isEmpty,
+      reason: 'announcing it once is enough',
+    );
+  });
+
   test('dead ends surface until acknowledged', () async {
     final container = containerWith([_model(id: 'p1', status: 'rejected')]);
     final service = container.read(debtServiceProvider);

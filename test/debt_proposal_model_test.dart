@@ -1,9 +1,16 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:heymybro/core/error/result.dart';
+import 'package:heymybro/shared/debt/debt_actions.dart';
 import 'package:heymybro/shared/models/debt_proposal_model.dart';
 import 'package:heymybro/shared/repositories/debt_repository.dart';
 
 void main() {
+  // reportDebtOutcome reaches for the global ScaffoldMessenger key, and
+  // GlobalKey.currentState needs a binding even when there is no messenger to
+  // find.
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   test('parses a my_debt_proposals row', () {
     final model = DebtProposalModel.fromJson({
       'id': 'p1',
@@ -108,6 +115,20 @@ void main() {
       expect(DebtOutcome.parse('bad_title'), DebtOutcome.badInput);
       expect(DebtOutcome.parse('bad_debtor'), DebtOutcome.badInput);
       expect(DebtOutcome.parse('bad_action'), DebtOutcome.badInput);
+    });
+
+    test('every outcome is reported, and only success reports success', () {
+      // The UI collapses most failures into one sentence, so a value that
+      // slipped through unhandled would look exactly like one that is
+      // handled. This walks the whole enum instead.
+      for (final outcome in DebtOutcome.values) {
+        expect(
+          reportDebtOutcome(Result.ok(outcome)),
+          outcome.isSuccess,
+          reason: '$outcome must not be mistaken for the opposite',
+        );
+      }
+      expect(reportDebtOutcome(Result.error(Exception('boom'))), isFalse);
     });
 
     test('every failure code is a failure', () {

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import 'package:heymybro/core/database/database.dart';
 import 'package:heymybro/core/routing/router.dart';
@@ -27,6 +28,19 @@ final _testNext = NotifierProvider<_NextNotifier, DebtProposal?>(
   _NextNotifier.new,
 );
 
+/// Drives the "they agreed" announcements the same way.
+class _ConfirmationsNotifier extends Notifier<List<DebtProposal>> {
+  @override
+  List<DebtProposal> build() => const [];
+
+  void queue(List<DebtProposal> rows) => state = rows;
+}
+
+final _confirmations =
+    NotifierProvider<_ConfirmationsNotifier, List<DebtProposal>>(
+      _ConfirmationsNotifier.new,
+    );
+
 /// Records what the host asked the service to do, and never starts a real
 /// subscription.
 class _SpyDebtService extends DebtService {
@@ -37,6 +51,7 @@ class _SpyDebtService extends DebtService {
 
   final Ref _ref;
   final popped = <String>[];
+  final confirmAlertsSeen = <String>[];
   int refreshes = 0;
 
   @override
@@ -46,6 +61,12 @@ class _SpyDebtService extends DebtService {
   Future<void> refresh() async => refreshes++;
 
   @override
+  Future<void> markConfirmAlertSeen(String id) async {
+    confirmAlertsSeen.add(id);
+    _ref.read(_confirmations.notifier).queue(const []);
+  }
+
+  @override
   Future<void> markPopped(String id) async {
     popped.add(id);
     // The real one writes poppedAt, which is what drops the proposal out of
@@ -53,6 +74,22 @@ class _SpyDebtService extends DebtService {
     _ref.read(_testNext.notifier).queue(null);
   }
 }
+
+/// A debt the other side has just agreed to, not yet announced here.
+DebtProposal _confirmed({String id = 'c1'}) => DebtProposal(
+  id: id,
+  proposerId: 'me',
+  counterpartyId: 'them',
+  debtorId: 'them',
+  title: '晚餐',
+  amount: 500,
+  status: 'confirmed',
+  round: 0,
+  otherName: '阿華',
+  createdAt: DateTime(2026, 8, 15),
+  updatedAt: DateTime(2026, 8, 15),
+  resolvedAt: DateTime(2026, 8, 15),
+);
 
 DebtProposal _proposal({String id = 'p1'}) => DebtProposal(
   id: id,
@@ -91,7 +128,8 @@ void main() {
           builder: (_, __) => Scaffold(
             body: withTextField
                 ? const TextField(key: Key('field'))
-                : const SizedBox.expand(),
+                // Keyed so a test can prove the page did not shift.
+                : const SizedBox.expand(key: Key('page-marker')),
           ),
         ),
         GoRoute(
@@ -124,6 +162,9 @@ void main() {
           ),
           friendsProvider.overrideWith((ref) => Stream.value(const <Friend>[])),
           nextPopupProvider.overrideWith((ref) => ref.watch(_testNext)),
+          unseenConfirmationsProvider.overrideWith(
+            (ref) => ref.watch(_confirmations),
+          ),
         ],
         child: MaterialApp.router(
           routerConfig: router,
@@ -207,6 +248,34 @@ void main() {
       ['p1'],
       reason: 'otherwise it reopens itself on every launch until answered',
     );
+  });
+
+  testWidgets('the agreed alert floats over the app instead of moving it', (
+    tester,
+  ) async {
+    final container = await pump(tester);
+    final before = tester.getTopLeft(find.byKey(const Key('page-marker')));
+
+    container.read(_confirmations.notifier).queue([_confirmed()]);
+    await tester.pumpAndSettle();
+
+    expect(find.byIcon(LucideIcons.circleCheck), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.byKey(const Key('page-marker'))),
+      before,
+      reason: 'a banner that pushes the page down moves it under the reader',
+    );
+  });
+
+  testWidgets('dismissing the alert marks it announced', (tester) async {
+    final container = await pump(tester);
+    container.read(_confirmations.notifier).queue([_confirmed()]);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(LucideIcons.x));
+    await tester.pumpAndSettle();
+
+    expect(spy.confirmAlertsSeen, ['c1']);
   });
 
   testWidgets('coming back from the background refetches', (tester) async {

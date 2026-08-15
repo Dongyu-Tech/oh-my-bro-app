@@ -527,12 +527,18 @@ class _DebtComposerState extends ConsumerState<_DebtComposer> {
         FocusScope.of(context).unfocus();
         showMessage('debt_sent'.tr());
       case Ok(value: DebtOutcome.notFriends):
-        showErrorSnakeBar('debt_err_not_friends'.tr());
+        showErrorSnakeBar(
+          'debt_err_not_friends'.tr(),
+          cause: DebtOutcome.notFriends,
+        );
       case Ok(value: DebtOutcome.badInput):
-        showErrorSnakeBar('debt_err_amount'.tr());
-      case Ok():
-      case Error():
-        showErrorSnakeBar('debt_err_generic'.tr());
+        showErrorSnakeBar('debt_err_amount'.tr(), cause: DebtOutcome.badInput);
+      // One sentence for the rest, but the console gets the real reason —
+      // otherwise every distinct failure looks identical while debugging.
+      case Ok(value: final outcome):
+        showErrorSnakeBar('debt_err_generic'.tr(), cause: 'outcome=$outcome');
+      case Error(error: final e):
+        showErrorSnakeBar('debt_err_generic'.tr(), cause: e);
     }
   }
 
