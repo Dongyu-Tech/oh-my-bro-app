@@ -16,7 +16,7 @@ class BackupService {
   /// Versions this build knows how to read. Add an entry when you bump the
   /// Drift schemaVersion AND have an `onUpgrade` clause that maps old data
   /// onto the new shape (or a per-version migrator in [_migrate]).
-  static const Set<int> supportedSchemaVersions = {1, 2, 3, 4, 5, 6, 7, 8};
+  static const Set<int> supportedSchemaVersions = {1, 2, 3, 4, 5, 6, 7, 8, 9};
 
   /// Serialize the database to a JSON envelope. Add table dumps as you add
   /// tables — keep table names stable so older backups remain readable.
