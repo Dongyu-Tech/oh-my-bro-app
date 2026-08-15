@@ -2,16 +2,20 @@ import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:heymybro/core/database/database.dart';
+import 'package:heymybro/core/routing/router.dart';
+import 'package:heymybro/shared/pages/debt_confirm_page.dart';
 import 'package:heymybro/shared/provider/database_provider.dart';
 import 'package:heymybro/shared/provider/debt_provider.dart';
 import 'package:heymybro/shared/provider/friend_provider.dart';
 import 'package:heymybro/shared/repositories/debt_repository.dart';
+import 'package:heymybro/shared/widgets/back_button.dart';
 import 'package:heymybro/shared/widgets/debt_popup_host.dart';
 
-/// Drives what the host sees as "next to pop", so a proposal can arrive
-/// mid-test — which is the only way to exercise "don't interrupt typing".
+/// Drives what the host sees as "next to open", so a proposal can arrive
+/// mid-test — the only way to exercise "don't interrupt typing".
 class _NextNotifier extends Notifier<DebtProposal?> {
   @override
   DebtProposal? build() => null;
@@ -45,8 +49,7 @@ class _SpyDebtService extends DebtService {
   Future<void> markPopped(String id) async {
     popped.add(id);
     // The real one writes poppedAt, which is what drops the proposal out of
-    // the queue. Without modelling that the host would just re-present it on
-    // the next frame.
+    // the queue. Without modelling that, the host would immediately reopen it.
     _ref.read(_testNext.notifier).queue(null);
   }
 }
@@ -79,11 +82,33 @@ void main() {
     await tester.binding.setSurfaceSize(const Size(420, 900));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
+    // Mirrors app.dart: the host wraps the router's output, which is exactly
+    // why it has to push through GoRouter rather than Navigator.of.
+    final router = GoRouter(
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (_, __) => Scaffold(
+            body: withTextField
+                ? const TextField(key: Key('field'))
+                : const SizedBox.expand(),
+          ),
+        ),
+        GoRoute(
+          path: '/debt/:id',
+          builder: (_, state) =>
+              DebtConfirmPage(proposalId: state.pathParameters['id']!),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           appDatabaseProvider.overrideWithValue(db),
           myUserIdProvider.overrideWithValue('me'),
+          routerProvider.overrideWithValue(router),
           debtRepositoryProvider.overrideWithValue(
             const UnavailableDebtRepository(),
           ),
@@ -91,23 +116,19 @@ void main() {
           // Both Drift-backed streams become plain ones. Drift schedules a
           // zero-duration cleanup timer when a query stream is cancelled, and
           // the framework tears the tree down with its own final runApp and
-          // then immediately asserts that no timer is pending — so any live
-          // Drift stream inside a ProviderScope fails that check regardless of
-          // how the test is written.
+          // then immediately asserts no timer is pending — so a live Drift
+          // stream inside a ProviderScope fails that check however the test is
+          // written.
           debtProposalsProvider.overrideWith(
-            (ref) => Stream.value(const <DebtProposal>[]),
+            (ref) => Stream.value([_proposal()]),
           ),
           friendsProvider.overrideWith((ref) => Stream.value(const <Friend>[])),
           nextPopupProvider.overrideWith((ref) => ref.watch(_testNext)),
         ],
-        child: MaterialApp(
-          home: DebtPopupHost(
-            child: Scaffold(
-              body: withTextField
-                  ? const TextField(key: Key('field'))
-                  : const SizedBox.expand(),
-            ),
-          ),
+        child: MaterialApp.router(
+          routerConfig: router,
+          builder: (context, child) =>
+              DebtPopupHost(child: child ?? const SizedBox.shrink()),
         ),
       ),
     );
@@ -115,23 +136,27 @@ void main() {
     return ProviderScope.containerOf(tester.element(find.byType(Scaffold)));
   }
 
-  final popup = find.textContaining('debt_popup_title');
+  final page = find.byType(DebtConfirmPage);
 
-  testWidgets('a proposal waiting on me pops up', (tester) async {
+  testWidgets('a proposal waiting on me opens the confirm page', (
+    tester,
+  ) async {
     final container = await pump(tester);
-    expect(popup, findsNothing);
+    expect(page, findsNothing);
 
     container.read(_testNext.notifier).queue(_proposal());
     await tester.pumpAndSettle();
 
-    expect(popup, findsOneWidget);
+    expect(page, findsOneWidget);
+    // The three answers, on the page rather than in a sheet.
     expect(find.text('debt_action_accept'), findsOneWidget);
-    expect(find.text('debt_popup_later'), findsOneWidget);
+    expect(find.text('debt_action_counter'), findsOneWidget);
+    expect(find.text('debt_action_reject'), findsOneWidget);
   });
 
-  testWidgets('nothing pops up when nothing is waiting', (tester) async {
+  testWidgets('nothing opens when nothing is waiting', (tester) async {
     await pump(tester);
-    expect(popup, findsNothing);
+    expect(page, findsNothing);
   });
 
   testWidgets('it does not steal the keyboard mid-sentence', (tester) async {
@@ -145,40 +170,42 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      popup,
+      page,
       findsNothing,
       reason: 'taking the keyboard away mid-sentence is the thing to prevent',
     );
   });
 
-  testWidgets('it pops once the field is let go', (tester) async {
+  testWidgets('it opens once the field is let go', (tester) async {
     final container = await pump(tester, withTextField: true);
 
     await tester.tap(find.byKey(const Key('field')));
     await tester.pumpAndSettle();
     container.read(_testNext.notifier).queue(_proposal());
     await tester.pumpAndSettle();
-    expect(popup, findsNothing);
+    expect(page, findsNothing);
 
     FocusManager.instance.primaryFocus?.unfocus();
     await tester.pumpAndSettle();
 
-    expect(popup, findsOneWidget, reason: 'deferred, not dropped');
+    expect(page, findsOneWidget, reason: 'deferred, not dropped');
   });
 
-  testWidgets('dismissing it records that it has been shown', (tester) async {
+  testWidgets('backing out records that it has been shown', (tester) async {
     final container = await pump(tester);
     container.read(_testNext.notifier).queue(_proposal());
     await tester.pumpAndSettle();
-    expect(popup, findsOneWidget);
+    expect(page, findsOneWidget);
 
-    await tester.tap(find.text('debt_popup_later'));
+    await tester.tap(find.byType(BrutalBackButton));
     await tester.pumpAndSettle();
 
-    expect(popup, findsNothing);
-    expect(spy.popped, [
-      'p1',
-    ], reason: 'otherwise it re-pops on every launch until answered');
+    expect(page, findsNothing);
+    expect(
+      spy.popped,
+      ['p1'],
+      reason: 'otherwise it reopens itself on every launch until answered',
+    );
   });
 
   testWidgets('coming back from the background refetches', (tester) async {
@@ -192,7 +219,7 @@ void main() {
     expect(
       spy.refreshes,
       greaterThan(before),
-      reason: 'the layer that turns a dropped socket into late, not never',
+      reason: 'what puts the newest debt on screen when the app is reopened',
     );
   });
 }

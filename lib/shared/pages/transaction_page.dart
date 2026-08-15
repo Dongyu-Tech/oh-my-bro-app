@@ -5,14 +5,18 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:share_plus/share_plus.dart';
 
+import 'package:heymybro/shared/pages/debt_pending_section.dart';
 import 'package:heymybro/shared/pages/group_detail_page.dart';
 import 'package:heymybro/shared/pages/trash_page.dart';
 import 'package:heymybro/shared/provider/group_provider.dart';
 import 'package:heymybro/shared/widgets/brutalism.dart';
 
-/// 交易 tab — the debt ledger: money BETWEEN you and other people. Your own
-/// spending lives in 帳本; this page is only "who owes who", derived from every
-/// gathering's settle-up plan.
+/// 帳本 tab — money BETWEEN you and other people: "who owes who", derived from
+/// every gathering's settle-up plan, plus the debts still awaiting
+/// confirmation.
+///
+/// Beware the file names here: this is 帳本, while `LedgerPage` is the 個人
+/// tab (your own spending). They read the other way round.
 class TransactionPage extends ConsumerWidget {
   const TransactionPage({super.key});
 
@@ -50,6 +54,9 @@ class TransactionPage extends ConsumerWidget {
               const SizedBox(height: 24),
               _DebtSummaryCard(money: money, owedToMe: owedToMe, iOwe: iOwe),
               const SizedBox(height: 20),
+              // Above 誰欠誰 on purpose: these are the only rows on this page
+              // that are waiting on somebody to do something.
+              const DebtPendingSection(),
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
