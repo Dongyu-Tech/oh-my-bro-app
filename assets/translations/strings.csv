@@ -146,6 +146,12 @@ debt_item_hint,Item,項目
 debt_record,Log,記下
 debt_need_people,Pick who's on each side,兩邊的人選好
 debt_same_person,Can't be the same person,不能是同一個人
+debt_amount_hint,Blank = they fill it,留白讓對方填
+debt_sent,Sent — waiting for them,已送出 等對方確認
+debt_friend_no_account,They haven't linked an account — add them again,這位還沒綁定帳號 請重新加一次好友
+debt_err_not_friends,You're not bros with them,你們還不是好友
+debt_err_amount,That amount doesn't work,金額不對
+debt_err_generic,Couldn't send that,送不出去
 circle_start_gather,Start a gathering,發起揪團
 circle_join_code,Enter a room code,輸入房號
 room_code_label,Room code,房號

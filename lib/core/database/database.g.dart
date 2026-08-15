@@ -212,10 +212,10 @@ class Group extends DataClass implements Insertable<Group> {
   final int colorValue;
   final bool isArchived;
 
-  /// A synthetic 2-person group minted by the debt composer
-  /// ([GroupService.addDirectDebt]) to record "A 欠 B $x". It still feeds 帳本
-  /// (債務紀錄) and 信用分, but is hidden from the "攤" (gathering) lists so
-  /// direct debts don't clutter the揪團 dashboard.
+  /// A synthetic 2-person group a confirmed debt is projected into (see
+  /// [DebtProjection]) to record "A 欠 B $x". It still feeds 帳本 (債務紀錄)
+  /// and 信用分, but is hidden from the "攤" (gathering) lists so direct debts
+  /// don't clutter the 揪團 dashboard.
   final bool isDirect;
   final DateTime createdAt;
 
