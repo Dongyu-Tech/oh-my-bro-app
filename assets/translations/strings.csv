@@ -128,7 +128,7 @@ record_with_who,Who's it with?,跟誰分？
 record_me,Just me,我自己
 record_personal_todo,Personal ledger coming soon,個人帳之後接帳本
 record_saved,Recorded!,記好囉！
-home_title,OH MY BRO,欸!粗哥
+home_title,OH MY BRO,欸! 粗哥
 home_greeting,Who's grabbing lunch today?,欸 今天要揪誰吃飯？
 home_gather_sub,A gathering + room code,約一攤・開房號
 home_join_sub,Got a code? tap here,朋友給碼就按
@@ -249,7 +249,6 @@ confirm_delete_friend,Remove this bro?,刪掉這個好友？
 confirm_delete_friend_msg,Their credit history goes too.,他的信用紀錄會一起消失。
 confirm_delete_entry,Delete this entry?,刪掉這筆帳？
 expense_edit_title,Edit expense,編輯花費
-friend_rename,Rename bro,幫他改名
 entry_edit_title,Edit entry,編輯這筆
 trash_title,Recycle bin,回收桶
 trash_empty,The bin is empty,回收桶是空的
@@ -391,3 +390,4 @@ debt_repay_sent,Sent — waiting for them,已送出 等對方確認
 debt_err_too_much,That's more than is owed,超過還欠的金額
 debt_repay_wait,Waiting for them to pay,等對方還款
 debt_repay_badge,Repayment,還款
+debt_cannot_delete,Both of you agreed to this — it cannot be deleted alone,這筆雙方都同意過 不能單方面刪除

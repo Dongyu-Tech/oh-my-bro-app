@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 import 'package:uuid/uuid.dart';
 
 import '../../core/database/database.dart';
+import '../../core/error/error_logger.dart';
 import '../../core/error/result.dart';
 import '../debt/debt_projection.dart';
 import '../models/debt_proposal_model.dart';
@@ -34,9 +35,21 @@ final debtProposalsProvider = StreamProvider<List<DebtProposal>>((ref) {
 });
 
 /// The signed-in user's id, or null. Every "is this mine / is it my turn"
-/// question needs it.
+/// question needs it — and so does projection, which skips everything without
+/// one.
+///
+/// Watches the stream first, exactly as every other provider in the app does.
+/// Reading `authServiceProvider.currentUser` alone looks equivalent and is not:
+/// that provider hands back the same service instance forever, so a Provider
+/// built only on it computes once and caches the answer for the whole session.
+/// Session restore is asynchronous, so that cached answer is whatever happened
+/// to be true the first time anything asked — often null at cold start, and
+/// then null for good.
 final myUserIdProvider = Provider<String?>((ref) {
-  return ref.watch(authServiceProvider).currentUser?.id;
+  final user =
+      ref.watch(currentUserProvider).asData?.value ??
+      ref.watch(authServiceProvider).currentUser;
+  return user?.id;
 });
 
 /// Waiting on me to answer.
@@ -116,6 +129,17 @@ final debtServiceProvider = Provider<DebtService>((ref) {
   final service = DebtService(ref);
   ref.onDispose(service.dispose);
   service.start();
+
+  // Sync again the moment a user actually appears. start() fires immediately,
+  // which at cold start can be before session restore has finished — and a
+  // pass with nobody signed in projects nothing at all, because projection has
+  // no "me" to decide which side of the debt is yours. Nothing else would ever
+  // retry: the proposals are already mirrored, so no push arrives to prompt
+  // one, and the debts simply never appear in 帳本.
+  ref.listen(myUserIdProvider, (previous, next) {
+    if (previous != next && next != null) unawaited(service.refresh());
+  });
+
   return service;
 });
 
@@ -193,6 +217,10 @@ class DebtService {
 
   /// Make Drift match the server exactly, then land any confirmed rows.
   Future<void> _absorb(List<DebtProposalModel> rows) async {
+    final me = _ref.read(myUserIdProvider);
+    final confirmedDebts = rows
+        .where((r) => r.isConfirmed && !r.isRepayment)
+        .toList();
     await _db.syncDebtProposals([
       for (final r in rows)
         DebtProposalsCompanion.insert(
@@ -224,12 +252,64 @@ class DebtService {
     // Debts first, repayments second. A repayment's settlement points at the
     // group and members the debt projects into, so those rows have to exist —
     // and on a fresh install both arrive in the same batch.
+    // Each row on its own. Projecting inside one unguarded loop meant a
+    // single failure — a constraint, a row that arrived out of order — threw
+    // straight out of the sync, so every debt after it was silently skipped
+    // and no message reached anyone. One bad row must not be able to empty the
+    // ledger.
+    var projected = 0;
     for (final r in rows) {
-      if (r.isConfirmed && !r.isRepayment) await _project(r);
+      if (!r.isConfirmed || r.isRepayment) continue;
+      try {
+        await _project(r);
+        projected++;
+      } on Object catch (e, st) {
+        logAppError('project debt "${r.title}"', e, st);
+      }
     }
+    var settled = 0;
     for (final r in rows) {
-      if (r.isConfirmed && r.isRepayment) await _projectRepayment(r);
+      if (!r.isConfirmed || !r.isRepayment) continue;
+      try {
+        await _projectRepayment(r);
+        settled++;
+      } on Object catch (e, st) {
+        logAppError('project repayment "${r.title}"', e, st);
+      }
     }
+
+
+    // Then take away what no longer belongs. Projecting is what puts a debt in
+    // the ledger; without the matching sweep, a proposal deleted or rejected
+    // server-side leaves its debt sitting there for good, backed by nothing —
+    // two accounts looking at genuinely different books.
+    //
+    // Guarded on being signed in: `me == null` means we cannot have projected
+    // anything this session, and clearing the ledger from that state would be
+    // destroying data on no evidence at all.
+    if (me != null) {
+      final projectedGroups = {
+        for (final r in confirmedDebts) debtGroupId(r.id),
+      };
+      // Settlements first, then whole debts. Inside a projected group the
+      // server is the authority on the repayments too — a settlement written
+      // by the old local 結清 never reached it, and left the debt looking
+      // cleared here while the other side still saw it outstanding. Nothing
+      // about that reads as a bug from the inside: the debt just stops
+      // appearing, exactly as a settled one should.
+      await _db.purgeUnbackedSettlements(projectedGroups, {
+        for (final r in rows)
+          if (r.isConfirmed && r.isRepayment) debtSettlementId(r.id),
+      });
+      await _db.purgeOrphanDirectDebts(projectedGroups);
+    }
+
+    logAppTrace(
+      'debt sync',
+      'fetched=${rows.length} debts=${confirmedDebts.length} '
+          'projected=$projected settlements=$settled '
+          'me=${me ?? "NOBODY SIGNED IN"}',
+    );
   }
 
   /// Land a confirmed repayment as a settlement inside the debt it clears.

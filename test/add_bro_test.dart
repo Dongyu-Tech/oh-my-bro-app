@@ -55,8 +55,9 @@ void main() {
     expect(rows, hasLength(1));
     expect(rows.single.handle, 'alex_renamed');
     expect(rows.single.avatarUrl, 'https://cdn/new.png');
-    // The name is MY nickname for them, so a re-add must not overwrite it.
-    expect(rows.single.name, 'Alex');
+    // The name mirrors their profile, so changing it server-side has to land
+    // here — a cached name that never moves again is the bug this replaces.
+    expect(rows.single.name, 'Alex Chen');
   });
 
   test('different accounts stay separate rows', () async {
@@ -83,6 +84,17 @@ void main() {
     test('adds the ones the server knows about', () async {
       await service.syncAccepted([bro(uid, 'Alex'), bro(other, 'Bo')]);
       expect(await live(), hasLength(2));
+    });
+
+    test('picks up a bro who renamed themselves server-side', () async {
+      await service.syncAccepted([bro(uid, 'Alex')]);
+
+      // They edited their display name in their own profile.
+      await service.syncAccepted([bro(uid, 'Alex Chen')]);
+
+      final rows = await live();
+      expect(rows, hasLength(1), reason: 'still the same bro');
+      expect(rows.single.name, 'Alex Chen');
     });
 
     test('trashes a bro who is no longer in the list', () async {

@@ -113,7 +113,9 @@ class PersonalEntries extends Table {
 class Friends extends Table {
   TextColumn get id => text()();
 
-  /// What *I* call them. Seeded from their profile, then mine to change.
+  /// Their display name, mirrored from `public.users` on every sync. Not a
+  /// nickname: whatever they call themselves is what shows here, so renaming
+  /// their own profile reaches everyone who has them as a bro.
   TextColumn get name => text()();
 
   /// Their `public.users` id. Null only on rows added before bros had to be
@@ -318,6 +320,14 @@ class AppDatabase extends _$AppDatabase {
 
   // ── Reads (watch = live streams the UI binds to) ──────────────────────────
 
+  /// Every group row, trashed and archived included — for diagnostics that
+  /// need to tell "not there" apart from "there but filtered out".
+  Future<List<Group>> allGroupsIncludingHidden() => select(groups).get();
+
+  /// Same, for expenses: a soft-deleted expense is invisible to every balance,
+  /// so "missing" and "trashed" have to be told apart.
+  Future<List<Expense>> allExpensesIncludingHidden() => select(expenses).get();
+
   /// Live groups (not trashed), newest first. Active/archived split downstream.
   Stream<List<Group>> watchGroups() =>
       (select(groups)
@@ -415,6 +425,63 @@ class AppDatabase extends _$AppDatabase {
         DebtProposalsCompanion(poppedAt: Value(DateTime.now())),
       );
 
+  /// Delete every direct-debt group that no live proposal accounts for.
+  ///
+  /// The projection writes these rows and, until this existed, nothing ever
+  /// removed them — so a proposal deleted server-side left its debt behind on
+  /// the device permanently, with nothing backing it. Same lesson as the
+  /// mirror one layer up: a sync that can only add cannot express a deletion.
+  ///
+  /// Members, expenses, shares and settlements all cascade off the group, so
+  /// removing it takes the whole debt with it.
+  ///
+  /// Only ever call this after a SUCCESSFUL fetch. An empty set legitimately
+  /// means "the server has no debts", and passing one after a failed fetch
+  /// would clear the ledger.
+  ///
+  /// Note this cannot distinguish an orphan from a direct debt recorded by the
+  /// old local-only composer — both are `isDirect` groups with ids no proposal
+  /// derives. Those predate debts needing agreement and are swept too.
+  Future<void> purgeOrphanDirectDebts(Set<String> liveGroupIds) {
+    return (delete(groups)..where((g) {
+          // `NOT IN ()` is a syntax error, so an empty set means "every direct
+          // debt is an orphan" and needs no exclusion clause at all.
+          return liveGroupIds.isEmpty
+              ? g.isDirect.equals(true)
+              : g.isDirect.equals(true) & g.id.isNotIn(liveGroupIds.toList());
+        }))
+        .go();
+  }
+
+  /// Remove settlements inside a projected debt that no agreed repayment
+  /// accounts for.
+  ///
+  /// Inside these groups the server is the authority on the repayments as well
+  /// as the debt. A settlement written by the old local 結清 — which never
+  /// reached the server — silently zeroes the balance here while the other
+  /// side still sees the debt outstanding. It does not look like a bug from
+  /// the inside: the debt simply stops appearing, as a settled one should.
+  ///
+  /// Scoped to projected groups, so an ordinary gathering's settlements, which
+  /// have no server counterpart to check against, are untouched.
+  ///
+  /// Only ever call this after a SUCCESSFUL fetch.
+  Future<void> purgeUnbackedSettlements(
+    Set<String> projectedGroupIds,
+    Set<String> agreedSettlementIds,
+  ) {
+    if (projectedGroupIds.isEmpty) return Future.value();
+    return (delete(settlements)..where((s) {
+          final inProjected = s.groupId.isIn(projectedGroupIds.toList());
+          // `NOT IN ()` is a syntax error, so "none are agreed" needs no
+          // exclusion clause at all.
+          return agreedSettlementIds.isEmpty
+              ? inProjected
+              : inProjected & s.id.isNotIn(agreedSettlementIds.toList());
+        }))
+        .go();
+  }
+
   Future<void> markDebtConfirmAlertSeen(String id) =>
       (update(debtProposals)..where((d) => d.id.equals(id))).write(
         DebtProposalsCompanion(confirmAlertAt: Value(DateTime.now())),
@@ -493,20 +560,17 @@ class AppDatabase extends _$AppDatabase {
   /// the server is the authority on that.
   Future<void> updateFriendProfile(
     String friendId, {
+    required String name,
     required String? handle,
     required String? avatarUrl,
   }) => (update(friends)..where((f) => f.id.equals(friendId))).write(
     FriendsCompanion(
+      name: Value(name),
       handle: Value(handle),
       avatarUrl: Value(avatarUrl),
       deletedAt: const Value(null),
     ),
   );
-
-  Future<void> renameFriend(String friendId, String name) =>
-      (update(friends)..where((f) => f.id.equals(friendId))).write(
-        FriendsCompanion(name: Value(name)),
-      );
 
   Future<void> deleteFriend(String friendId) =>
       (update(friends)..where((f) => f.id.equals(friendId))).write(
@@ -617,6 +681,22 @@ class AppDatabase extends _$AppDatabase {
           mode: InsertMode.insertOrIgnore,
         ),
       );
+
+      // Un-trash. insertOrIgnore skips a row that already exists, so without
+      // this a debt the user once tidied out of 帳本 could never come back —
+      // their device hiding it forever while the other still showed it, with
+      // no amount of syncing able to reconcile the two.
+      //
+      // The server says this debt exists and both sides agreed to it, and the
+      // server is the authority on that. A local deletedAt is stale state to
+      // correct, not a decision to honour — the same reasoning that lets a
+      // friend sync un-trash a bro the server still lists.
+      await (update(groups)
+            ..where((g) => g.id.equals(projection.group.id.value)))
+          .write(const GroupsCompanion(deletedAt: Value(null)));
+      await (update(expenses)
+            ..where((e) => e.id.equals(projection.expense.id.value)))
+          .write(const ExpensesCompanion(deletedAt: Value(null)));
     });
   }
 

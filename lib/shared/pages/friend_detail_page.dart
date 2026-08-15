@@ -7,7 +7,6 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import 'package:heymybro/core/error/error_logger.dart';
 import 'package:heymybro/core/error/result.dart';
-import 'package:heymybro/shared/dialogs/basic_dialog.dart';
 import 'package:heymybro/shared/provider/friend_provider.dart';
 import 'package:heymybro/shared/provider/friendship_provider.dart';
 import 'package:heymybro/shared/provider/group_provider.dart';
@@ -64,14 +63,6 @@ class FriendDetailPage extends ConsumerWidget {
                         style: BrutalText.headlineLgMobile(fontSize: 24),
                       ),
                     ),
-                    PressableBrutal(
-                      onTap: () => _rename(context, ref, friend.name),
-                      color: BrutalColors.surface,
-                      radius: BrutalSpec.pillRadius,
-                      padding: const EdgeInsets.all(9),
-                      child: const Icon(LucideIcons.pencil, size: 20),
-                    ),
-                    const SizedBox(width: 8),
                     PressableBrutal(
                       onTap: () async {
                         if (await confirmDialog(
@@ -217,23 +208,6 @@ class FriendDetailPage extends ConsumerWidget {
         ),
       ),
     );
-  }
-
-  Future<void> _rename(
-    BuildContext context,
-    WidgetRef ref,
-    String current,
-  ) async {
-    final input = await showTextInputDialog(
-      context,
-      title: 'friend_rename'.tr(),
-      initialValue: current,
-      confirmLabel: 'common_save'.tr(),
-    );
-    final name = input?.trim() ?? '';
-    if (name.isNotEmpty) {
-      await ref.read(friendServiceProvider).renameFriend(friendId, name);
-    }
   }
 }
 
