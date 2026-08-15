@@ -1,11 +1,14 @@
 import 'package:collection/collection.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../core/database/database.dart';
 import '../split/settlement.dart';
 import 'database_provider.dart';
+
+part 'group_provider.freezed.dart';
 
 const _uuid = Uuid();
 
@@ -241,52 +244,44 @@ int myShareOfGroup({
 }
 
 /// Immutable snapshot of a group's money state.
-class GroupSummary {
-  const GroupSummary({
-    required this.total,
-    required this.net,
-    required this.transfers,
-    required this.myNet,
-    required this.myShare,
-  });
+@freezed
+abstract class GroupSummary with _$GroupSummary {
+  const factory GroupSummary({
+    /// Total spent across all expenses.
+    required int total,
 
-  /// Total spent across all expenses.
-  final int total;
+    /// memberId → net balance (>0 owed to them, <0 they owe).
+    required Map<String, int> net,
 
-  /// memberId → net balance (>0 owed to them, <0 they owe).
-  final Map<String, int> net;
+    /// Minimal repayment plan.
+    required List<Transfer> transfers,
 
-  /// Minimal repayment plan.
-  final List<Transfer> transfers;
+    /// The signed-in member's net balance.
+    required int myNet,
 
-  /// The signed-in member's net balance.
-  final int myNet;
-
-  /// What "I" actually consumed here: the sum of my expense shares (independent
-  /// of who paid or settlements). This is my real out-of-pocket cost once the
-  /// gathering is settled — the amount offered to 個人記帳 on 結清.
-  final int myShare;
+    /// What "I" actually consumed here: the sum of my expense shares (independent
+    /// of who paid or settlements). This is my real out-of-pocket cost once the
+    /// gathering is settled — the amount offered to 個人記帳 on 結清.
+    required int myShare,
+  }) = _GroupSummary;
 }
 
 /// One outstanding debt between me and another person, in one gathering.
-class DebtRecord {
-  const DebtRecord({
-    required this.groupId,
-    required this.groupName,
-    required this.otherName,
-    required this.owedToMe,
-    required this.transfer,
-  });
+@freezed
+abstract class DebtRecord with _$DebtRecord {
+  const DebtRecord._();
 
-  final String groupId;
-  final String groupName;
-  final String otherName;
+  const factory DebtRecord({
+    required String groupId,
+    required String groupName,
+    required String otherName,
 
-  /// true = they owe me, false = I owe them.
-  final bool owedToMe;
+    /// true = they owe me, false = I owe them.
+    required bool owedToMe,
 
-  /// The underlying settle-up transfer (for the 結清 action).
-  final Transfer transfer;
+    /// The underlying settle-up transfer (for the 結清 action).
+    required Transfer transfer,
+  }) = _DebtRecord;
 
   int get amount => transfer.amount;
 }
