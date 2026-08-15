@@ -8,6 +8,7 @@ import 'shared/models/app_settings_model.dart';
 import 'shared/provider/settings_provider.dart';
 import 'shared/widgets/app_keyboard_focus_guard.dart';
 import 'shared/widgets/brutalism.dart';
+import 'shared/widgets/debt_popup_host.dart';
 
 class App extends ConsumerWidget {
   const App({super.key});
@@ -53,8 +54,11 @@ class App extends ConsumerWidget {
       ),
       themeMode: themeMode,
       routerConfig: ref.watch(routerProvider),
-      builder: (context, child) =>
-          AppKeyboardFocusGuard(child: child ?? const SizedBox.shrink()),
+      builder: (context, child) => AppKeyboardFocusGuard(
+        // Above the router: a debt proposal has to reach you on any tab, and
+        // the sync it owns keys off cold start and resume, not navigation.
+        child: DebtPopupHost(child: child ?? const SizedBox.shrink()),
+      ),
     );
   }
 }

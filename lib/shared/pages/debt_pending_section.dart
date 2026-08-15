@@ -72,8 +72,8 @@ class DebtPendingSection extends ConsumerWidget {
 }
 
 /// "阿華 欠你 $500" / "你欠 阿華 $500", plus what it used to say if countered.
-class _ProposalLine extends ConsumerWidget {
-  const _ProposalLine({required this.proposal});
+class DebtProposalLine extends ConsumerWidget {
+  const DebtProposalLine({required this.proposal, super.key});
 
   final DebtProposal proposal;
 
@@ -192,7 +192,7 @@ class _MyTurnCard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _ProposalLine(proposal: proposal),
+          DebtProposalLine(proposal: proposal),
           const SizedBox(height: 10),
           DebtActionRow(proposal: proposal),
         ],
@@ -267,7 +267,7 @@ class _TheirTurnCard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _ProposalLine(proposal: proposal),
+          DebtProposalLine(proposal: proposal),
           const SizedBox(height: 10),
           Row(
             children: [
@@ -325,7 +325,7 @@ class _DeadEndCard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _ProposalLine(proposal: proposal),
+          DebtProposalLine(proposal: proposal),
           const SizedBox(height: 8),
           Row(
             children: [
