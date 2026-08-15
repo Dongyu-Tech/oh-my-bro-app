@@ -7,6 +7,7 @@ import 'package:share_plus/share_plus.dart';
 
 import 'package:heymybro/shared/pages/debt_pending_section.dart';
 import 'package:heymybro/shared/pages/group_detail_page.dart';
+import 'package:heymybro/shared/provider/debt_provider.dart';
 import 'package:heymybro/shared/pages/trash_page.dart';
 import 'package:heymybro/shared/provider/group_provider.dart';
 import 'package:heymybro/shared/widgets/brutalism.dart';
@@ -36,44 +37,56 @@ class TransactionPage extends ConsumerWidget {
       body: SafeArea(
         bottom: false,
         child: DottedBackdrop(
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-            children: [
-              Row(
-                children: [
-                  MarkerHighlight(
-                    child: Text(
-                      'transaction_title'.tr(),
-                      style: BrutalText.headlineLgMobile(fontSize: 30),
+          child: RefreshIndicator(
+            // Realtime and the resume fetch already keep this current; the pull
+            // is for the moment you are staring at the screen wondering whether
+            // they have answered yet, which is exactly when waiting feels worst.
+            onRefresh: () => ref.read(debtServiceProvider).refresh(),
+            color: BrutalColors.onBackground,
+            backgroundColor: BrutalColors.primaryContainer,
+            child: ListView(
+              // Without this a short list cannot be dragged at all, and the
+              // refresh would be unreachable exactly when there is least on
+              // screen to explain the wait.
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+              children: [
+                Row(
+                  children: [
+                    MarkerHighlight(
+                      child: Text(
+                        'transaction_title'.tr(),
+                        style: BrutalText.headlineLgMobile(fontSize: 30),
+                      ),
                     ),
-                  ),
-                  const Spacer(),
-                  TrashButton(onTap: () => showTrashModal(context)),
-                ],
-              ),
-              const SizedBox(height: 24),
-              _DebtSummaryCard(money: money, owedToMe: owedToMe, iOwe: iOwe),
-              const SizedBox(height: 20),
-              // Above 誰欠誰 on purpose: these are the only rows on this page
-              // that are waiting on somebody to do something.
-              const DebtPendingSection(),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'tx_debts_title'.tr(),
-                  style: BrutalText.headlineLgMobile(fontSize: 22),
+                    const Spacer(),
+                    TrashButton(onTap: () => showTrashModal(context)),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 12),
-              if (debts.isEmpty)
-                _EmptyLine('tx_no_debts'.tr())
-              else
-                for (final d in debts)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: _DebtCard(debt: d, money: money),
+                const SizedBox(height: 24),
+                _DebtSummaryCard(money: money, owedToMe: owedToMe, iOwe: iOwe),
+                const SizedBox(height: 20),
+                // Above 誰欠誰 on purpose: these are the only rows on this page
+                // that are waiting on somebody to do something.
+                const DebtPendingSection(),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'tx_debts_title'.tr(),
+                    style: BrutalText.headlineLgMobile(fontSize: 22),
                   ),
-            ],
+                ),
+                const SizedBox(height: 12),
+                if (debts.isEmpty)
+                  _EmptyLine('tx_no_debts'.tr())
+                else
+                  for (final d in debts)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _DebtCard(debt: d, money: money),
+                    ),
+              ],
+            ),
           ),
         ),
       ),

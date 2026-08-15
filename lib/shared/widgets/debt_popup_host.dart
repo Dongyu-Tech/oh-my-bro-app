@@ -92,63 +92,10 @@ class _DebtPopupHostState extends ConsumerState<DebtPopupHost>
     }
   }
 
-  /// Announce "they agreed" at the top of whatever screen you happen to be on.
-  ///
-  /// A banner rather than a snackbar: this is news about money now on your
-  /// ledger, and it should wait to be acknowledged rather than slide away
-  /// while the phone is in a pocket.
-  void _announce(DebtProposal proposal) {
-    final messenger = ScaffoldMessenger.maybeOf(context);
-    if (messenger == null) return;
-
-    // Marked as it goes up, not when dismissed — otherwise every rebuild
-    // while the banner is on screen queues another one.
-    unawaited(ref.read(debtServiceProvider).markConfirmAlertSeen(proposal.id));
-
-    messenger.showMaterialBanner(
-      MaterialBanner(
-        backgroundColor: BrutalColors.primaryContainer,
-        dividerColor: BrutalColors.onBackground,
-        padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
-        leading: const Icon(
-          LucideIcons.circleCheck,
-          color: BrutalColors.onBackground,
-        ),
-        content: Text(
-          'debt_alert_confirmed'.tr(
-            namedArgs: {'name': proposal.otherName ?? '?'},
-          ),
-          style: BrutalText.labelBold(fontSize: 14),
-        ),
-        actions: [
-          TextButton(
-            onPressed: messenger.hideCurrentMaterialBanner,
-            child: Text(
-              'debt_action_dismiss'.tr(),
-              style: BrutalText.labelBold(
-                fontSize: 14,
-                color: BrutalColors.onPrimaryContainer,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     // Reading the service is what starts the subscription and the first fetch.
     ref.watch(debtServiceProvider);
-
-    final confirmed = ref.watch(unseenConfirmationsProvider);
-    if (confirmed.isNotEmpty) {
-      // Deferred a frame: showing a banner mid-build is not allowed.
-      final next = confirmed.first;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _announce(next);
-      });
-    }
 
     // Watched rather than listened to, so a proposal already queued on the
     // very first build is caught too — a listener only fires on a change, and
@@ -159,6 +106,86 @@ class _DebtPopupHostState extends ConsumerState<DebtPopupHost>
       WidgetsBinding.instance.addPostFrameCallback((_) => _maybeShow());
     }
 
-    return widget.child;
+    final announcements = ref.watch(unseenConfirmationsProvider);
+
+    // A layer over the app, not a row inserted into it. MaterialBanner takes
+    // space from the page and pushes everything down, which for news that
+    // arrives unannounced means the screen jumps under whatever the user was
+    // reading. This floats instead: nothing below it moves.
+    return Stack(
+      children: [
+        widget.child,
+        if (announcements.isNotEmpty)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: SafeArea(
+              bottom: false,
+              child: _ConfirmedAlert(
+                proposal: announcements.first,
+                onDismiss: () => ref
+                    .read(debtServiceProvider)
+                    .markConfirmAlertSeen(announcements.first.id),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// "They agreed" — floating over whatever screen you happen to be on.
+///
+/// It stays until acknowledged rather than sliding away on a timer: this is
+/// news that money is now on your ledger, and a snackbar that expires while
+/// the phone is in a pocket would simply never be seen.
+class _ConfirmedAlert extends StatelessWidget {
+  const _ConfirmedAlert({required this.proposal, required this.onDismiss});
+
+  final DebtProposal proposal;
+  final VoidCallback onDismiss;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+      child: Material(
+        // Transparent: the brutal decoration below draws every pixel. Material
+        // is here only so the text has a canvas to paint on outside a Scaffold.
+        color: Colors.transparent,
+        child: Container(
+          decoration: brutalDecoration(
+            color: BrutalColors.primaryContainer,
+            radius: BrutalSpec.cardRadius,
+            offset: BrutalSpec.shadowOffsetMobile,
+          ),
+          padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
+          child: Row(
+            children: [
+              const Icon(LucideIcons.circleCheck, size: 22),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'debt_alert_confirmed'.tr(
+                    namedArgs: {'name': proposal.otherName ?? '?'},
+                  ),
+                  style: BrutalText.labelBold(fontSize: 14),
+                ),
+              ),
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: onDismiss,
+                behavior: HitTestBehavior.opaque,
+                child: const Padding(
+                  padding: EdgeInsets.all(6),
+                  child: Icon(LucideIcons.x, size: 20),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

@@ -257,13 +257,18 @@ class DebtService {
     return result;
   }
 
+  /// Accepting does not go through [_respond], because the order matters here.
+  ///
+  /// The refresh is what brings the row back as `confirmed`, and "confirmed and
+  /// not yet announced" is exactly what raises the banner. Marking afterwards
+  /// is a race the banner wins — so this device's copy is marked *first*, and
+  /// only then does the row land. I am the one who agreed; being told so is
+  /// noise. The other side's copy still has it unset and will announce it.
   Future<Result<DebtOutcome>> accept(String id) async {
-    final result = await _respond(id, DebtReply.accept);
-    // Silence the "they agreed" banner on this device before the row lands:
-    // I am the one who agreed, so being told about it is noise. The other
-    // side's copy still has it unset and will announce it.
+    final result = await _repo.respond(id: id, reply: DebtReply.accept);
     if (result case Ok(value: final outcome) when outcome.isSuccess) {
       await _db.markDebtConfirmAlertSeen(id);
+      await refresh();
     }
     return result;
   }
