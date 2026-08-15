@@ -1,11 +1,14 @@
 import 'dart:async';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import 'package:heymybro/core/database/database.dart';
 import 'package:heymybro/core/routing/router.dart';
 import 'package:heymybro/shared/provider/debt_provider.dart';
+import 'package:heymybro/shared/widgets/brutalism.dart';
 
 /// Sits above the router and owns two things no screen can.
 ///
@@ -89,10 +92,63 @@ class _DebtPopupHostState extends ConsumerState<DebtPopupHost>
     }
   }
 
+  /// Announce "they agreed" at the top of whatever screen you happen to be on.
+  ///
+  /// A banner rather than a snackbar: this is news about money now on your
+  /// ledger, and it should wait to be acknowledged rather than slide away
+  /// while the phone is in a pocket.
+  void _announce(DebtProposal proposal) {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    if (messenger == null) return;
+
+    // Marked as it goes up, not when dismissed — otherwise every rebuild
+    // while the banner is on screen queues another one.
+    unawaited(ref.read(debtServiceProvider).markConfirmAlertSeen(proposal.id));
+
+    messenger.showMaterialBanner(
+      MaterialBanner(
+        backgroundColor: BrutalColors.primaryContainer,
+        dividerColor: BrutalColors.onBackground,
+        padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
+        leading: const Icon(
+          LucideIcons.circleCheck,
+          color: BrutalColors.onBackground,
+        ),
+        content: Text(
+          'debt_alert_confirmed'.tr(
+            namedArgs: {'name': proposal.otherName ?? '?'},
+          ),
+          style: BrutalText.labelBold(fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: messenger.hideCurrentMaterialBanner,
+            child: Text(
+              'debt_action_dismiss'.tr(),
+              style: BrutalText.labelBold(
+                fontSize: 14,
+                color: BrutalColors.onPrimaryContainer,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // Reading the service is what starts the subscription and the first fetch.
     ref.watch(debtServiceProvider);
+
+    final confirmed = ref.watch(unseenConfirmationsProvider);
+    if (confirmed.isNotEmpty) {
+      // Deferred a frame: showing a banner mid-build is not allowed.
+      final next = confirmed.first;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _announce(next);
+      });
+    }
 
     // Watched rather than listened to, so a proposal already queued on the
     // very first build is caught too — a listener only fires on a change, and

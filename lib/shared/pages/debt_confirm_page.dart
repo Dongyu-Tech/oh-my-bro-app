@@ -197,7 +197,7 @@ class _ClaimSlip extends StatelessWidget {
                         const SizedBox(height: 8),
                         Row(
                           children: [
-                            const Text('🧾', style: TextStyle(fontSize: 30)),
+                            const Icon(LucideIcons.receipt, size: 28),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Text(
@@ -396,8 +396,14 @@ class _MyTurnActions extends ConsumerWidget {
           : 'debt_accept_owed'.tr(namedArgs: args);
     }
 
+    // Grabbed BEFORE the await. Answering flips whose turn it is, which swaps
+    // this widget out for _TheirTurnActions, so `context` can be unmounted by
+    // the time the action returns — and a `context.mounted` guard would then
+    // silently skip the close. Not the cause of any bug seen so far; it is
+    // just the only ordering that cannot produce one.
+    final navigator = Navigator.of(context);
     Future<void> run(Future<bool> Function() action) async {
-      if (await action() && context.mounted) Navigator.of(context).maybePop();
+      if (await action()) await navigator.maybePop();
     }
 
     return Column(
@@ -419,7 +425,7 @@ class _MyTurnActions extends ConsumerWidget {
                         margin: EdgeInsets.only(right: 10),
                       ),
                     ),
-                    const Text('📢', style: TextStyle(fontSize: 15)),
+                    const Icon(LucideIcons.megaphone, size: 15),
                     const SizedBox(width: 6),
                     Text(
                       'debt_notify_note'.tr(),
@@ -514,10 +520,13 @@ class _TheirTurnActions extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     if (proposal.status != 'pending') return const SizedBox.shrink();
 
+    // Same reason as _MyTurnActions: withdrawing rebuilds this away.
+    final navigator = Navigator.of(context);
+
     return PressableBrutal(
       onTap: () async {
-        if (await cancelDebt(context, ref, proposal) && context.mounted) {
-          Navigator.of(context).maybePop();
+        if (await cancelDebt(context, ref, proposal)) {
+          await navigator.maybePop();
         }
       },
       color: BrutalColors.surface,

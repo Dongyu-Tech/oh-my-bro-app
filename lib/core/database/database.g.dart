@@ -3193,6 +3193,18 @@ class $DebtProposalsTable extends DebtProposals
     type: DriftSqlType.dateTime,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _confirmAlertAtMeta = const VerificationMeta(
+    'confirmAlertAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> confirmAlertAt =
+      GeneratedColumn<DateTime>(
+        'confirm_alert_at',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -3213,6 +3225,7 @@ class $DebtProposalsTable extends DebtProposals
     resolvedAt,
     poppedAt,
     dismissedAt,
+    confirmAlertAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -3362,6 +3375,15 @@ class $DebtProposalsTable extends DebtProposals
         ),
       );
     }
+    if (data.containsKey('confirm_alert_at')) {
+      context.handle(
+        _confirmAlertAtMeta,
+        confirmAlertAt.isAcceptableOrUnknown(
+          data['confirm_alert_at']!,
+          _confirmAlertAtMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -3443,6 +3465,10 @@ class $DebtProposalsTable extends DebtProposals
         DriftSqlType.dateTime,
         data['${effectivePrefix}dismissed_at'],
       ),
+      confirmAlertAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}confirm_alert_at'],
+      ),
     );
   }
 
@@ -3489,6 +3515,14 @@ class DebtProposal extends DataClass implements Insertable<DebtProposal> {
   /// Device-local: the user has acknowledged a dead end (rejected / withdrawn /
   /// voided) and the card can stop taking up space.
   final DateTime? dismissedAt;
+
+  /// Device-local: "they agreed" has already been announced on this device.
+  ///
+  /// Set the moment *this* device does the accepting, so the person who
+  /// pressed the button is never told what they just did — leaving the banner
+  /// for the other side, whichever side that turned out to be after the
+  /// haggling.
+  final DateTime? confirmAlertAt;
   const DebtProposal({
     required this.id,
     required this.proposerId,
@@ -3508,6 +3542,7 @@ class DebtProposal extends DataClass implements Insertable<DebtProposal> {
     this.resolvedAt,
     this.poppedAt,
     this.dismissedAt,
+    this.confirmAlertAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -3547,6 +3582,9 @@ class DebtProposal extends DataClass implements Insertable<DebtProposal> {
     }
     if (!nullToAbsent || dismissedAt != null) {
       map['dismissed_at'] = Variable<DateTime>(dismissedAt);
+    }
+    if (!nullToAbsent || confirmAlertAt != null) {
+      map['confirm_alert_at'] = Variable<DateTime>(confirmAlertAt);
     }
     return map;
   }
@@ -3589,6 +3627,9 @@ class DebtProposal extends DataClass implements Insertable<DebtProposal> {
       dismissedAt: dismissedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(dismissedAt),
+      confirmAlertAt: confirmAlertAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(confirmAlertAt),
     );
   }
 
@@ -3616,6 +3657,7 @@ class DebtProposal extends DataClass implements Insertable<DebtProposal> {
       resolvedAt: serializer.fromJson<DateTime?>(json['resolvedAt']),
       poppedAt: serializer.fromJson<DateTime?>(json['poppedAt']),
       dismissedAt: serializer.fromJson<DateTime?>(json['dismissedAt']),
+      confirmAlertAt: serializer.fromJson<DateTime?>(json['confirmAlertAt']),
     );
   }
   @override
@@ -3640,6 +3682,7 @@ class DebtProposal extends DataClass implements Insertable<DebtProposal> {
       'resolvedAt': serializer.toJson<DateTime?>(resolvedAt),
       'poppedAt': serializer.toJson<DateTime?>(poppedAt),
       'dismissedAt': serializer.toJson<DateTime?>(dismissedAt),
+      'confirmAlertAt': serializer.toJson<DateTime?>(confirmAlertAt),
     };
   }
 
@@ -3662,6 +3705,7 @@ class DebtProposal extends DataClass implements Insertable<DebtProposal> {
     Value<DateTime?> resolvedAt = const Value.absent(),
     Value<DateTime?> poppedAt = const Value.absent(),
     Value<DateTime?> dismissedAt = const Value.absent(),
+    Value<DateTime?> confirmAlertAt = const Value.absent(),
   }) => DebtProposal(
     id: id ?? this.id,
     proposerId: proposerId ?? this.proposerId,
@@ -3685,6 +3729,9 @@ class DebtProposal extends DataClass implements Insertable<DebtProposal> {
     resolvedAt: resolvedAt.present ? resolvedAt.value : this.resolvedAt,
     poppedAt: poppedAt.present ? poppedAt.value : this.poppedAt,
     dismissedAt: dismissedAt.present ? dismissedAt.value : this.dismissedAt,
+    confirmAlertAt: confirmAlertAt.present
+        ? confirmAlertAt.value
+        : this.confirmAlertAt,
   );
   DebtProposal copyWithCompanion(DebtProposalsCompanion data) {
     return DebtProposal(
@@ -3722,6 +3769,9 @@ class DebtProposal extends DataClass implements Insertable<DebtProposal> {
       dismissedAt: data.dismissedAt.present
           ? data.dismissedAt.value
           : this.dismissedAt,
+      confirmAlertAt: data.confirmAlertAt.present
+          ? data.confirmAlertAt.value
+          : this.confirmAlertAt,
     );
   }
 
@@ -3745,7 +3795,8 @@ class DebtProposal extends DataClass implements Insertable<DebtProposal> {
           ..write('updatedAt: $updatedAt, ')
           ..write('resolvedAt: $resolvedAt, ')
           ..write('poppedAt: $poppedAt, ')
-          ..write('dismissedAt: $dismissedAt')
+          ..write('dismissedAt: $dismissedAt, ')
+          ..write('confirmAlertAt: $confirmAlertAt')
           ..write(')'))
         .toString();
   }
@@ -3770,6 +3821,7 @@ class DebtProposal extends DataClass implements Insertable<DebtProposal> {
     resolvedAt,
     poppedAt,
     dismissedAt,
+    confirmAlertAt,
   );
   @override
   bool operator ==(Object other) =>
@@ -3792,7 +3844,8 @@ class DebtProposal extends DataClass implements Insertable<DebtProposal> {
           other.updatedAt == this.updatedAt &&
           other.resolvedAt == this.resolvedAt &&
           other.poppedAt == this.poppedAt &&
-          other.dismissedAt == this.dismissedAt);
+          other.dismissedAt == this.dismissedAt &&
+          other.confirmAlertAt == this.confirmAlertAt);
 }
 
 class DebtProposalsCompanion extends UpdateCompanion<DebtProposal> {
@@ -3814,6 +3867,7 @@ class DebtProposalsCompanion extends UpdateCompanion<DebtProposal> {
   final Value<DateTime?> resolvedAt;
   final Value<DateTime?> poppedAt;
   final Value<DateTime?> dismissedAt;
+  final Value<DateTime?> confirmAlertAt;
   final Value<int> rowid;
   const DebtProposalsCompanion({
     this.id = const Value.absent(),
@@ -3834,6 +3888,7 @@ class DebtProposalsCompanion extends UpdateCompanion<DebtProposal> {
     this.resolvedAt = const Value.absent(),
     this.poppedAt = const Value.absent(),
     this.dismissedAt = const Value.absent(),
+    this.confirmAlertAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   DebtProposalsCompanion.insert({
@@ -3855,6 +3910,7 @@ class DebtProposalsCompanion extends UpdateCompanion<DebtProposal> {
     this.resolvedAt = const Value.absent(),
     this.poppedAt = const Value.absent(),
     this.dismissedAt = const Value.absent(),
+    this.confirmAlertAt = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        proposerId = Value(proposerId),
@@ -3883,6 +3939,7 @@ class DebtProposalsCompanion extends UpdateCompanion<DebtProposal> {
     Expression<DateTime>? resolvedAt,
     Expression<DateTime>? poppedAt,
     Expression<DateTime>? dismissedAt,
+    Expression<DateTime>? confirmAlertAt,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -3904,6 +3961,7 @@ class DebtProposalsCompanion extends UpdateCompanion<DebtProposal> {
       if (resolvedAt != null) 'resolved_at': resolvedAt,
       if (poppedAt != null) 'popped_at': poppedAt,
       if (dismissedAt != null) 'dismissed_at': dismissedAt,
+      if (confirmAlertAt != null) 'confirm_alert_at': confirmAlertAt,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -3927,6 +3985,7 @@ class DebtProposalsCompanion extends UpdateCompanion<DebtProposal> {
     Value<DateTime?>? resolvedAt,
     Value<DateTime?>? poppedAt,
     Value<DateTime?>? dismissedAt,
+    Value<DateTime?>? confirmAlertAt,
     Value<int>? rowid,
   }) {
     return DebtProposalsCompanion(
@@ -3948,6 +4007,7 @@ class DebtProposalsCompanion extends UpdateCompanion<DebtProposal> {
       resolvedAt: resolvedAt ?? this.resolvedAt,
       poppedAt: poppedAt ?? this.poppedAt,
       dismissedAt: dismissedAt ?? this.dismissedAt,
+      confirmAlertAt: confirmAlertAt ?? this.confirmAlertAt,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -4009,6 +4069,9 @@ class DebtProposalsCompanion extends UpdateCompanion<DebtProposal> {
     if (dismissedAt.present) {
       map['dismissed_at'] = Variable<DateTime>(dismissedAt.value);
     }
+    if (confirmAlertAt.present) {
+      map['confirm_alert_at'] = Variable<DateTime>(confirmAlertAt.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -4036,6 +4099,7 @@ class DebtProposalsCompanion extends UpdateCompanion<DebtProposal> {
           ..write('resolvedAt: $resolvedAt, ')
           ..write('poppedAt: $poppedAt, ')
           ..write('dismissedAt: $dismissedAt, ')
+          ..write('confirmAlertAt: $confirmAlertAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -7135,6 +7199,7 @@ typedef $$DebtProposalsTableCreateCompanionBuilder =
       Value<DateTime?> resolvedAt,
       Value<DateTime?> poppedAt,
       Value<DateTime?> dismissedAt,
+      Value<DateTime?> confirmAlertAt,
       Value<int> rowid,
     });
 typedef $$DebtProposalsTableUpdateCompanionBuilder =
@@ -7157,6 +7222,7 @@ typedef $$DebtProposalsTableUpdateCompanionBuilder =
       Value<DateTime?> resolvedAt,
       Value<DateTime?> poppedAt,
       Value<DateTime?> dismissedAt,
+      Value<DateTime?> confirmAlertAt,
       Value<int> rowid,
     });
 
@@ -7256,6 +7322,11 @@ class $$DebtProposalsTableFilterComposer
 
   ColumnFilters<DateTime> get dismissedAt => $composableBuilder(
     column: $table.dismissedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get confirmAlertAt => $composableBuilder(
+    column: $table.confirmAlertAt,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -7358,6 +7429,11 @@ class $$DebtProposalsTableOrderingComposer
     column: $table.dismissedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<DateTime> get confirmAlertAt => $composableBuilder(
+    column: $table.confirmAlertAt,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$DebtProposalsTableAnnotationComposer
@@ -7438,6 +7514,11 @@ class $$DebtProposalsTableAnnotationComposer
     column: $table.dismissedAt,
     builder: (column) => column,
   );
+
+  GeneratedColumn<DateTime> get confirmAlertAt => $composableBuilder(
+    column: $table.confirmAlertAt,
+    builder: (column) => column,
+  );
 }
 
 class $$DebtProposalsTableTableManager
@@ -7489,6 +7570,7 @@ class $$DebtProposalsTableTableManager
                 Value<DateTime?> resolvedAt = const Value.absent(),
                 Value<DateTime?> poppedAt = const Value.absent(),
                 Value<DateTime?> dismissedAt = const Value.absent(),
+                Value<DateTime?> confirmAlertAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => DebtProposalsCompanion(
                 id: id,
@@ -7509,6 +7591,7 @@ class $$DebtProposalsTableTableManager
                 resolvedAt: resolvedAt,
                 poppedAt: poppedAt,
                 dismissedAt: dismissedAt,
+                confirmAlertAt: confirmAlertAt,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -7531,6 +7614,7 @@ class $$DebtProposalsTableTableManager
                 Value<DateTime?> resolvedAt = const Value.absent(),
                 Value<DateTime?> poppedAt = const Value.absent(),
                 Value<DateTime?> dismissedAt = const Value.absent(),
+                Value<DateTime?> confirmAlertAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => DebtProposalsCompanion.insert(
                 id: id,
@@ -7551,6 +7635,7 @@ class $$DebtProposalsTableTableManager
                 resolvedAt: resolvedAt,
                 poppedAt: poppedAt,
                 dismissedAt: dismissedAt,
+                confirmAlertAt: confirmAlertAt,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
