@@ -34,8 +34,9 @@ void main() {
     WidgetTester tester, {
     required List<DebtProposal> known,
     String openId = 'p1',
+    Size size = const Size(420, 900),
   }) async {
-    await tester.binding.setSurfaceSize(const Size(420, 900));
+    await tester.binding.setSurfaceSize(size);
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     await tester.pumpWidget(
@@ -59,12 +60,16 @@ void main() {
 
     expect(find.text('\$500'), findsOneWidget);
     expect(find.text('晚餐'), findsOneWidget);
-    expect(find.textContaining('debt_you_owe_them'), findsOneWidget);
+    // The claimant's name sits directly above the claim, so the sentence does
+    // not repeat it.
+    expect(find.text('阿華'), findsOneWidget);
+    expect(find.text('debt_claim_you_owe'), findsOneWidget);
   });
 
   testWidgets('direction follows who the debtor is', (tester) async {
     await pump(tester, known: [_proposal(debtorId: 'them')]);
-    expect(find.textContaining('debt_they_owe'), findsOneWidget);
+    expect(find.text('debt_claim_owes_you'), findsOneWidget);
+    expect(find.text('debt_claim_you_owe'), findsNothing);
   });
 
   testWidgets('my turn gets all three answers', (tester) async {
@@ -111,6 +116,27 @@ void main() {
 
     expect(find.text('\$400'), findsOneWidget);
     expect(find.textContaining('debt_was_amount'), findsOneWidget);
+  });
+
+  testWidgets('it survives a small screen and a long item name', (
+    tester,
+  ) async {
+    // A 52px amount, an overlapping sticker and three buttons on an iPhone SE
+    // is where this layout would break first. A RenderFlex overflow throws in
+    // debug, so reaching the assertions at all is the assertion.
+    await pump(
+      tester,
+      size: const Size(320, 568),
+      known: [
+        _proposal(
+          amount: 1234567,
+          originalAmount: 7654321,
+        ).copyWith(title: '上禮拜五那頓超級無敵長的燒肉店聚餐加宵夜'),
+      ],
+    );
+
+    expect(find.byType(DebtConfirmPage), findsOneWidget);
+    expect(find.text('debt_action_accept'), findsOneWidget);
   });
 
   testWidgets('a proposal this device does not have says so', (tester) async {

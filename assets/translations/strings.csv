@@ -176,6 +176,8 @@ debt_send,Send,送出
 debt_err_stale,That one's already been dealt with,這筆已經處理過了
 debt_err_not_yours,It's not your turn on that one,那筆現在不是輪到你
 debt_confirm_title,Confirm this?,要確認嗎？
+debt_claim_you_owe,says you owe them,說你欠他
+debt_claim_owes_you,says they owe you,說他欠你
 debt_confirm_gone,That one's no longer here,這筆已經不在了
 debt_confirm_settled,Already dealt with,已經處理過了
 circle_start_gather,Start a gathering,發起揪團
